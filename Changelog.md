@@ -12,6 +12,12 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v22
 
 ### Changelog
+2025 - 6.4.4
+  Fix : improper order for accentuated chararters (French)
+  Fix : add rising sun no French images
+  Feat : add translation for no card image translated
+  Feat : rework of Card generation
+
 2024/12/28 - 6.4.3
 Dev deploy on github pages
 Dev deploy on 71yeti.fr

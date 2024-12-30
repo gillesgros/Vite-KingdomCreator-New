@@ -38,8 +38,9 @@
             :style='"font-size:" + getCardNameFontSize(Card).fontsize + "em;"'>
             {{ Card.frenchName }}</div>
         </div>
-        <!--Card Text -->
-        <div class="full-card-text-container" v-html="Card.text_html"></div>
+        <!--Card Text need to change -->
+        <!-- <div class="full-card-text-container" v-html="Card.text_html"></div> -->
+        <CardTextContainer :card='Card' />
         <!--Card Bottom bar -->
         <div class="bottom-bar-full" style="width:239.75%;bottom:-70px;">
           <div class="cost-container-full">
@@ -96,7 +97,6 @@ import { SupplyCardSorter } from "../utils/supply-card-sorter";
 import { getCardImageUrl } from "../utils/resources";
 import { incaseofImgerror } from "../utils/resources";
 
-
 import { DominionSets } from "../dominion/dominion-sets";
 import type { SupplyCard } from "../dominion/supply-card";
 import type { OtherCard } from "../dominion/other-card";
@@ -114,6 +114,7 @@ import { Cards_list_Illustrator, Year_set } from "../dominion/digital_cards/digi
 
 /* import store  */
 /* import Components */
+import CardTextContainer from "./CardTextContainer.vue";
 
 const QuestionMarkValue =
   new Set(["bank", "philosophersstone", "scepter", "bauble"
@@ -160,6 +161,9 @@ const BASEURL= /http:\/\/localhost:8080/
 
 export default defineComponent({
   name: "CardOnlinePageComponent",
+  components:{
+    CardTextContainer
+  },
   props: {
     set: {
       type: DominionSet,
@@ -673,7 +677,6 @@ export default defineComponent({
           console.error('Erreur lors de la capture de l\'image:', error);
         }
     }; 
-
 
     return {
       CardsToDisplay,

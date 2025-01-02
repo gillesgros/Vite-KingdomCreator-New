@@ -64,12 +64,16 @@ CDN_access = "../docs"
 .card-rows {
     display: flex;
     flex-direction: column;
-    //flex-wrap: wrap;
     line-height:1;
     font-family: primary-font;
+
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    gap: 10px;
 }
 
-Coef_scale = 1.4
+Coef_scale = 1
+
 
 .Coef_scale12 { 
     top: 100px; 
@@ -86,7 +90,9 @@ Coef_scale = 1.4
   }
 
 .cardMain {
-    position : absolute;
+    position : relative;
+    margin: auto;
+    width: 100%;
 }
 
 .v-for{
@@ -129,6 +135,9 @@ Coef_scale = 1.4
 
 .card-container {
   display: flex; /* Allow side-by-side positioning */
+  justify-content: center; /* Centrage horizontal */
+  //align-items: center; /* Centrage vertical */
+  width:100%;
 }
 
 .separator-card-landscape {
@@ -255,9 +264,9 @@ Coef_scale = 1.4
 .full-card-text-container {
     z-index: 100;
     position: absolute;
-    left: 3%;
-    top: 263px;
-    min-width: 287px;
+    left: 22px;
+    top: 265px;
+    width: 265px;
     text-align: center;
     min-height: 170px;
 }

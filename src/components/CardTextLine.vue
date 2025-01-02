@@ -1,12 +1,12 @@
 <template>
-  <template v-if="isEmptyLine"> <!-- Rend une ligne vide avec un espace vertical -->
+  <template v-if="isEmptyLine"> 
     <div class="card-text-line" style="height: 0.4em;"></div>
   </template> 
-  <template v-else-if="hasOnlySeparator"> <!-- Rend un séparateur comme élément unique -->
+  <template v-else-if="hasOnlySeparator"> 
     <div class="card-text-line separator-line" style="height: 0.16em; margin: 0.4em 0px 0.24em; background-color: black;"
     ></div>
   </template>
-  <template v-else> <!-- Rend tous les blocs sous une seule occurrence de card-text-line -->
+  <template v-else> 
     <span class="card-text-line" :style="singleBoldStyle">
       <template v-for="(block, index) in blocks" :key="index">
         <CardTextBlock :block="block" :blockIndex="index" :blocks="blocks"/>

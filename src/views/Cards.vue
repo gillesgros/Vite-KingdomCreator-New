@@ -2,11 +2,11 @@
   <Page :subtitle="$t('sets_page_subtitle')" :selectedType="selectedType">
     <div class="content">
       <BoxesSidebar />
-      <div class="main cardMain">
+      <div class="main">
         <!-- <card-online-editor-component :set="set" v-if="true" /> -->
         <CardOnlinePageComponent :set="set" v-if="true" />
         <CardOnlinePageLandscapeComponent :set="set" v-if="true" />
-        <CardOnlinePageOthercardComponent :set="set" v-if="true" />
+        <CardOnlinePageOthercardComponent :set="set" v-if="false" />
       </div>
     </div>
   </Page>

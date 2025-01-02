@@ -1,7 +1,21 @@
  .fontbold { font-weight: bold; }
  .fontitalics { font-style: italic; }
 
- .card-text-container {
+
+.text-layer {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center
+    //color: blanchedalmond;
+    //background-color: chocolate;
+}
+
+.card-stack-layer {
+    position: absolute
+}
+
+.card-text-container {
     align-items: center;
     display: flex;
     flex-direction: column;
@@ -9,7 +23,8 @@
     line-height: 1;
     min-height: 100%;
     min-width: 100%;
-    position: absolute
+    position: absolute;
+    //border: solid;
 }
 
 .card-text-line {

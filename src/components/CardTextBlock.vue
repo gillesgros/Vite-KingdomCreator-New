@@ -84,7 +84,7 @@ export default defineComponent({
     };
 
     const leftRightMargin = computed(() => {
-    console.log(props.blockIndex, props.block.inner)
+    //console.log(props.blockIndex, props.block.inner)
     if (props.blockIndex === 0 && getnextBlockType(props.blockIndex) === 'coin') return 'no-right-margin';
     // dépend du type du bloc suivant pour savoir s'il faut ajouter une marge à droite
     if (getpreviousBlockType(props.blockIndex) === 'coin' ) return 'no-left-margin no-right-margin';

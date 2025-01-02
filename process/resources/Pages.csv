@@ -59,7 +59,7 @@ page-boxes	Randomizer	Randomizer			Randomizer
 page-boxes	Mat included in box	Mat included in box			Plateaux incluses dans la boite		
 page-boxes	Tokens	Tokens			Pièces		
 page-boxes	Cards	Cards			Cartes		
-page-boxes	Rules	Rules			régles		
+page-boxes	Rules	Rules			Règles		
 page-boxes	Recommended Kingdoms	Recommended Kingdoms			Recommended Kingdoms		
 page-boxes	Box content 	Box content			Box content		
 page-boxes							
@@ -71,7 +71,7 @@ page-index	Randomizer	Randomizer		Randomizer	jeux au hasard
 page-index	alertRandomizeNoSets	No Set selected! \n\nSelect at least 1 set for randomize to work.			Aucun Set sélectionné ! \n\nChoississez au moins 1 set pour obtenir un résultat.		
 page-index	Recommended Kingdoms	Recommended Kingdoms		Recommended Kingdoms	jeux définis		
 page-index	Box content	Box content		Box content	contenu des boites		
-page-index	Rules	Rules		Rules	Régles		
+page-index	Rules	Rules		Rules	Règles		
 page-index	Sets	Sets		Sets	Sets		
 page-index	Require +2 Action	Require +2 Action		Mit +2 Aktionen	Require +2 Action		
 page-index	Require Drawer	Require Drawer		Mit Kartenziehen	Require Drawer		
@@ -96,7 +96,7 @@ page-index	Warning	Warning:			Avertissement :
 page-index	Constraint_violated	kingdom not folowing setting constraints			Royaume ne respectant pas les contraintes de paramétrage		
 page-index	Cards_not_in_sets	Card not present in selected sets			Carte non présente dans les extensions sélectionnées		
 page-index	Cards_excluded	Excluded card according to settings			Carte exclue selon les paramètres de configuration		
-page-index	Card_rule_problem	Card rule problem			Problème de suivi de régles		
+page-index	Card_rule_problem	Card rule problem			Problème de suivi de règles		
 page-index	YW_needs_bane	"""Young Witch"" requires a bane card"			"""Jeune Sorcière"" nécessite une Carte Fléau."		
 page-index	Bane_needs_YW	"The presence of a bane card requires a ""young Witch"""			"La présence d'une carte fléau (bane card) nécessite une ""Jeune Sorcière"""		
 page-index	Bane_Cost	The bane card must have a cost between  {MIN_COST} and {MAX_COST}			La carte fléau (bane card) doit avoir un coût entre {MIN_COST} et {MAX_COST}		

@@ -107,17 +107,10 @@ export default defineComponent({
       const capSize = bbox.height * (cardName.isLandscape ? maxLandscapeFontFactor : maxFontFactor);
       const measuredSize = Math.min( measurementSize * bbox.height / totalHeight,
                 measurementSize * bbox.width / longestWidth);
-      //console.log(props.card.id, 340, measuredSize, capSize)
-
-
-
-      return `font-size: ${Math.min(capSize, measuredSize).toFixed(2)}px`;
+//      console.log(props.card.id, measuredSize,totalHeight, capSize, Math.max(1.0,capSize/measuredSize).toFixed(2))
+      const lineHeight = Math.max(1.0,capSize/measuredSize).toFixed(2);
+      return `font-size: ${Math.min(capSize, measuredSize).toFixed(2)}px; line-height: ${lineHeight};`;
     })
-
-    const lineHeight = computed(() => {
-      const bbox = getCardTextBlockSize(340, cardName);
-      return `line-height: ${bbox.height}px`;
-    });
 
     const measureLine = (line:string, fontFamily:string, measurementSize: number) => {
       const lineIsBold = /^\|.*?\|$/.test(line);

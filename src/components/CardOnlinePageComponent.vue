@@ -72,6 +72,8 @@
         </div>
         </div>
       </div>
+      <div v-if="Displayfirst('v-html')">old</div>
+      <div v-else >New</div>
       <div class="separator-card" style="z-index:0;"></div>
       <div class="card-container" style="z-index:1; position: relative;"> 
         <div class="full-card unselectable" style="z-index:0; cursor:default;

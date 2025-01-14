@@ -23,6 +23,10 @@ interface Block {
   inner: string;
 };
 
+const divSize = 340
+const lineHeightSize = 50
+const lineLenghtSize = 48
+
 export default defineComponent({
   name: 'CardTextContainer',
   components: {
@@ -89,26 +93,43 @@ export default defineComponent({
     const measurementCanvas = document.createElement("canvas");
     const ctx = measurementCanvas.getContext("2d");
 
-// function for font size calculation
+// function for font-size and line-height calculation
     const FontSize = computed(() =>  {
-      let measurementSize = 50
+      const lineHeightMeasurementSize = lineHeightSize
+      const lineLenghtMeasurementSize = lineLenghtSize
       let totalHeight = 1;
       let longestWidth = 1;
 
       for(const line of lines.value) {
-        const metrics = measureLine(line, "Times New Roman", measurementSize);
+        const metrics = measureLine(line, "Times New Roman", lineHeightMeasurementSize);
         longestWidth = Math.max(longestWidth, metrics.width);
         totalHeight += metrics.height;
         //console.log(props.card.id, longestWidth, totalHeight)
       };
       //console.log(props.card.id, longestWidth, totalHeight)
-      const bbox = getCardTextBlockSize(340, cardName); 
+      const bbox = getCardTextBlockSize(divSize, cardName); 
       //console.log(props.card.id, bbox)
+      // font-size considering bbox
       const capSize = bbox.height * (cardName.isLandscape ? maxLandscapeFontFactor : maxFontFactor);
-      const measuredSize = Math.min( measurementSize * bbox.height / totalHeight,
-                measurementSize * bbox.width / longestWidth);
-//      console.log(props.card.id, measuredSize,totalHeight, capSize, Math.max(1.0,capSize/measuredSize).toFixed(2))
-      const lineHeight = Math.max(1.0,capSize/measuredSize).toFixed(2);
+      // font-size considering line 
+      const measuredSize = Math.min(
+                            lineHeightMeasurementSize * bbox.height / totalHeight,
+                            lineLenghtMeasurementSize * bbox.width / longestWidth
+                          );
+      const lineHeightbox = bbox.width * (cardName.isLandscape ? maxLandscapeFontFactor : maxFontFactor);
+      const lineHeight = Math.min(
+            Math.max(1.0,capSize/measuredSize),
+            Math.max(1.0,divSize/totalHeight)
+          ).toFixed(2);
+      
+      if (props.card.id == "counterfeit" || props.card.id == "vagrant") {    
+        console.log(props.card.id, 
+          "font", measuredSize.toFixed(2), capSize.toFixed(2), "===>", Math.min(capSize, measuredSize).toFixed(2))
+        console.log(props.card.id, 
+          "line", lineHeightbox, totalHeight, 340, Math.max(1.0,capSize/measuredSize).toFixed(2), Math.max(1.0,divSize/totalHeight).toFixed(2),
+          "final line", lineHeight)
+      }
+      
       return `font-size: ${Math.min(capSize, measuredSize).toFixed(2)}px; line-height: ${lineHeight};`;
     })
 

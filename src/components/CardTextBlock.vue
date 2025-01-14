@@ -10,16 +10,22 @@
       {{ block.inner }}
     </span>
   </template>
+  <template v-else-if="block.type === 'italics'">
+    <span class="card-text-block" :class="leftRightMargin"
+      style="font-style: italic ; font-family: 'Times New Roman';">
+      {{ block.inner }}
+    </span>
+  </template>
   <template v-else-if="block.type === 'shield' || block.type === 'bigshield'">
-    <span class="card-text-line" :style="BigStyle">
+    <span class="card-text-block" :style="BigStyle">
       <span class="victory-container">
-        <div class="victory-amount">{{ block.inner }}</div>
+        <div class="victory-amount" :style="shieldTextoffset">{{ block.inner }}</div>
         <div class="victory-shield"></div>
       </span>
     </span>
   </template>
   <template v-else-if="block.type === 'coin' || block.type === 'bigcoin'">
-    <span class="card-text-line"  :style="BigStyle">
+    <span class="card-text-block" :class="leftRightMargin" :style="BigStyle">
       <span class="cost-container">
         <div class="coin-cost">{{ block.inner }}</div>
       </span>
@@ -61,14 +67,23 @@ export default defineComponent({
   },
 
   setup(props) {
+
     const BigStyle = computed(() => {
-      if (props.block.type.startsWith('big'))
-      if (props.block.type.includes('coin'))
-        return  { fontSize: '1.3em',
-                  fontWeight: 'bold'};
-      else if (props.block.type.includes('shield'))
-        return  { fontSize: '3em',
-                  fontWeight: 'bold'};
+      if (props.block.type.startsWith('big')) {
+        if (props.block.type.includes('coin'))
+          return  { fontSize: '1.3em',
+                    fontWeight: 'bold'};
+        else if (props.block.type.includes('shield'))
+          return  { fontSize: '3em',
+                    fontWeight: 'bold'};
+      }
+      return null;
+    });
+
+    const shieldTextoffset = computed(() => {
+      if (props.block.inner < '2') {
+        return { marginTop: '-0.1em' };
+      }
       return null;
     });
 
@@ -77,6 +92,7 @@ export default defineComponent({
         return '';
       return props.blocks[index - 1].type;
     };
+
     const getnextBlockType = (index: number) => {
       if (index === props.blocks.length - 1)
         return '';
@@ -84,17 +100,30 @@ export default defineComponent({
     };
 
     const leftRightMargin = computed(() => {
-    //console.log(props.blockIndex, props.block.inner)
-    if (props.blockIndex === 0 && getnextBlockType(props.blockIndex) === 'coin') return 'no-right-margin';
-    // dépend du type du bloc suivant pour savoir s'il faut ajouter une marge à droite
-    if (getpreviousBlockType(props.blockIndex) === 'coin' ) return 'no-left-margin no-right-margin';
-    return '';
-    });
+      let leftMargin =1;
+      let rightMargin =1;
+      if (props.blockIndex === 0 && props.blocks.length ===  1) leftMargin = rightMargin = 1
 
+      if (getnextBlockType(props.blockIndex) === 'coin') rightMargin=0
+      if (getpreviousBlockType(props.blockIndex) === 'coin' ) leftMargin = 0
+      if (getpreviousBlockType(props.blockIndex) === 'italics' || getpreviousBlockType(props.blockIndex) === 'bold' ) leftMargin = 0
+      if (props.block.type === 'coin') leftMargin = rightMargin = 0
+      if (props.block.type === 'italics' ||props.block.type === 'bold') rightMargin = 0
+
+
+      if (props.blockIndex === 0 ) leftMargin = 1
+      if (props.blockIndex === props.blocks.length -1 ) rightMargin = 1
+
+      if (leftMargin== 0 && rightMargin==0) return 'no-left-margin no-right-margin'; 
+      if (leftMargin==0) return 'no-left-margin';
+      if (rightMargin==0) return 'no-right-margin';
+
+    });
 
     return {
       BigStyle,
-      leftRightMargin
+      leftRightMargin,
+      shieldTextoffset
     };
   },
   

@@ -46,6 +46,7 @@ import { APPROACHINGARMY_ID, APPROACHINGARMY_CARDTYPE_REQUESTED } from "../rando
 /* import store  */
 import { useRandomizerStore } from "../pinia/randomizer-store";
 import { useSettingsStore } from "../pinia/settings-store";
+import type { SupplyCard } from "../dominion/supply-card";
 
 /* import Components */
 
@@ -229,6 +230,7 @@ export default defineComponent({
     }
 
     const TRAITRule = () => {
+      console.log("TRAITRule", kingdom.value.traits, kingdom.value.supply.traitsSupply)
       const invalidSpecialCardRules = [];
       if (kingdom.value.traits.length > MAX_ADDONS_OF_TYPE(Addons_TYPE.TRAIT)) 
           invalidSpecialCardRules.push(t("TooMany_Traits"));
@@ -237,9 +239,11 @@ export default defineComponent({
           invalidSpecialCardRules.push(t("EachTrait_has_TraitSupply"))
         else if (kingdom.value.supply.traitsSupply.length > kingdom.value.traits.length)
           invalidSpecialCardRules.push(t("EachTraitSupply_has_Trait"))
-        for (const traitSupplyId of kingdom.value.supply.traitsSupply || [])
-          if (!(traitSupplyId.isOfType(TRAITS_CARDTYPE_POSSIBILITY_1) || traitSupplyId.isOfType(TRAITS_CARDTYPE_POSSIBILITY_2)))
+        for (const traitSupplyId of kingdom.value.supply.traitsSupply) {
+          if (!((traitSupplyId as SupplyCard).isOfType(TRAITS_CARDTYPE_POSSIBILITY_1) || 
+                (traitSupplyId as SupplyCard).isOfType(TRAITS_CARDTYPE_POSSIBILITY_2) ))
             invalidSpecialCardRules.push(t("invalid_trait_type"));
+        }
       }
       return invalidSpecialCardRules;
     }

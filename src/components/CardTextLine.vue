@@ -35,18 +35,18 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const blocks = computed(() => props.getBlocks(props.line));
+    const blocks = computed(() => { console.log(props.line)
+    return props.getBlocks(props.line)});
     const isEmptyLine = computed(() => props.line.trim() === '');
     const hasOnlySeparator = computed(() =>
       blocks.value.length === 1 && blocks.value[0].type === 'separator'
     );
     // Vérifie si une ligne contient un seul bloc de type bold
     const singleBoldStyle = computed(() => {
-      if (blocks.value.length === 1 && blocks.value[0].type === 'bold') {
-        return {
-          fontSize: '1.3em',
-        };
-      }
+      console.log(blocks.value)
+      if (blocks.value.length === 1 && blocks.value[0].type === 'bold') return { fontSize: '1.3em' };
+      if (blocks.value.length === 1 && blocks.value[0].type === 'bigcoin') return { fontSize: '2em' };
+
       return null;
     });
 

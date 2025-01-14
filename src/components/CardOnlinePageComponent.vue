@@ -46,8 +46,9 @@
           <div class="cost-container-full">
             <div class="coin-cost-full"
               v-if="getCardCost(Card).treasure > 0 || (getCardCost(Card).potion + getCardCost(Card).debt == 0)">
-              <div class="coin-cost-full-text" style="top:12px;">{{ getCardCost(Card).treasure }}<sup
+              <div v-if="DoNeedSub(Card)" class="coin-cost-full-text" style="top:12px;">{{ getCardCost(Card).treasure }}<sup
                   v-if="DoNeedSub(Card)" class="supetoile" /></div>
+              <div v-else class="coin-cost-full-text" style="top:12px;">{{ getCardCost(Card).treasure }}</div>
 
             </div>
             <div class="potion-cost-full" v-if="getCardCost(Card).potion > 0">
@@ -119,8 +120,9 @@
           <div class="cost-container-full">
             <div class="coin-cost-full"
               v-if="getCardCost(Card).treasure > 0 || (getCardCost(Card).potion + getCardCost(Card).debt == 0)">
-              <div class="coin-cost-full-text" style="top:12px;">{{ getCardCost(Card).treasure }}<sup
+              <div v-if="DoNeedSub(Card)" class="coin-cost-full-text" style="top:12px; position:unset;  margin-left: 10px;">{{ getCardCost(Card).treasure }}<sup
                   v-if="DoNeedSub(Card)" class="supetoile" /></div>
+              <div v-else class="coin-cost-full-text" style="top:12px;">{{ getCardCost(Card).treasure }}</div>
 
             </div>
             <div class="potion-cost-full" v-if="getCardCost(Card).potion > 0">

@@ -1,6 +1,6 @@
 <template>
   <button  class="copy-button copy-button-svg-color" >
-    <input :aria-label="$t('copyButton')" ref="textInput" class="copy-button__input" type="text" readonly />
+    <input :name="kingdom.name":aria-label="$t('copyButton')" ref="textInput" class="copy-button__input" type="text" readonly />
     <div class="copy-button__icon">
     <router-link :to="targetUrl">
       <svg fill="#000000" width="24px" height="24px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg">

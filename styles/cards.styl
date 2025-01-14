@@ -265,7 +265,7 @@ Coef_scale = 1
     z-index: 100;
     position: absolute;
     left: 22px;
-    top: 265px;
+    top: 275px;
     width: 265px;
     text-align: center;
     min-height: 170px;
@@ -406,10 +406,19 @@ Coef_scale = 1
     font-size: 6em;
     font-weight: 700;
 }
+
+.supetoile{
+  //line-height: 0;
+  font-size: 0.8em; /* Réduire la taille de l'étoile */
+  margin-left: -5px; 
+}
+
 .supetoile:after {
     content: "\002605";
+    vertical-align: super;
     display: inline-block;
-    font-size: 45%
+    font-size: 0.4em;
+    //margin-top: 10px;
 }
 
 .potion-cost-full{

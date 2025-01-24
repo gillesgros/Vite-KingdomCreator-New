@@ -1,7 +1,7 @@
 <template>
-  <div class="full-card-text-container card-stack-layer text-layer">
+  <div :class="layoutClass">
     <div class="card-text-container" :style="FontSize" style="font-family: 'Times New Roman';">
-      <CardTextLine
+      <CardTextLine :cardId="card.id"
         v-for="(line, index) in lines"
         :key="index"
         :line="line"
@@ -14,8 +14,8 @@
 <script lang="ts">
 import { defineComponent, computed } from 'vue';
 import CardTextLine from './CardTextLine.vue';
-import type { DigitalCard } from "../dominion/digital_cards/digital-cards-type";
-import { FrenchCardTexts } from "../dominion/digital_cards/french/Dominion.games.ts";
+import type { DigitalCard } from "../dominion/digital_cards/digital-cards-type.ts";
+import { FrenchCardTexts } from "../dominion/digital_cards/Dominion.games.ts";
 import { DominionSets } from '../dominion/dominion-sets.ts';
 
 interface Block {
@@ -33,25 +33,44 @@ export default defineComponent({
     CardTextLine,
   },
   props: {
+    direction: {
+      type: String,
+      required:true
+    },
     card: {
       type: Object as () => DigitalCard,
       required: true,
     },
   },
   setup(props) {
+      const layoutClass = computed(()=> {
+        if (props.direction == "portrait")
+         return `full-card-text-container card-stack-layer text-layer`;
+        if (props.direction == "landscape")
+          return `landscape-text-container`
+        return `landscape-text-container`
+      })
+
     const cardText = computed(() => FrenchCardTexts[props.card.id.toUpperCase()] || '');
-    const lines = computed(() => cardText.value.split('//'));
+    const lines = computed(() => { return cardText.value.split('//') });
 
     const regextests = [
       { regex: /^(---)/, type: 'separator' },
       { regex: /^\|\+\[(.*?)\]\|/, type: 'bigcoin_singleline' }, // Cas particulier
-      { regex: /^([^\[{\|%]+)/, type: 'normal' },
+      { regex: /^\|\[!(.*?)\]\|/, type: 'bigcoin_singleline_noPlus' }, // Cas particulier
+      { regex: /^\|\+{(.*?)}\|/, type: 'bigshield_singleline' }, // Cas particulier
+      { regex: /^\|\+(.*?) <>\|/, type: 'bigsun_singleline' }, // Cas particulier
+
+      { regex: /^([^><\[{\|%]+)/, type: 'normal' },
+      { regex: /^\|%(.*?)%\|/, type: 'bold_italics' },
+      { regex: /^%\|(.*?)\|%/, type: 'bold_italics' },
       { regex: /^\|(.*?)\|/, type: 'bold' },
       { regex: /^%(.*?)%/, type: 'italics' },
       { regex: /^\[!(.*?)\]/, type: 'bigcoin' },
       { regex: /^\[(.*?)\]/, type: 'coin' },
       { regex: /^{!(.*?)}/, type: 'bigshield' },
       { regex: /^{(.*?)}/, type: 'shield' },
+      { regex: /^<>/, type: "sun" },
     ];
 
     const getBlocks = (line: string) => {
@@ -74,7 +93,6 @@ export default defineComponent({
     };
 
 // To calculate the font size of the card text
-
 //constant
     const cardName = { isLandscape: DominionSets.isLandscape(props.card.id), hasHeirloom: false };
     const CardSizes = { FULL: { portraitRatio : 1.5777777777777777, landscapeRatio : 0.6338028169014085 } };
@@ -110,27 +128,35 @@ export default defineComponent({
       const bbox = getCardTextBlockSize(divSize, cardName); 
       //console.log(props.card.id, bbox)
       // font-size considering bbox
-      const capSize = bbox.height * (cardName.isLandscape ? maxLandscapeFontFactor : maxFontFactor);
+      let capSize = bbox.height * (cardName.isLandscape ? maxLandscapeFontFactor : maxFontFactor);
       // font-size considering line 
-      const measuredSize = Math.min(
+      let measuredSize = Math.min(
                             lineHeightMeasurementSize * bbox.height / totalHeight,
                             lineLenghtMeasurementSize * bbox.width / longestWidth
                           );
       const lineHeightbox = bbox.width * (cardName.isLandscape ? maxLandscapeFontFactor : maxFontFactor);
       const lineHeight = Math.min(
             Math.max(1.0,capSize/measuredSize),
-            Math.max(1.0,divSize/totalHeight)
+            Math.max(1.0,400/totalHeight)
           ).toFixed(2);
       
-      if (props.card.id == "counterfeit" || props.card.id == "vagrant") {    
+      if (props.direction == "landscape") measuredSize = capSize
+      if (props.card.id == "alms" ||props.card.id == "ferry" ) {    
         console.log(props.card.id, 
           "font", measuredSize.toFixed(2), capSize.toFixed(2), "===>", Math.min(capSize, measuredSize).toFixed(2))
         console.log(props.card.id, 
           "line", lineHeightbox, totalHeight, 340, Math.max(1.0,capSize/measuredSize).toFixed(2), Math.max(1.0,divSize/totalHeight).toFixed(2),
           "final line", lineHeight)
       }
-      
-      return `font-size: ${Math.min(capSize, measuredSize).toFixed(2)}px; line-height: ${lineHeight};`;
+      if (props.direction == "landscape") {
+        capSize=measuredSize
+        return `font-size: ${Math.min(capSize, measuredSize,23).toFixed(2)}px; line-height: ${lineHeight};`;
+
+      }
+      if (props.direction == "portrait") {
+        return `font-size: ${Math.min(capSize, measuredSize,23).toFixed(2)}px; line-height: ${lineHeight};`;
+      }
+      return "";
     })
 
     const measureLine = (line:string, fontFamily:string, measurementSize: number) => {
@@ -139,7 +165,7 @@ export default defineComponent({
       const lineIsSeparator = line === "---";
       const lineIsBlank = line === "";
       const lineIsBig = /^[\[{]!.*?[\]}]$/.test(line);
-      const lineText = lineIsBold || lineIsHeirloom ? line.slice(2, -2) : line;
+      const lineText = lineIsBold || lineIsHeirloom ? line.slice(1, -1) : line;
 
       let adjustedSize = measurementSize;
       if (lineIsBold) adjustedSize *= boldLineFactor;
@@ -172,6 +198,7 @@ export default defineComponent({
           ctx.font = `italic ${measurementSize}px ${fontFamily}`;
           break
         case "bold":
+        case "bold_italics":
           ctx.font = `bold ${measurementSize}px ${fontFamily}`;
           break
         case "coin":
@@ -204,6 +231,7 @@ export default defineComponent({
     }
 
     return {
+      layoutClass,
       lines,
       getBlocks,
       FontSize

@@ -46,7 +46,9 @@ import { APPROACHINGARMY_ID, APPROACHINGARMY_CARDTYPE_REQUESTED } from "../rando
 /* import store  */
 import { useRandomizerStore } from "../pinia/randomizer-store";
 import { useSettingsStore } from "../pinia/settings-store";
-import type { SupplyCard } from "../dominion/supply-card";
+import { SupplyCard } from "../dominion/supply-card";
+import type { Kingdom } from "../randomizer/kingdom";
+import type { Supply } from "../randomizer/supply";
 
 /* import Components */
 
@@ -55,26 +57,26 @@ export default defineComponent({
   setup() {
     const { t } = useI18n();
     const randomizerStore = useRandomizerStore();
-    const kingdom = computed(()=> randomizerStore.kingdom);
+    const kingdom = computed(()=> {return randomizerStore.kingdom as Kingdom});
     const settings = computed(()=> randomizerStore.settings);
     const settingsStore= useSettingsStore();
   
     const allKingdomCards = computed(()=>  [
-        ...kingdom.value.supply.supplyCards,
-        ...(kingdom.value.supply.baneCard ? [kingdom.value.supply.baneCard] : []),
-        ...(kingdom.value.supply.ferrymanCard ? [kingdom.value.supply.ferrymanCard] : []),
-        ...(kingdom.value.supply.obeliskCard ? [kingdom.value.supply.obeliskCard] : []),
-        ...(kingdom.value.supply.mouseWay ? [kingdom.value.supply.mouseWay] : []),
-        ...(kingdom.value.supply.riverboatCard ? [kingdom.value.supply.riverboatCard] : []),
-        ...(kingdom.value.supply.approachingArmyCard ? [kingdom.value.supply.approachingArmyCard] : []),
-        ...kingdom.value.supply.traitsSupply,
-        ...kingdom.value.events,
-        ...kingdom.value.landmarks,
-        ...kingdom.value.projects,
-        ...kingdom.value.ways,
-        ...(kingdom.value.boons ? kingdom.value.boons : []),
-        ...(kingdom.value.ally ? [kingdom.value.ally] : []),
-        ...(kingdom.value.prophecy ? [kingdom.value.prophecy]  : []),
+        ...kingdom.value.supply.supplyCards as Card[],
+        ...(kingdom.value.supply.baneCard ? [kingdom.value.supply.baneCard] : []) as Card[],
+        ...(kingdom.value.supply.ferrymanCard ? [kingdom.value.supply.ferrymanCard] : []) as Card[],
+        ...(kingdom.value.supply.obeliskCard ? [kingdom.value.supply.obeliskCard] : []) as Card[],
+        ...(kingdom.value.supply.mouseWay ? [kingdom.value.supply.mouseWay] : []) as Card[],
+        ...(kingdom.value.supply.riverboatCard ? [kingdom.value.supply.riverboatCard] : []) as Card[],
+        ...(kingdom.value.supply.approachingArmyCard ? [kingdom.value.supply.approachingArmyCard] : []) as Card[],
+        ...kingdom.value.supply.traitsSupply as Card[],
+        ...kingdom.value.events as Card[],
+        ...kingdom.value.landmarks as Card[],
+        ...kingdom.value.projects as Card[],
+        ...kingdom.value.ways as Card[],
+        ...(kingdom.value.boons ? kingdom.value.boons : []) as Card[],
+        ...(kingdom.value.ally ? [kingdom.value.ally] : []) as Card[],
+        ...(kingdom.value.prophecy ? [kingdom.value.prophecy]  : []) as Card[],
         ...kingdom.value.traits as Card[]
       ]);
    
@@ -187,8 +189,9 @@ export default defineComponent({
         if (!kingdom.value.supply.obeliskCard) {
           invalidSpecialCardRules.push(t("OBE_needs_obeliskcard"));
         } else {
-          if (!kingdom.value.supply.obeliskCard.isOfType(OBELISK_CARDTYPE_REQUESTED))
-          invalidSpecialCardRules.push(t("obelisk_Cardtype"));
+          const obeliskCard = SupplyCard.from(kingdom.value.supply.obeliskCard);
+          if (!obeliskCard.isOfType(OBELISK_CARDTYPE_REQUESTED))
+            invalidSpecialCardRules.push(t("obelisk_Cardtype"));
         }
       } else
         if (kingdom.value.supply.obeliskCard)
@@ -202,11 +205,12 @@ export default defineComponent({
         if (!kingdom.value.supply.riverboatCard) {
           invalidSpecialCardRules.push(t("RB_needs_riverboatcard"));
         } else {
-          if (!kingdom.value.supply.riverboatCard.isOfType(RIVERBOAT_CARDTYPE_REQUESTED) || 
-                kingdom.value.supply.riverboatCard.isOfType(RIVERBOAT_CARDTYPE_NOTREQUESTED))
+          const riverboatCard = SupplyCard.from(kingdom.value.supply.riverboatCard);
+          if ( !(riverboatCard as SupplyCard).isOfType(RIVERBOAT_CARDTYPE_REQUESTED) || 
+                (riverboatCard as SupplyCard).isOfType(RIVERBOAT_CARDTYPE_NOTREQUESTED) )
             invalidSpecialCardRules.push(t("riverboat_Cardtype"));
           else if (kingdom.value.supply.riverboatCard.cost.treasure != RIVERBOAT_COST)
-            invalidSpecialCardRules.push(t("Riverboat_Cost", {COST: RIVERBOAT_COST}));
+           invalidSpecialCardRules.push(t("Riverboat_Cost", {COST: RIVERBOAT_COST}));
         }
       } else {
         if (kingdom.value.supply.riverboatCard)
@@ -230,7 +234,6 @@ export default defineComponent({
     }
 
     const TRAITRule = () => {
-      console.log("TRAITRule", kingdom.value.traits, kingdom.value.supply.traitsSupply)
       const invalidSpecialCardRules = [];
       if (kingdom.value.traits.length > MAX_ADDONS_OF_TYPE(Addons_TYPE.TRAIT)) 
           invalidSpecialCardRules.push(t("TooMany_Traits"));
@@ -277,8 +280,9 @@ export default defineComponent({
           if (!kingdom.value.supply.approachingArmyCard) {
             invalidSpecialCardRules.push(t("APA_needs_aApproachingarmycard"));
           } else {
-            if (!kingdom.value.supply.approachingArmyCard.isOfType(APPROACHINGARMY_CARDTYPE_REQUESTED))
-            invalidSpecialCardRules.push(t("approachingarmycard_Cardtype"));
+            const approachingArmyCard = SupplyCard.from(kingdom.value.supply.approachingArmyCard);
+            if (!approachingArmyCard.isOfType(APPROACHINGARMY_CARDTYPE_REQUESTED))
+              invalidSpecialCardRules.push(t("approachingarmycard_Cardtype"));
           }
         } else
           if (kingdom.value.supply.approachingArmyCard)

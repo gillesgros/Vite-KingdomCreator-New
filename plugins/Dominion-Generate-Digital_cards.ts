@@ -7,7 +7,7 @@ const ArtworkFileDir = 'design'
 const ArtworkFileName = 'artwork.xlsx'
 const DigitalCardFileName = 'digital-cards - '
 const DigitalCardLandscapeFileName = 'digital-cards-landscape - '
-const DigitalCardDir = 'src/dominion/digital_cards'
+const DigitalCardDir = 'src/dominion/digital_cards/Manual/French'
 
 enum Orientation {
   PORTRAIT = 'portrait',
@@ -32,7 +32,7 @@ function Generate_Digitalcard_for_set (setid:string) {
   });
   // Convertir les données en une chaîne de caractères, chaque ligne étant séparée par des retours à la ligne
   //const textData = mydata.map(row => Object.values(row as string ).join('\t')).join('\n');
-  const textData = `import type { DigitalCard } from "./digital-cards-type";
+  const textData = `import type { DigitalCard } from "../../digital-cards-type";
 
 export const Cards_list_${setid}: DigitalCard[] = [
 ${allData.map(row => Object.values(row as string).join('\t')).join('\n')}
@@ -50,7 +50,7 @@ ${allData.map(row => Object.values(row as string).join('\t')).join('\n')}
 
     // Convertir les données en une chaîne de caractères, chaque ligne étant séparée par des retours à la ligne
     //const textData = mydata.map(row => Object.values(row as string ).join('\t')).join('\n');
-    const textDataLandscape = `import type { DigitalCard } from "./digital-cards-type";
+    const textDataLandscape = `import type { DigitalCard } from "../../digital-cards-type";
 
 export const Cards_list_${setid}: DigitalCard[] = [
 ${allData.map(row => Object.values(row as string).join('\t')).join('\n')}
@@ -87,7 +87,7 @@ function getRange(setid:string, type: Orientation) {
                 'Allies': [ 'A1949:C2114' ],
                 'Plunder': [ 'A2183:C2348' ],
                 'Guildscornucopia': [ 'A2438:C2480' ],
-                'RisingSun': [ 'A2480:C2555', 'A2555:C2630' ],		
+                'Risingsun': [ 'A2480:C2555' ],		
             // ... ajoutez les autres paires ici
               'setid10': ['range10']};
     break;
@@ -101,6 +101,7 @@ function getRange(setid:string, type: Orientation) {
         'Menagerie': [ 'A1748:C1868' ],
         'Allies': [ 'A2114:C2183' ],
         'Plunder': [ 'A2348:C2438' ],
+        'Risingsun': [ 'A2555:C2630' ],		
             // ... ajoutez les autres paires ici
               'setid10': ['range10']};
     break;
@@ -135,6 +136,7 @@ export function Generate_Digitalcard () {
   Generate_Digitalcard_for_set('Allies')
   Generate_Digitalcard_for_set('Plunder')
   Generate_Digitalcard_for_set('Guildscornucopia')
+  Generate_Digitalcard_for_set('Risingsun')
 
 }
 

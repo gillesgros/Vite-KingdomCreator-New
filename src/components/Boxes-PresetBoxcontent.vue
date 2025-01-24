@@ -138,9 +138,7 @@ export default defineComponent({
     const { t } = useI18n();
 
     const Shape = shapeFromGridLayout
-    const sets = computed(() => {
-      return [(DominionSets.sets[setsStore.selectedBoxesSetId] as DominionSet)];
-    });
+    const sets = computed(() => { return [(DominionSets.sets[setsStore.selectedBoxesSetId] as DominionSet)]; });
 
     const numberOfColumnsForSupplyCards = computed(() => {
       return windowStore.isEnlarged ? 2 : windowStore.width <= FOUR_COLUMN_SUPPLY_CARD_WIDTH ? 4 : 5;
@@ -159,7 +157,7 @@ export default defineComponent({
       if (origine == SortOption.SET) 
         return SupplyCardSorter.sort(cardIds as SupplyCard[], setsStore.sortBoxesSet, t);
       else 
-      console.log("cardIds", cardIds, "origine", origine, SupplyCardSorter.sort(cardIds as SupplyCard[], origine, t))
+      //console.log("cardIds", cardIds, "origine", origine, SupplyCardSorter.sort(cardIds as SupplyCard[], origine, t))
         return SupplyCardSorter.sort(cardIds as SupplyCard[], origine, t);
     };
 

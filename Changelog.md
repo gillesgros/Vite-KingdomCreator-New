@@ -12,27 +12,29 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v22
 
 ### Changelog
-**2025/01/12 - 6.4.5**
->**Fix** : Regression - blakevanlan/KingdomCreator # 169 - Bug: Copy does not work anymore like it used to
+**2025/01/31 - 6.4.6**  
+>**Work in progress
 
-**2025/01/02 - 6.4.4**
+**2025/01/12 - 6.4.5**  
+>**Fix** - Regression - blakevanlan/KingdomCreator # 169 - Bug: Copy does not work anymore like it used to
+
+**2025/01/02 - 6.4.4**  
 Dev deploy on github pages  
-Dev deploy on 71yeti.fr  
+Dev deploy on 71yeti.fr
 >**Fix** - improper order for accentuated characters (French)
 >**Fix** - add rising sun no French images  
 >**Feat** - add translation for no card image translated  
->**Fix** - blakevanlan/KingdomCreator #181 - Bug: Riverboat pile selects cards that don't cost $5 
->**Feat** - rework of Card generation
->**Feat** - rework of Card generation  
+>**Fix** - blakevanlan/KingdomCreator #181 - Bug: Riverboat pile selects cards that don't cost $5  
+>**Feat** - rework of Card generation 
 
-**2024/12/28 - 6.4.3**
+**2024/12/28 - 6.4.3**  
 Dev deploy on github pages  
 Dev deploy on 71yeti.fr  
 >**Fix** - Correcting wrong image names for other  
 >**Fix** - Usage of Dominion Randomizer - error filter fix  
 >**Fix** - Usage of Dominion Randomizer - Download all data  
 
-**2024/12/21 - 6.4.2**
+**2024/12/21 - 6.4.2**  
 Dev deploy on github pages  
 Dev deploy on 71yeti.fr 
 >**Feat** - RisingSun: handle riverboat Action card Request  
@@ -41,47 +43,47 @@ Dev deploy on 71yeti.fr
 >**Feat** - Recommended kingdoms: Add a link to start building a randomized deck based on it  
 >**Feat** - Usage of Dominion Randomizer made accessible : https://suivi.71yeti.fr/  
 
-**2024/12/01 - 6.4.1**
-Dev deploy on github pages
+**2024/12/01 - 6.4.1**  
+Dev deploy on github pages  
 Dev deploy on 71yeti.fr
 >**Feat** - RisingSun: handle riverboat Action card Request
 >**Feat** - Add kingdom for Rising Sun
 
-**2024/10/21 - 6.4.0**
-Dev deploy on github pages
+**2024/10/21 - 6.4.0**  
+Dev deploy on github pages  
 Dev deploy on 71yeti.fr
->**Feat** - include RisingSun and prophecies
->**Feat** - add option to exclude cards from randomization
-         To do : handle minCards and maxCards in supplies selection
->**Feat** - allow not valid kingdoms and add information about coherence issues
->**Feat** - Clarify message when not able to randomize
->**Fix** - order for boxes display of special cards 
-         Travellers, Split Cards, Castle
->**Fix** - rename othercard jpg with (set)_other_(name)
-         and cleanup for old and used cards jpg
->**Fix** - blakevanlan/KingdomCreator # 167 - The content displayed differs from the query parameters allow not valid kingdoms
+>**Feat** - include RisingSun and prophecies  
+>**Feat** - add option to exclude cards from randomization  
+           To do : handle minCards and maxCards in supplies selection  
+>**Feat** - allow not valid kingdoms and add information about coherence issues  
+>**Feat** - Clarify message when not able to randomize  
+>**Fix** - order for boxes display of special cards   
+           Travellers, Split Cards, Castle  
+>**Fix** - rename othercard jpg with (set)_other_(name)  
+           and cleanup for old and used cards jpg  
+>**Fix** - blakevanlan/KingdomCreator # 167 - The content displayed   differs from the query parameters allow not valid kingdoms  
 
-**2024/09/24 - 6.3.1**
->**Fix** - blakevanlan/KingdomCreator # 169 - Bug: Copy does not work anymore like it used to
+**2024/09/24 - 6.3.1**  
+>**Fix** - blakevanlan/KingdomCreator # 169 - Bug: Copy does not work anymore like it used to  
 
-**2024/09/23 - 6.3.0**
-Dev deploy on github pages
->**Fix** - blakevanlan/KingdomCreator # 166 - Additional Cards such as Colonies/Platinum or Shelters are not displaying correctly
->**Fix** - blakevanlan/KingdomCreator # 168 - Can't open the Recommended Kingdoms and Rules page directly
->**Feat** - blakevanlan/KingdomCreator # 164 - Allow Customization for the Events, Ways, and Landmarks section
->**Feat** - blakevanlan/KingdomCreator PR # 157 - Enable running from a subdirectory
->**Fix** - avoid popup for site translation
->**Feat** - add alert if not able to Randomize
+**2024/09/23 - 6.3.0**  
+Dev deploy on github pages  
+>**Fix** - blakevanlan/KingdomCreator # 166 - Additional Cards such as Colonies/Platinum or Shelters are not displaying correctly  
+>**Fix** - blakevanlan/KingdomCreator # 168 - Can't open the Recommended Kingdoms and Rules page directly  
+>**Feat** - blakevanlan/KingdomCreator # 164 - Allow Customization for the Events, Ways, and Landmarks section  
+>**Feat** - blakevanlan/KingdomCreator PR # 157 - Enable running from a subdirectory  
+>**Fix** - avoid popup for site translation  
+>**Feat** - add alert if not able to Randomize  
 
-**2024/07/10 - 6.2.0**
-New release
->**Fix** - enlarge display for Addons, Boons, Allies
+**2024/07/10 - 6.2.0**  
+New release  
+>**Fix** - enlarge display for Addons, Boons, Allies  
 
-**2024/07/08 - 6.1.0**
-New release
->**Fix** - fix boon display
+**2024/07/08 - 6.1.0**  
+New release  
+>**Fix** - fix boon display  
 
-**2024/07/04 - 6.1.0**
-New release
->**Feat** - add German rules and box
->**Feat** - add menu for new set tools
+**2024/07/04 - 6.1.0**  
+New release  
+>**Feat** - add German rules and box  
+>**Feat** - add menu for new set tools  

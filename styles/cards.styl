@@ -105,9 +105,13 @@ Coef_scale = 1
 }
 
 .v-for-landscape{
+    display:flex;
+    flex-direction: row
+    //flex-wrap: wrap;
     margin:1%;
-    margin-right: 250px;
-    width: 490px; 
+    align-content: space-evenly;
+    //margin-right: 250px;
+    //width: 490px; 
     height: (Coef_scale*294)px; 
     transform: scale(Coef_scale);
     transform-origin: top;
@@ -147,7 +151,9 @@ Coef_scale = 1
 
 .card-container-landscape {
   display: flex; /* Allow side-by-side positioning */
-  flex-direction: row-reverse;
+  //flex-direction: row-reverse;
+  flex:1 1 auto;
+  
 }
 
 .unselectable {
@@ -410,7 +416,7 @@ Coef_scale = 1
 .supetoile{
   //line-height: 0;
   font-size: 0.8em; /* Réduire la taille de l'étoile */
-  margin-left: -5px; 
+  margin-left: -30px; 
 }
 
 .supetoile:after {
@@ -419,6 +425,18 @@ Coef_scale = 1
     display: inline-block;
     font-size: 0.4em;
     //margin-top: 10px;
+}
+
+.supplus{
+  margin-left: -30px; 
+}
+
+.supplus:after {
+    content: "+";
+    vertical-align: super;
+    display: inline-block;
+    font-size: 0.6em;
+    margin-top: -5px;
 }
 
 .potion-cost-full{
@@ -513,7 +531,7 @@ Coef_scale = 1
     background-color: rgba(0,0,0,0);
 }
 .landscape {
-    position: absolute;
+    //position: absolute;
     height: 294px;
     width: 471px;
     overflow: hidden;

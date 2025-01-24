@@ -37,7 +37,7 @@
           <!---->
         </div>
         <!--Card Text -->
-        <div class="landscape-text-container" v-html="Card.text_html"></div>
+        <div class="landscape-text-container" v-html="Card.text_html"></div> 
 
         <div class="landscape-bottom-right-container-expansion" :style="ExpansionIconPosition(Card)">
           <div class="expansion-icon-bottom-full"
@@ -54,10 +54,64 @@
         </div>
         <!---->
       </div>
-      <div class="separator-card-landscape" style="z-index:0;">
+      </div>
+      <div class="separator-card-landscape" style="z-index:0;"></div>
+      <div class="card-container-landscape">
+      <div class="landscape unselectable" style="left:0px; top:0px; z-index:0;transform: scale(1); cursor:">
+        <div class="landscape-template"
+          :style='"background-image: url(" + getHost() + "/img/Templates-card-type/" + getCardTypeById(Card).png + ".png);"'>
+        </div>
+        <!-- type of card -->
+        <div class="landscape-art" :style='"background-size: 452px 177px; background-image: url(" + getCardArtwork(Card.artwork) + ")"'>
+          <div class="action-layer"></div>
+        </div>
+        <!--Card name -->
+        <div class="landscape-name-container" :style='"top:" + getCardNameFontSize(Card).top + "px;"'>
+          <div class="landscape-name" :style='"font-size:" + getCardNameFontSize(Card).fontsize + "em;"'>
+            {{ Card.frenchName }}
+          </div>
+        </div>
+
+        <div class="landscape-type-rotate " style="top:35px; ">
+          <div class="landscape-name" :style="getCardTypeById(Card).style">
+            {{ getCardTypeById(Card).label }}
+          </div>
+        </div>
+        <!---->
+        <div class="landscape-cost-container-full" v-if="getCardNeedCost(Card)">
+          <!---->
+          <div class="landscape-coin-cost-full"
+            v-if="((getCardCost(Card).treasure > 0 && getCardCost(Card).debt > 0) || getCardCost(Card).debt == 0 && getCardCost(Card).treasure >= 0)">
+            <div class="coin-cost-full-text" style="top:12px;">{{ getCardCost(Card).treasure }}</div>
+          </div>
+          <div class="landscape-debt-cost-full" v-if="getCardCost(Card).debt > 0">
+            <div class="landscape-debt-cost-full-text" style="top:12px;">{{ getCardCost(Card).debt }}</div>
+          </div>
+          <!---->
+          <!---->
+        </div>
+        <!--Card Text -->
+        <!-- <div class="landscape-text-container" v-html="Card.text_html"></div>  -->
+        <CardTextContainer :card='Card' direction="landscape"/>
+
+        <div class="landscape-bottom-right-container-expansion" :style="ExpansionIconPosition(Card)">
+          <div class="expansion-icon-bottom-full"
+            :style='" background-image: url(" + getHost() + "/img/Templates-set/" + getCardSetById(Card) + "-small.png);"'>
+          </div>
+        </div>
+
+        <div class="full-card-border">
+          <div class="card-footer landscape-card-footer illustrator" style="color:Black;"
+            :style="ExpansionillustratorOffset(Card)">{{ getCardIllustrator(Card).illustrator }}</div>
+          <div class="card-footer landscape-card-footer copyright" :style="ExpansionillustratorOffset(Card)">{{
+            getCardSetYear(Card) }}</div>
+
+        </div>
+        <!---->
+      </div>
+      </div>
+      <div class="separator-card-landscape" style="z-index:0;"></div>
            <img class="landscape " style="z-index:0; " :src="cardImageUrl(Card)" :key="cardImageUrl(Card)" @error="incaseoferror" />
-      </div>
-      </div>
     </div>
   </div>
 </template>
@@ -82,7 +136,7 @@ import { getCardImageUrl } from "../utils/resources";
 import { incaseofImgerror } from "../utils/resources";
 
 import type { DigitalCard } from "../dominion/digital_cards/digital-cards-type"
-import { Cards_list } from "../dominion/digital_cards/digital-cards-landscape"
+import { Cards_list } from "../dominion/digital_cards/Manual/digital-cards-landscape"
 import type { IllustratorCard } from "../dominion/digital_cards/digital-cards-type"
 import { Cards_list_Illustrator, Year_set } from "../dominion/digital_cards/digital-cards-Illustrator"
 

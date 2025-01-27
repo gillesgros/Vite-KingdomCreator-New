@@ -161,7 +161,7 @@
 
 <script lang="ts">
 /* import Vue, typescript */
-import { defineComponent, computed, nextTick } from 'vue';
+import { defineComponent, computed } from 'vue';
 import html2canvas from 'html2canvas';
 import * as htmlToImage from 'html-to-image';
 
@@ -331,19 +331,21 @@ export default defineComponent({
         ).concat(
           Cards_list.filter(card =>
             props.set.allies.some(function (item) { return item.shortId == card.id; }))
+        ).concat(
+          Cards_list.filter(card =>
+            props.set.traits.some(function (item) { return item.shortId == card.id; }))
+        ).concat(
+          Cards_list.filter(card =>
+            props.set.prophecies.some(function (item) { return item.shortId == card.id; }))
         )
 
-/*        const typefilteredCards = filteredCards.filter(card => {
+        const typefilteredCards = filteredCards.filter(card => {
         const supplycard = DominionSets.getCardById(card.id) as SupplyCard
-        if (supplycard.isOfType(CardType.TREASURE)) {
-          console.log(supplycard.id)
-        }
-        return supplycard.isOfType(CardType.TREASURE);
+
+        return supplycard.shortId == 'tanuki';
         })   
         console.log(filteredCards, typefilteredCards)
-        */
-        console.log(filteredCards)
-      const uniqueCards = new Set(filteredCards);
+      const uniqueCards = new Set(typefilteredCards);
       return Array.from(uniqueCards)  
     })
 

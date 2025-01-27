@@ -1,5 +1,7 @@
 type FrenchCardTextsType = {[key: string]: string;};
 export const FrenchCardTexts: FrenchCardTextsType = {}
+
+/*Cards from Renaissance*/
 FrenchCardTexts["BORDERGUARD"]= "|+1 Action|////D\xE9voilez les 2 premi\xE8res cartes//de votre pioche. Prenez-en une//en main et d\xE9faussez l'autre. Si//les deux \xE9taient des cartes Action,//prenez la Lanterne ou la Corne.";
 FrenchCardTexts["DUCAT"]= "|+1 Coffres|//|+1 Achat|//---//Quand vous recevez cette carte,//vous pouvez \xE9carter un Cuivre//de votre main.";
 FrenchCardTexts["LACKEYS"]= "|+2 Cartes|//---//Quand vous recevez cette carte,//|+2 Villageois|.";
@@ -25,6 +27,8 @@ FrenchCardTexts["SPICES"]= "[!2]////|+1 Achat|//---//Quand vous recevez cette ca
 FrenchCardTexts["SWASHBUCKLER"]= "|+3 Cartes|////Si votre d\xE9fausse n'est pas vide ://|+1 Coffres|, puis si vous avez au//moins 4 jetons sur vos Coffres,//prenez le Coffre au tr\xE9sor.";
 FrenchCardTexts["TREASURER"]= "|+[3]|////Choisisez une option : \xE9cartez//une carte Tr\xE9sor de votre main;//ou recevez en main une carte//Tr\xE9sor du Rebut; ou prenez la Cl\xE9.";
 FrenchCardTexts["VILLAIN"]= "|+2 Coffres|////Tous vos adversaires ayant au//moins 5 cartes en main d\xE9faussent//une carte co\xFBtant [2] ou plus (ou//\xE0 d\xE9faut, d\xE9voilent leur main).";
+
+/*Projects*/
 FrenchCardTexts["CATHEDRAL"]= "Au d\xE9but de votre tour,//\xE9cartez une carte de votre main.";
 FrenchCardTexts["CITYGATE"]= "Au d\xE9but de votre tour, |+1 Carte|, puis replacez//une carte de votre main sur votre pioche.";
 FrenchCardTexts["PAGEANT"]= "\xC0 la fin de votre phase Achat, vous pouvez//payer [1] pour |+1 Coffres|.";
@@ -45,6 +49,8 @@ FrenchCardTexts["CROPROTATION"]= "Au d\xE9but de votre tour, vous pouvez d\xE9fa
 FrenchCardTexts["INNOVATION"]= "Une fois \xE0 chacun de vos tours, quand vous//recevez une carte Action, vous pouvez la jouer.";
 FrenchCardTexts["CANAL"]= "Pendant vos tours, les cartes co\xFBtent [1] de moins.";
 FrenchCardTexts["CITADEL"]= "\xC0 chacun de vos tours, la premi\xE8re fois que vous//jouez une carte Action, rejouez-la ensuite.";
+
+/*Atrifacts*/
 FrenchCardTexts["FLAG"]= "Quand vous piochez votre main, |+1 Carte|.";
 FrenchCardTexts["HORN"]= "Une fois par tour, quand vous d\xE9faussez une Garde-fronti\xE8re//de la zone de jeu, vous pouvez la replacer sur votre pioche.";
 FrenchCardTexts["KEY"]= "Au d\xE9but de votre tour, |+|[1].";

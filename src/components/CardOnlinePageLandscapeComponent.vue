@@ -195,8 +195,19 @@ export default defineComponent({
         ).concat(
           Cards_list.filter(card =>
             props.set.allies.some(function (item) { return item.shortId == card.id; }))
+        ).concat(
+          Cards_list.filter(card =>
+            props.set.traits.some(function (item) { return item.shortId == card.id; }))
+        ).concat(
+          Cards_list.filter(card =>
+            props.set.prophecies.some(function (item) { return item.shortId == card.id; }))
         )
-        const uniqueCards = new Set(filteredCards);
+        const typefilteredCards = filteredCards.filter(card => {
+        //const supplycard = DominionSets.getCardById(card.id) 
+        return card.id == 'continue';
+        })   
+        console.log(filteredCards, typefilteredCards)
+        const uniqueCards = new Set(typefilteredCards);
       return Array.from(uniqueCards) 
     });
 

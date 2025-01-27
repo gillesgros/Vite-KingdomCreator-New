@@ -23,9 +23,21 @@ interface Block {
   inner: string;
 };
 
-const divSize = 340
-const lineHeightSize = 50
-const lineLenghtSize = 48
+let divSize = 20
+let lineHeightSize = 4
+let lineLenghtSize = 4
+
+// card H: 47 L: 58
+const cardParams = {
+  "portrait": { divSize : 340,
+                lineHeightSize : 47,
+                lineLenghtSize : 58
+              },
+  "landscape" :  { divSize : 240,
+                lineHeightSize : 40,
+                lineLenghtSize : 47
+              }
+}
 
 export default defineComponent({
   name: 'CardTextContainer',
@@ -102,7 +114,7 @@ export default defineComponent({
                       blankFactor : cardName.isLandscape ? 0.2 : 0.4,
                       maxFontFactor : 0.15,
                       maxLandscapeFontFactor : 0.4,
-                      heirloomFactor : 1.1 ,
+                      heirloomFactor : 1.1 , //0.8
                       victoryRatio : 0.9,
                       sunRatio : 1
                     }
@@ -113,18 +125,34 @@ export default defineComponent({
 
 // function for font-size and line-height calculation
     const FontSize = computed(() =>  {
+      console.log(props.card.id, props.direction)
+      switch (props.direction) {
+        case "portrait":
+          divSize = cardParams.portrait.divSize
+          lineHeightSize = cardParams.portrait.lineHeightSize
+          lineLenghtSize = cardParams.portrait.lineLenghtSize
+          break;
+        case "landscape":
+          divSize = cardParams.landscape.divSize
+          lineHeightSize = cardParams.landscape.lineHeightSize
+          lineLenghtSize = cardParams.landscape.lineLenghtSize
+          break;
+      }
+      console.log(props.card.id, props.direction, divSize, lineHeightSize, lineLenghtSize)
+
       const lineHeightMeasurementSize = lineHeightSize
       const lineLenghtMeasurementSize = lineLenghtSize
       let totalHeight = 1;
       let longestWidth = 1;
 
       for(const line of lines.value) {
-        const metrics = measureLine(line, "Times New Roman", lineHeightMeasurementSize);
+        console.log(props.card.id, "measureLine", line, lineLenghtMeasurementSize, lineHeightMeasurementSize)
+        const metrics = measureLine(line, "Times New Roman", lineLenghtMeasurementSize, lineHeightMeasurementSize);
+        console.log(props.card.id, metrics.width, metrics.height, line)
         longestWidth = Math.max(longestWidth, metrics.width);
         totalHeight += metrics.height;
         //console.log(props.card.id, longestWidth, totalHeight)
       };
-      //console.log(props.card.id, longestWidth, totalHeight)
       const bbox = getCardTextBlockSize(divSize, cardName); 
       //console.log(props.card.id, bbox)
       // font-size considering bbox
@@ -141,46 +169,52 @@ export default defineComponent({
           ).toFixed(2);
       
       if (props.direction == "landscape") measuredSize = capSize
-      if (props.card.id == "alms" ||props.card.id == "ferry" ) {    
+      if (props.direction == "landscape") {
+        //capSize=measuredSize
         console.log(props.card.id, 
           "font", measuredSize.toFixed(2), capSize.toFixed(2), "===>", Math.min(capSize, measuredSize).toFixed(2))
-        console.log(props.card.id, 
+        console.log(props.card.id,
           "line", lineHeightbox, totalHeight, 340, Math.max(1.0,capSize/measuredSize).toFixed(2), Math.max(1.0,divSize/totalHeight).toFixed(2),
           "final line", lineHeight)
-      }
-      if (props.direction == "landscape") {
-        capSize=measuredSize
         return `font-size: ${Math.min(capSize, measuredSize,23).toFixed(2)}px; line-height: ${lineHeight};`;
 
       }
       if (props.direction == "portrait") {
+        console.log(props.card.id, 
+          "font", measuredSize.toFixed(2), capSize.toFixed(2), "===>", Math.min(capSize, measuredSize).toFixed(2))
+        console.log(props.card.id,
+          "line", lineHeightbox, totalHeight, 340, Math.max(1.0,capSize/measuredSize).toFixed(2), Math.max(1.0,divSize/totalHeight).toFixed(2),
+          "final line", lineHeight)
         return `font-size: ${Math.min(capSize, measuredSize,23).toFixed(2)}px; line-height: ${lineHeight};`;
       }
       return "";
     })
 
-    const measureLine = (line:string, fontFamily:string, measurementSize: number) => {
+    const measureLine = (line:string, fontFamily:string, measurementSizeLenght: number, measurementSizeHeight: number) => {
       const lineIsBold = /^\|.*?\|$/.test(line);
       const lineIsHeirloom = /^%%.*?%%$/.test(line);
+      const lineIsItalics = /^%.*?%$/.test(line);
       const lineIsSeparator = line === "---";
       const lineIsBlank = line === "";
       const lineIsBig = /^[\[{]!.*?[\]}]$/.test(line);
-      const lineText = lineIsBold || lineIsHeirloom ? line.slice(1, -1) : line;
+      const lineText = lineIsBold || lineIsItalics ? line.slice(1, -1) : line;
 
-      let adjustedSize = measurementSize;
+      let adjustedSize = measurementSizeLenght;
       if (lineIsBold) adjustedSize *= boldLineFactor;
       if (lineIsBig) adjustedSize *= bigLineFactor;
       if (lineIsSeparator) adjustedSize *= separatorFactor;
       if (lineIsBlank) adjustedSize *= blankFactor;
       if (lineIsHeirloom) adjustedSize *= heirloomFactor;
 
+      console.log(props.card.id, adjustedSize, line)
       let totalLength = 0;
       let totalHeight = 0;
       if (!lineIsSeparator && !lineIsBlank) {
-        const blocks = getBlocks(lineText);
+        const blocks = getBlocks(line);
         blocks.forEach((block) => {
           totalLength += measureBlock(block, fontFamily, adjustedSize).width;
           totalHeight += measureBlock(block, fontFamily, adjustedSize).height;
+          console.log(props.card.id, totalLength, totalHeight, block.inner)
         });
       }
       return { width: totalLength, height: adjustedSize };
@@ -191,6 +225,8 @@ export default defineComponent({
       let evaluatedSize
       let addition = 0;
       switch (block.type) {
+        case "bigcoin": 
+          measurementSize *= 1.1;
         case "normal":
           ctx.font = `${measurementSize}px ${fontFamily}`;
           break
@@ -202,7 +238,10 @@ export default defineComponent({
           ctx.font = `bold ${measurementSize}px ${fontFamily}`;
           break
         case "coin":
-        case "bigcoin":
+        case "bigcoin": // measurementSize*1.1
+        case "bigcoin_singleline":
+        case "bigcoin_singleline_noPlus":
+        case "bigsun_singleline":
         case "sun":
           return {width : measurementSize, height : measurementSize}
         case "shield":
@@ -214,6 +253,7 @@ export default defineComponent({
           addition = measurementSize * victoryRatio;
           break;
         default:
+          console.log(block.type, block.inner)
           throw new Error(`Unknown block type: ${block.type}`);
       }
       evaluatedSize = ctx.measureText(block.inner); 
@@ -225,9 +265,26 @@ export default defineComponent({
 
     const getCardTextBlockSize = (w: number, cardName: { isLandscape: boolean; hasHeirloom: boolean }) => {
       const { portraitRatio, landscapeRatio } = CardSizes.FULL;
-      if (cardName.isLandscape) return { height: w * landscapeRatio * 0.21, width: w * 0.815 };
-      if (cardName.hasHeirloom) return { height: w * portraitRatio * 0.27, width: w * 0.795 };
-      return { height: w * portraitRatio * 0.31, width: w * 0.795 };
+      let height = 0;
+      let width = 0;
+      if (cardName.isLandscape) {
+        const h = w * landscapeRatio;
+        //const rect = new Rectangle(0.09 * w, 0.72 * h, 0.815 * w, 0.21 * h);
+        height = 0.21 * h;
+        width =  0.815 * w;
+      } else {
+        const h = w * portraitRatio;
+        if (cardName.hasHeirloom) {
+          //const rect = new Rectangle(0.1 * w, 0.55 * h, 0.795 * w, 0.27 * h);
+          height = 0.27 * h;
+          width = 0.795 * w;
+        } else {
+          //const rect = new Rectangle(0.1 * w, 0.55 * h, 0.795 * w, 0.31 * h);
+          height = 0.31 * h;
+          width = 0.795 * w;
+        }
+      }
+      return { height: height, width: width };
     }
 
     return {

@@ -29,7 +29,7 @@ export const Cards_list_Plunder: DigitalCard[] = [
   /* landscape */		text_html: '\
 '
   /* landscape */	},	
-  /* landscape */	{	id: "mirror",  frenchName: "Imitation",  artwork: "http://wiki.dominionstrategy.com/images/3/3d/Haunted_MirrorArt.jpg",
+  /* landscape */	{	id: "mirror",  frenchName: "Imitation",  artwork: "http://wiki.dominionstrategy.com/images/9/9e/MirrorArt.jpg",
   /* landscape */		text_html: '\
 '
   /* landscape */	},	
@@ -41,7 +41,7 @@ export const Cards_list_Plunder: DigitalCard[] = [
   /* landscape */		text_html: '\
 '
   /* landscape */	},	
-  /* landscape */	{	id: "journey",  frenchName: "Traversée",  artwork: "http://wiki.dominionstrategy.com/images/a/a5/JourneymanArt.jpg",
+  /* landscape */	{	id: "journey",  frenchName: "Traversée",  artwork: "http://wiki.dominionstrategy.com/images/e/e2/JourneyArt.jpg",
   /* landscape */		text_html: '\
 '
   /* landscape */	},	
@@ -65,7 +65,7 @@ export const Cards_list_Plunder: DigitalCard[] = [
   /* landscape */		text_html: '\
 '
   /* landscape */	},	
-  /* landscape */	{	id: "cursed",  frenchName: "Maudit",  artwork: "http://wiki.dominionstrategy.com/images/c/c2/Cursed_GoldArt.jpg",
+  /* landscape */	{	id: "cursed",  frenchName: "Maudit",  artwork: "http://wiki.dominionstrategy.com/images/4/45/CursedArt.jpg",
   /* landscape */		text_html: '\
 '
   /* landscape */	},	

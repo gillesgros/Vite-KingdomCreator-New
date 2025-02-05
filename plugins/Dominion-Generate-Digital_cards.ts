@@ -95,7 +95,7 @@ function getRange(setid:string, type: Orientation) {
       rangeMap  = {
         'Adventures': [ 'A917:C977' ],
         'Empires': [ 'A1103:C1205' ],
-        'Nocturne': [ 'A1328:C1460' ],
+        'Nocturne': [ 'A1328:C1364', 'A1409:C1460' ],
         'Renaissance': [ 'A1535:C1610' ],
         'Promo': [ 'A1652:C1655' ],
         'Menagerie': [ 'A1748:C1868' ],

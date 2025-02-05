@@ -49,6 +49,7 @@ export class SupplyCard implements Card {
 
     // Rising sun
     readonly isOmen: boolean,
+    readonly isShadow: boolean,
 
     // Promos
     readonly isCommand: boolean
@@ -118,7 +119,8 @@ export class SupplyCard implements Card {
   // Rising Sun
     case CardType.OMEN:
       return this.isOmen;
-
+    case CardType.SHADOW:
+      return this.isShadow;
   // Promps
       case CardType.COMMAND:
         return this.isCommand;
@@ -173,6 +175,7 @@ export class SupplyCard implements Card {
   
   // Rising Sun
       data.isOmen ?? false,
+      data.isShadow ?? false,
   
   // Promo
       data.isCommand ?? false
@@ -225,6 +228,7 @@ export class SupplyCard implements Card {
 
   // Allies
       json["isOmen"] || false,
+      json["isShadow"] || false,
       
   // Promos
       json["isCommand"] || false,

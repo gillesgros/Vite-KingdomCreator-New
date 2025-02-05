@@ -46,9 +46,8 @@ FrenchCardTexts["SHANTYTOWN"]= "|+2 Actions|////D\xE9voilez votre main.//Si vous
 FrenchCardTexts["LURKER"]= "|+1 Action|////Choisissez : \xC9cartez une carte//Action de la r\xE9serve ; ou recevez//une carte Action du rebut.";
 FrenchCardTexts["SECRETPASSAGE"]= "|+2 Cartes|//|+1 Action|////Prenez une carte de votre main et//placez-la o\xF9 vous voulez dans//votre pioche.";
 FrenchCardTexts["DIPLOMAT"]= "|+2 Cartes|////Si apr\xE8s cela vous avez en main//5 cartes ou moins, |+2 Actions|.//---//Quand un autre joueur joue une carte//Attaque et que vous avez au moins 5//cartes en main, vous pouvez d\xE9voiler ceci//pour piocher 2 cartes puis en d\xE9fausser 3.";
-//FrenchCardTexts["MILL"]= "{!1}////|+1 Carte|//|+1 Action|//---//Vous pouvez d\xE9fausser 2 cartes pour +[2].";
-FrenchCardTexts["MILL"]= "//|+1 Carte|//|+1 Action|//Vous pouvez d\xE9fausser 2 cartes//pour +[2].//---//{!1}////";
-FrenchCardTexts["COURTIER"]= "D\xE9voilez une carte de votre main.//Pour chacun de ses types (Action,//Attaque, etc.), choisissez : |+1 Action|;//ou |+1 Achat|; ou +[3]; ou recevez un//Or. Les choix doivent \xEAtre diff\xE9rents.";
+FrenchCardTexts["MILL"]= "//////|+1 Carte|//|+1 Action|//Vous pouvez d\xE9fausser 2 cartes//pour +[2].//---//{!1}//////";
+FrenchCardTexts["COURTIER"]= "D\xE9voilez une carte de votre main.//Pour chacun de ses types (Action,//Attaque, etc.), choisissez ://|+1 Action| ; ou |+1 Achat| ;//ou +[3]; ou recevez un Or.//Les choix doivent \xEAtre diff\xE9rents.";
 FrenchCardTexts["PATROL"]= "|+3 Cartes|////D\xE9voilez les 4 premi\xE8res cartes de//votre pioche. Prenez en main les//cartes Victoire et Mal\xE9diction.//Replacez les autres sur votre//pioche dans l'ordre de votre choix.";
 FrenchCardTexts["REPLACE"]= "\xC9cartez une carte de votre main.//Recevez une carte co\xFBtant jusqu'\xE0//[2] de plus. Si la carte re\xE7ue est une//Action ou un Tr\xE9sor, placez-la sur//votre pioche; si c'est une carte//Victoire, tous vos adversaires//re\xE7oivent une Mal\xE9diction.";
 

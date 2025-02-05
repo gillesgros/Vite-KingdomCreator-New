@@ -2,12 +2,10 @@ type FrenchCardTextsType = {[key: string]: string;};
 export const FrenchCardTexts: FrenchCardTextsType = {}
 FrenchCardTexts["ADVISOR"]= "|+1 Action|////D\xE9voilez les 3 premi\xE8re cartes//de votre pioche. Le joueur \xE0 votre//gauche en choisit une.//D\xE9faussez-la et prenez en main//le reste.";
 FrenchCardTexts["BAKER"]= "|+1 Carte|//|+1 Action|//|+1 Coffre|//---//Mise en place : pour tous les joueurs,//|+1 Coffres|.";
-//FrenchCardTexts["BUTCHER"]= "|+2 Coffres|////Vous pouvez \xE9carter une carte//de votre main pour recevoir//une carte co\xFBtant jusqu'\xE0 [1]//de plus par Coffres d\xE9pens\xE9.";
 FrenchCardTexts["BUTCHER"]= "|+2 Coffres|////Vous pouvez \xE9carter une carte de//votre main. Dans ce cas, dépensez//autant de jetons de vos Coffres que//souhaité et recevez une carte coûtant//au plus le cout de la caret écartée//plus le nombre de jetons dépensés.";
-//  pour recevoir//une carte co\xFBtant jusqu'\xE0 [1]//de plus par Coffres d\xE9pens\xE9.";
 FrenchCardTexts["CANDLESTICKMAKER"]= "|+1 Action|//|+1 Achat|//|+1 Coffre|";
 FrenchCardTexts["DOCTOR"]= "Nommez une carte. D\xE9voilez les 3//premi\xE8res cartes de votre pioche.//\xC9cartez celles dont le nom correspond,//et remettez les autres sur votre pioche.//---//Quand vous achetez cette carte, vous//pouvez surpayer. Pour chaque [] surpay\xE9,//consultez la carte du haut de votre pioche ;//\xE9cartez-la, d\xE9faussez-la, ou replacez-la.";
-FrenchCardTexts["HERALD"]= "|+1 Carte|//|+1 Action|//D\xE9voilez la carte du haut de votre//pioche. Si c'est une Action, jouez-la.//---//Quand vous achetez cette carte, vous//pouvez surpayer. Pour chaque []//surpay\xE9, consultez votre d\xE9fausse et//placez-en une carte sur votre pioche.//";
+FrenchCardTexts["HERALD"]= "//|+1 Carte|//|+1 Action|//D\xE9voilez la carte du haut de votre//pioche. Si c'est une Action, jouez-la.//---//Quand vous achetez cette carte, vous//pouvez surpayer. Pour chaque []//surpay\xE9, consultez votre d\xE9fausse et//placez-en une carte sur votre pioche.////";
 FrenchCardTexts["JOURNEYMAN"]= "Nommez une carte. D\xE9voilez des//cartes de votre pioche jusqu'\xE0//d\xE9voiler 3 cartes dont le nom//ne correspond pas. Prenez-les//en main et d\xE9faussez le reste.";
 FrenchCardTexts["MASTERPIECE"]= "[!1]//---//Quand vous achetez cette carte, vous//pouvez surpayer. Pour chaque [1]//surpay\xE9, recevez un Argent.";
 FrenchCardTexts["MERCHANTGUILD"]= "|+1 Achat|//|+[1]|//---//Lorsque cette carte est en jeu,//quand vous achetez une carte,//|+1 Coffre|.";

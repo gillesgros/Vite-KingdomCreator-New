@@ -101,7 +101,7 @@ export const Cards_list_Plunder: DigitalCard[] = [
   /* t */		text_html: '\
 '
   /* t */	},	
-    	{	id: "pilgrim",  frenchName: "Pèlerin",  artwork: "http://wiki.dominionstrategy.com/images/a/a2/PilgrimageArt.jpg",
+    	{	id: "pilgrim",  frenchName: "Pèlerin",  artwork: "http://wiki.dominionstrategy.com/images/f/fc/PilgrimArt.jpg",
     		text_html: '\
 '
     	},	
@@ -117,7 +117,7 @@ export const Cards_list_Plunder: DigitalCard[] = [
   /* t */		text_html: '\
 '
   /* t */	},	
-    	{	id: "search",  frenchName: "Chasse au trésor",  artwork: "http://wiki.dominionstrategy.com/images/0/0b/ResearchArt.jpg",
+    	{	id: "search",  frenchName: "Chasse au trésor",  artwork: "http://wiki.dominionstrategy.com/images/1/1d/SearchArt.jpg",
     		text_html: '\
 '
     	},	

@@ -136,7 +136,7 @@ import { getCardImageUrl } from "../utils/resources";
 import { incaseofImgerror } from "../utils/resources";
 
 import type { DigitalCard } from "../dominion/digital_cards/digital-cards-type"
-import { Cards_list } from "../dominion/digital_cards/Manual/digital-cards-landscape"
+import { Cards_list_Landsacpe as Cards_list } from "../dominion/digital_cards/digital-cards"
 import type { IllustratorCard } from "../dominion/digital_cards/digital-cards-type"
 import { Cards_list_Illustrator, Year_set } from "../dominion/digital_cards/digital-cards-Illustrator"
 
@@ -172,6 +172,11 @@ export default defineComponent({
     const { t } = useI18n();
 
     const Cards = computed(() => {
+
+      console.log( 
+        Cards_list.filter(card =>
+            props.set.otherCards.some(function (item) { return item.shortId == card.id; }))
+      )
       const filteredCards = Cards_list.filter(card =>
         props.set.supplyCards.some(function (item) { return item.shortId == card.id; }))
         .concat(
@@ -204,10 +209,10 @@ export default defineComponent({
         )
         const typefilteredCards = filteredCards.filter(card => {
         //const supplycard = DominionSets.getCardById(card.id) 
-        return card.id == 'continue';
+        return card.id == 'amass' || card.id == 'asceticism' || card.id == 'gather';
         })   
-        console.log(filteredCards, typefilteredCards)
-        const uniqueCards = new Set(typefilteredCards);
+        //console.log(filteredCards, typefilteredCards)
+        const uniqueCards = new Set(filteredCards);
       return Array.from(uniqueCards) 
     });
 
@@ -267,6 +272,18 @@ export default defineComponent({
         case "Ally": {
           return {
             png: "ally", label: "Allié",
+            style: "top:3px; left:-15px; font-size:1.2em;"
+          };
+        }
+        case "Trait": {
+          return {
+            png: "trait", label: "trai",
+            style: "top:3px; left:-15px; font-size:1.2em;"
+          };
+        }
+        case "Prophecy": {
+          return {
+            png: "prophecy", label: "Prophétie",
             style: "top:3px; left:-15px; font-size:1.2em;"
           };
         }
@@ -420,6 +437,11 @@ export default defineComponent({
       switch (CardSetid) {
 
         case SetId.ALLIES: return " bottom: -2px; "
+        case SetId.RISING_SUN: 
+          let card = DominionSets.getCardById(currentCard.id);
+          switch (card.constructor.name) {
+            case "Prophecy": return " color: #FEFFFC; "
+          }
         default: { return ""; }
       }
     }

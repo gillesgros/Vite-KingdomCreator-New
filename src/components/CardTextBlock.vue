@@ -10,6 +10,12 @@
       {{ block.inner }}
     </span>
   </template>
+  <template v-else-if="block.type === 'verybold'">
+    <span class="card-text-block bold " :class="leftRightMargin"
+      style="font-size:1.3em; font-weight: bold; font-family: 'Times New Roman';">
+      {{ block.inner }}
+    </span>
+  </template>
   <template v-else-if="block.type === 'italics'">
     <span class="card-text-block italics" :class="leftRightMargin"
       style="font-style: italic ; font-family: 'Times New Roman';">
@@ -105,8 +111,10 @@ export default defineComponent({
 
     const BigStyle = computed(() => {
       if (props.block.type.startsWith('big')) {
-        if (props.block.type == 'bigshield_singleline' ||
-                  props.block.type == 'bigcoin_singleline_noPlus' )
+        if (props.block.type == 'bigshield_singleline')
+          return  { fontSize: '1.45em',
+                fontWeight: 'bold'};
+        else if (props.block.type == 'bigcoin_singleline_noPlus' )
           return  { fontSize: '1.6em',
                     fontWeight: 'bold'};
         else if (props.block.type.includes('coin') || props.block.type.includes('sun'))

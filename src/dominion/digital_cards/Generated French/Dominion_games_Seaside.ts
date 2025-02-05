@@ -12,7 +12,7 @@ FrenchCardTexts["FISHINGVILLAGE"] = "|+2 Actions|//|+[1]|////Au d\xE9but de votr
 FrenchCardTexts["GHOSTSHIP"] = "|+2 Cartes|////Tous vos adversaires ayant au//moins 4 cartes en main placent//des cartes de leur main sur leur//pioche jusqu'\xE0 avoir 3 cartes//en main.";
 FrenchCardTexts["HAVEN"] = "|+3 Carte|//|+1 Action|////Mettez de c\xF4t\xE9 une carte de votre//main face cach\xE9e (sous cette carte).//Au d\xE9but de votre prochain tour,//prenez-la en main.";
 FrenchCardTexts["ISLAND"] = "Placez cette carte et une carte de//votre main sur votre plateau \xCEle.//---//{!2}";
-FrenchCardTexts["LIGHTHOUSE"] = "|+1 Action|////Maintenant et au d\xE9but de//votre prochain tour, |+|[1].//---//D'ici l\xE0,//les cartes Attaque jou\xE9es par vos//adversaires ne vous affectent pas.";
+FrenchCardTexts["LIGHTHOUSE"] = "|+1 Action|////Maintenant et au d\xE9but de//votre prochain tour, |+|[1].//---//Lorsque cette carte est en jeu,//les cartes Attaque jou\xE9es par vos//adversaires ne vous affectent pas.";
 FrenchCardTexts["LOOKOUT"] = "|+1 Action|////Consultez les 3 premi\xE8res cartes//de votre pioche. \xC9cartez-en une.//D\xE9faussez-en une. Placez la carte//restante sur le haut de votre pioche.";
 FrenchCardTexts["MERCHANTSHIP"] = "Maintenant et au d\xE9but de//votre prochain tour, |+|[2].";
 FrenchCardTexts["NATIVEVILLAGE"] = "|+2 Actions|////Choisissez : placez la carte du haut//de votre pioche, face cach\xE9e, sur//votre plateau Village indig\xE8ne//vous pouvez consulter ces cartes//\xE0 tout moment) ; ou prenez en//main toutes les cartes du plateau.";
@@ -29,13 +29,13 @@ FrenchCardTexts["TREASURY"] = "|+1 Carte|//|+1 Action|//|+[1]|//---//A la fin de
 FrenchCardTexts["WAREHOUSE"] = "|+ 3 Cartes|//|+1 Action|////D\xE9faussez 3 cartes.";
 FrenchCardTexts["WHARF"] = "Maintenant et au d\xE9but//de votre prochain tour ://|+2 Cartes |et |+1 Achat|.";
 
-/* updatePack */
+/* updatePack */ 
 FrenchCardTexts["ASTROLABE"] = "Maintenant et au début//de votre prochain tour :////|[!1]|//|+1 Achat|";
 FrenchCardTexts["BLOCKADE"] = "Recevez une carte coûtant//jusqu'à [4], en la mettant de côté.//Au début de votre prochain tour,//prenez-là enmain. Tant qu'elle est//mise de côté, quand un autre joueur//en reçoit un exemplaire durant leur//tour, il reçoit une Malédiction.";
 FrenchCardTexts["CORSAIR"] = "|+[2]|//Au début de votre prochain tour,//|+1 Carte|. D'ici là, chacun de vos//adversaires écarte le premier Argent//ou Or qu'il joue à chaque tour.";
 FrenchCardTexts["MONKEY"] = "Jusqu'à votre prochain tour, quand//le joueur à votre droite reçoit//une carte, |+1 Carte|. Au début//de votre prochain tour, |+1 Carte|.";
 FrenchCardTexts["PIRATE"] = "Au début de votre prochain tour//recevez en main un Trésor//coûtant jusqu'à [6].//---//Quand un joueur reçoit un Trésor//vous pouvez jouer cette carte//depuis votre main.";
 FrenchCardTexts["SAILOR"] = "|+1 Action|//Une fois durant ce tour, quand//vous recevez une carte Durée, vous//pouvez la jouer. Au début de votre//prochain tour, +[2] et vous pouvez//écarter une carte de votre main.";
-FrenchCardTexts["SEACHART"] = "|+1 Carte|//|+1 Action|//Dévoilez la carte du haut de votre//pioche. Si vous en avez un /exemplaire//en jeu, prenez-là en main.";
+FrenchCardTexts["SEACHART"] = "|+1 Carte|//|+1 Action|//Dévoilez la carte du haut de votre//pioche. Si vous en avez un //exemplaire en jeu,//prenez-là en main.";
 FrenchCardTexts["SEAWITCH"] = "|+2 Cartes|//Tous vos adversaires reçoivent//une Malédiction. Au début de//votre prochain tour, |+2 Cartes|,//puis défaussez 2 cartes.";
 FrenchCardTexts["TIDEPOOLS"] = "|+3 Cartes|//|+1 Action|//Au début de votre prochain//tour, défaussez 2 cartes.";

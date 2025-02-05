@@ -54,7 +54,9 @@ export default defineComponent({
 
     // Vérifie si une ligne contient un seul bloc de type bold
     const singleBoldStyle = computed(() => {
-      if (blocks.value.length === 1 && blocks.value[0].type === 'bold') return { fontSize: '1.3em' };
+      if (blocks.value.length === 1 && 
+            (blocks.value[0].type === 'bold' || blocks.value[0].type === 'verybold'))
+        return { fontSize: '1.3em' };
       if (blocks.value.length === 1 && blocks.value[0].type === 'bigcoin') return { fontSize: '2em' };
       return null;
     });

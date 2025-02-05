@@ -77,7 +77,7 @@
       <div v-if="Displayfirst('v-html')">old</div>
       <div v-else >New</div>
       <div class="separator-card" style="z-index:0;"></div>
-      <div class="card-container" style="z-index:1; position: relative;"> 
+      <div class="card-container" :class="getClassCard(Card)" style="z-index:1; position: relative;"> 
         <div class="full-card unselectable" style="z-index:0; cursor:default;
            transform: scale(1); transition:none; position: sticky;" :id="Card.id">
         <!-- is a card -->
@@ -195,7 +195,7 @@ import CardTextContainer from "./CardTextContainer.vue";
 
 const QuestionMarkValue =
   new Set(["bank", "philosophersstone", "scepter", "bauble",
-    "crucible", "figurine", "gondola", "pendant",
+    "crucible", "figurine", "gondola", "pendant", "amphora", "orb", 
     "charm", "foolsgold", "rice"
   ]);
 
@@ -342,10 +342,10 @@ export default defineComponent({
         const typefilteredCards = filteredCards.filter(card => {
         const supplycard = DominionSets.getCardById(card.id) as SupplyCard
 
-        return supplycard.shortId == 'tanuki';
+        return supplycard.shortId == 'druid';
         })   
-        console.log(filteredCards, typefilteredCards)
-      const uniqueCards = new Set(typefilteredCards);
+        //console.log(filteredCards, typefilteredCards)
+      const uniqueCards = new Set(filteredCards);
       return Array.from(uniqueCards)  
     })
 
@@ -415,10 +415,20 @@ export default defineComponent({
         if (card.isOfType(CardType.FATE)) { extension = " - Destin"; }
         if (card.isOfType(CardType.DOOM)) { extension = " - Fatalité"; }
         if (card.isOfType(CardType.LIAISON)) { extension = " - Liaison"; }
+        if (card.isOfType(CardType.SHADOW)) { extension = " - Shadow"; extension = " - Ombre";}
+        if (card.isOfType(CardType.OMEN)) { extension = " - Omen"; extension = " - Signe";}
         if (card.isOfType(CardType.COMMAND)) { extension = " - Ordre"; }
+
         if (card.isOfType(CardType.COVER)) {
-          extension = " - " + t(card.id)
-          return { png: "action", label: "Action" + extension };
+          switch (card.shortId) {
+            case "clashes":   { extension = " - Affrontement"; break; }
+            case "townsfolk": { extension = " - Citoyen"; break; }
+            case "augurs":    { extension = " - Augure"; break; }
+            case "odysseys":  { extension = " - Odyssée"; break; }
+            case "forts":     { extension = " - Fortification"; break}
+            case "wizards":   { extension = " - Magicien" + extension ; break;}
+          }
+          return { png: "action", label: "Action" + extension }; 
         }
 
         if (card.isOfType(CardType.NIGHT)) {
@@ -440,7 +450,7 @@ export default defineComponent({
           if (card.isOfType(CardType.TRAVELLER)) { return { png: "action-traveller", label: "Action - Itinérant" + extension }; }
           if (card.isOfType(CardType.DURATION)) {
             if (card.isOfType(CardType.REACTION)) { return { png: "action-duration-reaction", label: "Action - Durée - Réaction" + extension }; }
-            if (card.isOfType(CardType.ATTACK)) { return { png: "action-duration", label: "Action - Durée - Attaque" + extension }; }
+            if (card.isOfType(CardType.ATTACK)) { return { png: "action-duration", label: "Action - Attaque - Durée" + extension }; }
             if (NeedHeirloompng) { return { png: "action-duration-heirloom", label: "Action - Durée" + extension }; }
             return { png: "action-duration", label: "Action - Durée" + extension };
           }
@@ -482,6 +492,7 @@ export default defineComponent({
         let extension
         extension = "";
         if (card.type.includes("Prize")) { extension = " - Prix"; }
+        if (card.type.includes("Reward")) { extension = " - Récompense"; }
         if (card.type.includes("Heirloom")) { extension = " - Patrimoine"; }
         if (card.type.includes("Spirit")) { extension = " - Esprit"; }
         if (card.type.includes("Zombie")) { extension = " - Zombie"; }
@@ -517,6 +528,7 @@ export default defineComponent({
           if (card.type.includes(CardType.DURATION.slice(2))) {
             if (card.type.includes(CardType.REACTION.slice(2))) { return { png: "action-duration-reaction", label: "Action - Durée - Réaction" + extension }; }
             if (card.type.includes(CardType.VICTORY.slice(2))) { return { png: "action-duration-victory", label: "Action - Victoire - Durée" + extension }; }
+            if (card.type.includes(CardType.ATTACK.slice(2))) { return { png: "action-duration", label: "Action - Durée - Attaque"+ extension }; }
             return { png: "action-duration", label: "Action - Durée" + extension };
           }
           if (card.type.includes(CardType.RESERVE.slice(2))) {
@@ -607,7 +619,7 @@ export default defineComponent({
     const getValueforTreasureCard = (currentCard: DigitalCard) => {
       const cardText = FrenchCardTexts[currentCard.id.toUpperCase()]
       if (!cardText) {
-        console.log(currentCard.id.toUpperCase(), cardText)
+        //console.log(currentCard.id.toUpperCase(), cardText)
         return "";
       }
       const pattern = /\[!(.*?)\]/
@@ -683,8 +695,10 @@ export default defineComponent({
       if (typeOfCard.length >= 35) { return "font-size: 1.43em;  top:50px;"; } /* Action - Attaque - Chevalier - Vitoire*/
       if (typeOfCard.length >= 28) { return "font-size: 1.75em;  top:50px;"; } /* Action - Attaque - Chevalier */
       if (typeOfCard.length >= 26) { return "font-size: 2em;     top:45px;"; } /* Action - Attaque - Pillard */
+      if (typeOfCard.length >= 24) { return "font-size: 2.1em;   top:40px;"; } /* Action - Attaque - Shadow */
       if (typeOfCard.length >= 22) { return "font-size: 2.2em;   top:40px;"; } /* Action - Attaque - Prix */
       if (typeOfCard.length >= 21) { return "font-size: 2.4em;   top:38px;"; } /* Action - Attaque - Prix */
+      if (typeOfCard.length >= 19) { return "font-size: 2.6em;   top:38px;"; } /* Action - Récompense */      
       if (typeOfCard.length >= 16) { return "font-size: 2.8em;   top:35px;"; } /* Action - Attaque */
       if (typeOfCard.length >= 13) { return "font-size: 3.125em; top:30px;"; } /* Action - Prix */ /*Action - Durée */
       return "font-size: 4.2em;   top:20px;";   /* Nuit - Attaque - Durée */

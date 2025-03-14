@@ -104,7 +104,7 @@ export default defineComponent({
   const container = ref<HTMLElement | null>(null);
 const fontSize = ref(22); // Taille initiale =  taille maxilmale
 const minFontSize = 10;
-const step = 1;
+const step = 0.5*2;
 
 // Style calculé pour appliquer dynamiquement la police
 const computedStyle = computed(() => ({

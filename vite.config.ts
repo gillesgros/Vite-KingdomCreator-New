@@ -7,7 +7,7 @@ import VueDevTools from 'vite-plugin-vue-devtools'
 import vue from '@vitejs/plugin-vue';
 import legacy from '@vitejs/plugin-legacy'
 import vueI18n from '@intlify/unplugin-vue-i18n/vite';
-import { del } from '@kineticcafe/rollup-plugin-delete';
+import del  from 'rollup-plugin-delete';
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 import { DominionContentGenerate, HandleLocaleGenerateAndMerge } from './plugins/vite-dominion-content';

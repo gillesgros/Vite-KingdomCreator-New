@@ -102,9 +102,9 @@ export default defineComponent({
     };
 
   const container = ref<HTMLElement | null>(null);
-const fontSize = ref(22); // Taille initiale =  taille maxilmale
+const fontSize = ref(24); // Taille initiale =  taille maxilmale
 const minFontSize = 10;
-const step = 0.5*2;
+const step = 0.1;
 
 // Style calculé pour appliquer dynamiquement la police
 const computedStyle = computed(() => ({
@@ -120,6 +120,8 @@ const adjustFontSize =  async () => {
         console.warn("⚠️ adjustFontSize aborted: container is null");
         return;
       }
+  console.log(container.value.innerText)
+
   console.log("carry on  adjust fontsize")
 
   let size = fontSize.value;
@@ -130,16 +132,16 @@ const adjustFontSize =  async () => {
     container.value.style.fontSize = `${size}px`;
     container.value.style.lineHeight = `${size * 1.2}px`;
   }
-
   fontSize.value = size; // Mise à jour de la police
 };
 
 // Vérifie si le texte déborde du conteneur
 const isOverflowing = () => {
   if (!container.value) return false;
+  console.log('isOF', container.value.scrollHeight, container.value.scrollWidth, container.value.clientHeight, container.value.clientWidth)
   return (
     container.value.scrollHeight > container.value.clientHeight ||
-    container.value.scrollWidth > container.value.clientWidth
+    container.value.scrollWidth > container.value.clientWidth*1.01
   );
 };
 
@@ -147,7 +149,7 @@ const isOverflowing = () => {
 const observeChanges = () => {
   console.log("in observeChanges")
   if (!container.value) return;
-  console.log("in observeChanges")
+  console.log("carry on observeChanges")
 
   const mutationObserver = new MutationObserver(adjustFontSize);
   mutationObserver.observe(container.value, { childList: true, subtree: true });
@@ -180,6 +182,7 @@ onMounted(async () => {
     watch(container, (newVal) => {
       if (newVal) {
         console.log("🆕 Container updated, adjusting font size...");
+        console.log(newVal.innerText)
         adjustFontSize();
       }
     });

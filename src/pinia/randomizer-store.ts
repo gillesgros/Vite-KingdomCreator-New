@@ -37,7 +37,8 @@ export interface RandomizeSupplyCardParams {
 }
 
 export const useRandomizerStore = defineStore(
-  'randomizerStore', {
+  'randomizerStore', 
+  {
   state: () => ({
     kingdom: Kingdom.empty(),
     selection: Selection.empty(),

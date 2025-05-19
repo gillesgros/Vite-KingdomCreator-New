@@ -59,7 +59,7 @@
             <a :title="PackageDate + ' Release: ' + PackageVersion" :href="PackageURL">{{ $t("github_info_source") }}</a>
           </template>
           <template #issues>
-            <a :href="PackageURL +'issues'">{{ $t("github_info_issues") }}</a>
+            <a :href="PackageURL +'/issues'">{{ $t("github_info_issues") }}</a>
           </template>
         </i18n-t>
         <i18n-t scope="global" class="disclaimers-and-credit" keypath="disclaimers_and_credits" tag="div">

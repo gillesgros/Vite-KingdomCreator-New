@@ -1,6 +1,6 @@
 type FrenchCardTextsType = {[key: string]: string;};
 export const FrenchCardTexts: FrenchCardTextsType = {}
-FrenchCardTexts["DRUID"]= "|+1 Achat|////Appliquez une des trois Aubaines//mises de c\xF4t\xE9 (laissez-la en place).//---//Mise en place : mettez de cot\xE9 face//visible les 3 premi\xE8res Aubaines.";
+FrenchCardTexts["DRUID"]= "|+1 Achat|////Appliquez une des trois Aubaines//mises de c\xF4t\xE9 (laissez-la en place).//---////Mise en place : mettez de cot\xE9 face//visible les 3 premi\xE8res Aubaines.";
 FrenchCardTexts["FAITHFULHOUND"]= "|+2 Cartes|//---//Quand vous d\xE9faussez cette carte//en dehors de la phase Ajustement,//vous pouvez la mettre de c\xF4t\xE9, et la//prendre en main \xE0 la fin de votre tour.";
 FrenchCardTexts["GUARDIAN"]= "Au d\xE9but de votre prochain tour,//|+|[1]. D'ici l\xE0, quand un adversaire//joue une carte Attaque, vous//n'en subissez pas les effets. //---//Cette carte est re\xE7ue en main//(et non dans la d\xE9fausse).";
 FrenchCardTexts["MONASTERY"]= "Pour chaque carte que vous avez//re\xE7ue ce tour, vous pouvez \xE9carter//une carte de votre main ou un//Cuivre en jeu.";

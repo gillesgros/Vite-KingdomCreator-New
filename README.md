@@ -9,6 +9,9 @@ As I became a maintainer for Kingdom Creator, https://www.dominionrandomizer.com
 Feel free to propose any improvements you see fit and send me a pull request!
 
 ### Changelog
+**2025/05/20 - 6.4.7**  
+    **Fix & Feat** (see [Changelog.md](./Changelog.md))
+
 **2025/01/31 - 6.4.6**  
     **Fix & Feat** (see [Changelog.md](./Changelog.md))
 

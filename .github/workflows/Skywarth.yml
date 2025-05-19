@@ -30,11 +30,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install dependencies
         run: npm install
       - name: Vite Github Pages Deployer
-        uses: skywarth/vite-github-pages-deployer@v1.4.0
+        uses: skywarth/vite-github-pages-deployer@v1.5.0
         with:
           public_base_path: '/Vite-KingdomCreator-New'
           build_path: './docs'

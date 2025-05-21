@@ -21,7 +21,9 @@ docs/404.html
 docs/dominion-content.js
 docs/locales/*.json
 process/processed/
-package-lock.json
+process/resources/Pages.csv
+package-lock.json   
+src/i18n/locales/messages/
 
 # other files anf folders
 dist-ssr

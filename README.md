@@ -10,6 +10,8 @@ Feel free to propose any improvements you see fit and send me a pull request!
 
 ### Changelog
 **2025/05/20 - 6.4.7**  
+Dev deploy on github pages  
+Dev deploy on 71yeti.fr  
     **Fix & Feat** (see [Changelog.md](./Changelog.md))
 
 **2025/01/31 - 6.4.6**  

@@ -138,7 +138,9 @@ export default defineComponent({
     const { t } = useI18n();
 
     const Shape = shapeFromGridLayout
-    const sets = computed(() => { return [(DominionSets.sets[setsStore.selectedBoxesSetId] as DominionSet)]; });
+    const sets = computed(() => {
+      return [(DominionSets.sets[setsStore.selectedBoxesSetId] as DominionSet)];
+    });
 
     const numberOfColumnsForSupplyCards = computed(() => {
       return windowStore.isEnlarged ? 2 : windowStore.width <= FOUR_COLUMN_SUPPLY_CARD_WIDTH ? 4 : 5;

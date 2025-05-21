@@ -33,10 +33,13 @@ const readmeVersionMatch = readmeText.match(regex);
 const readmeVersion = readmeVersionMatch ? readmeVersionMatch[1] : null;
 console.log('readmeVersion: ', readmeVersion);  
 
-if (packageVersion != changelogVersion || packageVersion != readmeVersion || changelogVersion != readmeVersion) exit(0);
+if (packageVersion != changelogVersion || packageVersion != readmeVersion || changelogVersion != readmeVersion) {
+  console.log("inconsistency in version number. Please Check")
+  exit(0);
+}
 
 export default defineConfig( ({ mode}) => {
-//console.log(process.argv)
+
   if (mode === 'production' || mode === 'development') {
    // mergeJSONLanguageFiles();
     DominionContentGenerate('docs');

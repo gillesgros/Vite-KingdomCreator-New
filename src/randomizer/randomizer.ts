@@ -95,7 +95,6 @@ export class Randomizer {
     return ExcludedCardIds
   }
   static setsToUse() : DominionSet[] {
-    console.log("SavedSetIds", SavedSetIds, SavedSetIds.length)
     if(!SavedSetIds.length) {
       const activePinia = getActivePinia();
       if (activePinia) {
@@ -269,8 +268,8 @@ export class Randomizer {
         .filter(card => !excludedCardIds.includes(card.id)); 
     const selectedCards = FORCE_ADDONS_USE() ? 
         this.selectRandomCards(cards.filter(card => (card instanceof Event)||(card instanceof Landmark)||
-        (card instanceof Project)||(card instanceof Way)||(card instanceof Trait)), NUM_CARDS_IN_KINGDOM())
-        : this.selectRandomCards(cards, 2*NUM_CARDS_IN_KINGDOM());
+        (card instanceof Project)||(card instanceof Way)||(card instanceof Trait)), MAX_ADDONS_IN_KINGDOM())
+        : this.selectRandomCards(cards, 5*MAX_ADDONS_IN_KINGDOM());
     const selectedEvents: Event[] = [];
     const selectedLandmarks: Landmark[] = [];
     const selectedProjects: Project[] = [];
@@ -325,11 +324,12 @@ export class Randomizer {
     const landmarks = Cards.getAllLandmarks(cards) as Addon[];
     const projects = Cards.getAllProjects(cards) as Addon[];
     const ways = Cards.getAllWays(cards) as Addon[];
-    const allies = Cards.getAllAllies(cards) as Addon[];
+    //const allies = Cards.getAllAllies(cards) as Addon[];
     const traits = Cards.getAllTraits(cards) as Addon[];
-    const prophecies = Cards.getAllProphecies(cards) as Addon[];
+    //const prophecies = Cards.getAllProphecies(cards) as Addon[];
 
-    return events.concat(landmarks, projects, ways, allies, prophecies, traits);
+    //return events.concat(landmarks, projects, ways, allies, prophecies, traits);
+    return events.concat(landmarks, projects, ways, traits);
   }
 
   static getRandomBoons(supply: Supply, keepBoons: Boon[]) {
@@ -569,7 +569,7 @@ export class Randomizer {
     return getRandomInt(min, Math.min(max, remainingCards));
   }
 
-  private static removeDuplicateCards(cards: SupplyCard[], requiredCardIds: string[]) {
+  static removeDuplicateCards(cards: SupplyCard[], requiredCardIds: string[]) {
     // Removes duplicate cards (cards appearing in multiple sets); keep setA's version.
     // Cards to keep = (A - [B required as A]) + (B - ([A as B] - B required))
     for (const duplicateSets of SETS_WITH_DUPLICATES) {

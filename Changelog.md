@@ -12,6 +12,16 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v22
 
 ### Changelog
+**2025/07/10 - 6.4.8**  
+Dev deploy on github pages  
+Dev deploy on 71yeti.fr
+>**Fix** - blakevanlan/KingdomCreator #202 - BTypo in Owned Set Settings menu
+>**Fix** - blakevanlan/KingdomCreator #196 - Bug with Addons Settings
+>**Feat** - blakevanlan/KingdomCreator #93 - Request cost deselect all button
+>**Fix** - Correct display of menu on smartphone (small screen)
+>**Feat** - Extend list of supply card type for SupplyCard replacement windows
+>**Feat** - Search SupplyCard with criteria Set, Type, Cost 
+
 **2025/05/20 - 6.4.7**  
 Dev deploy on github pages  
 Dev deploy on 71yeti.fr

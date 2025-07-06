@@ -108,6 +108,7 @@ export enum MenuItemType {
   SETS,
   RULES,
   CARDS,
+  SEARCHCARDS,
   BOXES,
   SETTINGS
 }
@@ -122,6 +123,7 @@ let MENU_ITEMS = [
   new LocalMenuItem(MenuItemType.SETS, "Recommended Kingdoms", "/sets"),
   new LocalMenuItem(MenuItemType.RULES, "Rules", "/rulebooks"),
   new LocalMenuItem(MenuItemType.BOXES, "Box content", "/boxes"),
+  new LocalMenuItem(MenuItemType.SEARCHCARDS, "Search Cards", "/searchcards"),
   new LocalMenuItem(MenuItemType.SETTINGS, "Settings", "/settings")
 ];
 
@@ -191,11 +193,12 @@ export default defineComponent({
        * Menu button : 80
        * Ajustement : 75
        */
-      // forcing only 2 menu
-      if (WindowStore.width < (20 + 385 +  125 + 220 + 75 + 80 + 75)) {
-        return FirstPart ?  
-          MENU_ITEMS.slice(0, 2):
-          MENU_ITEMS.slice(2,10);
+      if (nbEntry != 0) {
+        if (WindowStore.width < (20 + 385 +  125 + 220 + 75 + 80 + 75)) {
+          return FirstPart ?  
+            MENU_ITEMS.slice(0, 2):
+            MENU_ITEMS.slice(2,10);
+        }
       }
       return FirstPart ?  
           MENU_ITEMS.slice(0, nbEntry):

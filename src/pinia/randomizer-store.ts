@@ -188,7 +188,7 @@ export const useRandomizerStore = defineStore(
         let addonsForAdjustement ={ 
           events: initialKingdom.events, landmarks: initialKingdom.landmarks, 
           projects: initialKingdom.projects, ways: initialKingdom.ways, 
-          allies: [], prophecy: [], traits: initialKingdom.traits
+          allies: [], prophecies: [], traits: initialKingdom.traits
         } as unknown as Addons;
         if (supply) {
           EventTracker.trackEvent(EventType.LOAD_PARTIAL_KINGDOM_FROM_URL);

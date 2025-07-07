@@ -23,6 +23,7 @@ docs/locales/*.json
 process/processed/
 process/resources/Pages.csv
 package-lock.json   
+bun.lock
 src/i18n/locales/messages/
 
 # other files anf folders

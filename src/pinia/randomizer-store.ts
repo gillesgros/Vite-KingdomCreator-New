@@ -17,7 +17,6 @@ import { SetId } from "../dominion/set-id";
 import { CostType } from "../dominion/cost-type";
 import { Boon } from "../dominion/boon";
 import { Ally } from "../dominion/ally";
-import { Prophecy } from "../dominion/prophecy";
 import { Randomizer } from "../randomizer/randomizer";
 
 import { EventTracker } from "../analytics/follow-activity";

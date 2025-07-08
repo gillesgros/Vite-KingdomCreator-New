@@ -3,13 +3,17 @@
     <h3>{{ $t("Results") }} ({{ cards.length }})</h3>
     <div class="card-grid">
       <div v-for="card in cards" :key="card.id" class="card-grid-item">
+
+      <div class="beforeStaticSet">
         <StaticCardWithSet :card="card" style="position:unset;"/>
+      </div>
         <div class="card-details">
           <span class="card-name">{{ $t(card.id) }}</span>
           <span class="card-set">{{ getSetName(card.setId) }}</span>
           <span class="card-cost">{{ getCostName(card.cost) }}</span>
           <span class="card-types">{{ getCardTypeNames(card) }}</span>
         </div>
+
       </div>
     </div>
     <p v-if="cards.length === 0">{{ $t("No cards found matching your criteria.") }}</p>
@@ -97,20 +101,33 @@ h3 {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 18px;
   margin-bottom: 20px;
+  align-items: start;
+  border-bottom: 1px solid #ccc;
 }
 
 .card-grid-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   background: #f9f9f9;
   border: 1px solid #eee;
   border-radius: 8px;
   padding: 10px 6px 12px 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  max-width: 180px;
+  width: 180px;
+  max-width: 100%;
+}
+
+.beforeStaticSet{
+  display: flex;
+  flex-direction: column;
+  position : relative;
+}
+
+.beforeStaticSet img {
   width: 100%;
+  height: auto;
+  display: block;
 }
 
 .card-details {

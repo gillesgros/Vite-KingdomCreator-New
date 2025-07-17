@@ -1,13 +1,16 @@
 <template>
   <div class="sidebar">
+        <a class="standard-button standard-button--is-primary standard-button--large desktop_randomize-button masking-button">
+      {{ "placeHolder" }}
+    </a> 
     <div class="sidebar-content filters">
-      <div class="sidebar-content-title">{{ $t("Search Filters") }}</div>
+      <div class="sidebar-content-title">{{ $t("SearchFilters") }}</div>
       <div class="filter-group">
-        <label for="cardName" class="sidebar-content-title">{{ $t("Card Name (partial)") }}:</label>
+        <div for="cardName" class="checkbox">{{ $t("CardName_Partial") }}:</div>
         <input type="text" id="cardName" :value="searchName" @input="updateSearchName" class="sidebar-input" />
       </div>
-      <div class="sidebar-content-title">{{ $t("Set(s)") }}</div>
-      <div class="filter-group sets">
+      <div class="checkbox">{{ $t("SetsFilter") }}</div>
+      <div class="filter-group">
         <div class="listbox-container">
           <Listbox :modelValue="selectedSetIds" multiple @update:modelValue="updateSelectedSetIds">
             <div class="settingsInput listbox-wrapper">
@@ -37,7 +40,7 @@
           </Listbox>
         </div>
       </div>
-      <div class="sidebar-content-title">{{ $t("Type(s)") }}</div>
+      <div class="checkbox">{{ $t("TypesFilter") }}</div>
       <div class="filter-group">
         <div class="listbox-container">
           <Listbox :modelValue="selectedCardTypes" multiple @update:modelValue="updateSelectedCardTypes">
@@ -56,7 +59,7 @@
                   <ListboxOption v-slot="{ active, selected }" v-for="visibleType in allVisibleCardTypes"
                     :key="visibleType.type" :value="visibleType.type" as="template">
                     <li class="listboxOption" :class="{ 'active-listbox-option': active }">
-                      <span class="truncate-block">{{ visibleType.name }}</span>
+                      <span class="truncate-block">{{ $t(visibleType.name) }}</span>
                       <span v-if="selected" class="listboxOptionSelected">
                         <CheckIcon class="chevronlistboxIcon" aria-hidden="true" />
                       </span>
@@ -68,7 +71,7 @@
           </Listbox>
         </div>
       </div>
-      <div class="sidebar-content-title">{{ $t("Cost(s)") }}</div>
+      <div class="checkbox">{{ $t("CostsFilter") }}</div>
       <div class="filter-group">
         <div class="listbox-container">
           <Listbox :modelValue="selectedCostTypes" multiple @update:modelValue="updateSelectedCostTypes">
@@ -87,7 +90,7 @@
                   <ListboxOption v-slot="{ active, selected }" v-for="visibleCost in visibleCosts"
                     :key="visibleCost.type" :value="visibleCost.type" as="template">
                     <li class="listboxOption" :class="{ 'active-listbox-option': active }">
-                      <span class="truncate-block">{{ visibleCost.name }}</span>
+                      <span class="truncate-block">{{ $t(visibleCost.name) }}</span>
                       <span v-if="selected" class="listboxOptionSelected">
                         <CheckIcon class="chevronlistboxIcon" aria-hidden="true" />
                       </span>
@@ -182,40 +185,40 @@ export default defineComponent({
 
     const getButtonTextForSets = (selectedIds: SetId[]) => {
       if (selectedIds.length === 0) {
-        return t('Any Set');
+        return t('AnySet');
       } else if (selectedIds.length === sets.value.length) {
-        return t('All Sets Selected');
+        return t('AllSetsSelected');
       } else {
         const selectedNames = selectedIds.map(id => t(id));
-        return `${selectedNames.length} ${t('sets selected')}: ${selectedNames.join(', ')}`;
+        return `${selectedNames.length} ${t('SetsSelected', selectedNames.length)}: ${selectedNames.join(', ')}`;
       }
     };
 
     const getButtonTextForTypes = (selectedTypes: CardType[]) => {
       if (selectedTypes.length === 0) {
-        return t('Any Type');
+        return t('AnyType');
       } else if (selectedTypes.length === allVisibleCardTypes.length) {
-        return t('All Types Selected');
+        return t('AllTypesSelected');
       } else {
         const selectedNames = selectedTypes.map(type => {
           const visibleType = VISIBLE_CARD_TYPES.find(vt => vt.type === type);
           return visibleType ? visibleType.name : type;
         });
-        return `${selectedNames.length} ${t('types selected')}: ${selectedNames.join(', ')}`;
+        return `${selectedNames.length} ${t('TypesSelected', selectedNames.length)}: ${selectedNames.join(', ')}`;
       }
     };
 
     const getButtonTextForCosts = (selectedCosts: CostType[]) => {
       if (selectedCosts.length === 0) {
-        return t('Any Cost');
+        return t('AnyCost');
       } else if (selectedCosts.length === visibleCosts.length) {
-        return t('All Costs Selected');
+        return t('AllCostsSelected');
       } else {
         const selectedNames = selectedCosts.map(cost => {
           const visibleCost = VISIBLE_COSTS.find(vc => vc.type === cost);
           return visibleCost ? visibleCost.name : cost;
         });
-        return `${selectedNames.length} ${t('costs selected')}: ${selectedNames.join(', ')}`;
+        return `${selectedNames.length} ${t('CostsSelected', selectedNames.length)}: ${selectedNames.join(', ')}`;
       }
     };
 
@@ -236,43 +239,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.sidebar {
-  width: 300px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 0;
-  margin: 0;
-}
-.sidebar-content.filters {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.sidebar-content-title {
-  font-weight: bold;
-  font-size: 1.1em;
-  margin-bottom: 8px;
-  margin-top: 10px;
-  color: #333;
-}
+
+
 .filter-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 8px;
 }
-.sidebar-input {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 100%;
-  font-size: 1em;
-}
-.sets {
-  margin-bottom: 10px;
-}
+
 
 /* Styles from SearchCards.vue for filter-group and listbox components */
 .search-filters {
@@ -288,7 +263,7 @@ export default defineComponent({
 .filter-group {
   display: flex;
   flex-direction: column;
-  min-width: 250px;
+  /*min-width: 250px;*/
 }
 
 .filter-group label {
@@ -300,7 +275,7 @@ export default defineComponent({
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  width: 100%;
+ 
 }
 
 .listbox-container {
@@ -324,7 +299,7 @@ export default defineComponent({
   padding: .5rem 2.5rem .5rem .75rem;
   border: 1px solid #ccc;
   background-color: #fff;
-  font-size: 0.9em;
+  /* font-size: 0.9em; */
 }
 
 .listboxCard:focus {
@@ -428,7 +403,26 @@ export default defineComponent({
   }
   .filter-group {
     min-width: unset;
-    width: 100%;
+    width: 85%;
   }
+}
+
+.desktop_randomize-button,
+.condensed_randomize-button {
+  display: block;
+  margin: 2px;
+}
+
+.condensed_randomize-button {
+  margin-top: 12px;
+}
+
+.masking-button {
+  background: unset;
+  border-color: unset;
+  box-shadow: unset;
+  color:#ffffff;
+  pointer-events: none;
+  cursor: default;
 }
 </style>

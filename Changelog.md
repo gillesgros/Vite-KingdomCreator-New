@@ -15,20 +15,28 @@ it uses vue 3, vite.js, Pinia, vue-i18n and node.js v22
 **2025/07/10 - 6.4.8**  
 Dev deploy on github pages  
 Dev deploy on 71yeti.fr
->**Fix** - blakevanlan/KingdomCreator #202 - BTypo in Owned Set Settings menu
->**Fix** - blakevanlan/KingdomCreator #196 - Bug with Addons Settings
->**Feat** - blakevanlan/KingdomCreator #93 - Request cost deselect all button
->**Fix** - Correct display of menu on smartphone (small screen)
->**Feat** - Extend list of supply card type for SupplyCard replacement windows
+>**Fix** - blakevanlan/KingdomCreator #202 - Typo in Owned Set Settings menu  
+>**Fix** - blakevanlan/KingdomCreator #196 - Bug with Addons Settings  
+>**Feat** - blakevanlan/KingdomCreator #93 - Request cost deselect all button  
+>**Fix** - Correct display of menu on smartphone (small screen)  
+>**Feat** - Extend list of supply card type for SupplyCard replacement windows  
 >**Feat** - Search SupplyCard with criteria Set, Type, Cost 
+>**Feat** - Rendering menu dynamicaly
+>**Fix** - Fix windows resize for Custom setting page
+>**Fix** - blakevanlan/KingdomCreator #192 - Randomization Issues  
+           Add trace for candidate card selection and for candidate cards for addons  
+           To do : description of selection process    
+>**Fix** - blakevanlan/KingdomCreator #193 - Issues Randomizing Events, Landmarks, Projects, Ways & Traits After the Initial Set Creation   
+           Adjust number of cards selectd   
+           To do : add modal windows for addons selection process   
 
 **2025/05/20 - 6.4.7**  
 Dev deploy on github pages  
 Dev deploy on 71yeti.fr
->**Fix** - blakevanlan/KingdomCreator #190 - Bug: Issue: Link to issue page broken
->**Fix** - blakevanlan/KingdomCreator #191 - Issue: Reaction cards (set Patron reaction:true)
->**Fix** - blakevanlan/KingdomCreator PR # 189 - fix: Fix string key
->**Fix** - blakevanlan/KingdomCreator PR # 188 - fix(build): Fix build on Linux systems
+>**Fix** - blakevanlan/KingdomCreator #190 - Bug: Issue: Link to issue page broken  
+>**Fix** - blakevanlan/KingdomCreator #191 - Issue: Reaction cards (set Patron reaction:true)  
+>**Fix** - blakevanlan/KingdomCreator PR # 189 - fix: Fix string key  
+>**Fix** - blakevanlan/KingdomCreator PR # 188 - fix(build): Fix build on Linux systems  
 >**Feat** - blakevanlan/KingdomCreator PR # 187 - feat: Add Italian translation
 
 **2025/01/31 - 6.4.6**  

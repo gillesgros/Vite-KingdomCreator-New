@@ -231,6 +231,7 @@ export function createRandomizerOptionsBuilder(context: randomizerStoreState) {
   const randomizerSettings = context.settings.randomizerSettings;
   return new RandomizerOptionsBuilder()
       .setRequireActionProvider(randomizerSettings.requireActionProvider)
+      .setRequireCardProvider(randomizerSettings.requireCardProvider)
       .setRequireBuyProvider(randomizerSettings.requireBuyProvider)
       .setRequireTrashing(randomizerSettings.requireTrashing)
       .setRequireReactionIfAttacks(randomizerSettings.requireReaction)

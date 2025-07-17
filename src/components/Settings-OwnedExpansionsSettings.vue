@@ -152,7 +152,7 @@ export default defineComponent({
   border-left: 2px solid #ccc; 
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .OwnedSize {
     /* Adjust styles for smaller screens, if needed */
     width: 100%; /* Adjust width for smaller devices */

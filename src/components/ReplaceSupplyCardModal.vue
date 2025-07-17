@@ -7,10 +7,10 @@
       <div class="modal-container" v-if="specifying" @keydown.esc="handleEscapeKey">
         <div class="modal" tabindex="0" ref="modal">
           <div class="modal__title">
-            Replace {{ specifying.name }}
+            {{ $t("ReplaceModal") }} {{ specifying_names }}
           </div>
           <div class="modal__subtitle">
-            Customize the replacement card
+            {{ $t('Customize the replacement card') }}
           </div>
           <div class="modal__body">
             <div class="modal__body__section">
@@ -38,7 +38,7 @@
               <div class="modal__body__section__options">
                 <div class="modal__body__section__option">
                   <label class="checkbox">
-                    <input type="radio" id="selectedType" :value="null" v-model="filteredVisibleTypes" />
+                    <input type="radio" id="selectedType" :value="null" v-model="selectedType" />
                     <span>Any Type</span>
                   </label>
                 </div>
@@ -97,6 +97,7 @@ import { Randomizer } from "../randomizer/randomizer";
 
 /* import store  */
 import { useRandomizerStore } from "../pinia/randomizer-store";
+import { useI18n } from "vue-i18n";
 import type { RandomizeSupplyCardParams } from "../pinia/randomizer-store";
 import  { getUnselectedSupplyCards, getSelectedSupplyCards } from "../pinia/randomizer-actions"
 import { VISIBLE_CARD_TYPES } from "../dominion/card-type"
@@ -107,8 +108,9 @@ import { VISIBLE_COSTS } from "../dominion/cost-type"
 export default defineComponent({
   name: "ReplaceSupplyCardModal",
   setup() {
+    const { t } = useI18n()
     const randomizerStore = useRandomizerStore()
-    const selectedSetIds = computed(() => randomizerStore.settings.selectedSets);
+    const selectedSetIds = computed(() => { console.log (randomizerStore.selection); return randomizerStore.settings.selectedSets});
     const selectedSetId = ref<SetId | null>(null);
     const selectedType = ref<CardType | null>(null);
     const selectedCosts = ref<CostType[]>(VISIBLE_COSTS.map(cost => cost.type)); 
@@ -121,7 +123,6 @@ export default defineComponent({
     const filteredVisibleTypes = computed(() => {
       const randomizerSettings = randomizerStore.settings.randomizerSettings;
       let outputTypes = []; // Commencez avec tous les types visibles
-    
       const excludeCardIds = getSelectedSupplyCards(randomizerStore).map((card) => card.id);
       const includeCardIds = getUnselectedSupplyCards(randomizerStore).map((card) => card.id);
     
@@ -132,22 +133,12 @@ export default defineComponent({
           allSupplyCards.filter(Cards.filterByIncludedSetIds(selectedSetIds.value)), [])
           .filter(card => !excludeCardIds.includes(card.id))
           .filter(card => !includeCardIds.includes(card.id))
-      console.log(allSupplyCardsToUse.some(card => card.isOfType(CardType.RESERVE)));
-      console.log("allSupplyCardsToUse:", allSupplyCardsToUse)
-      console.log("allSupplyCards:", allSupplyCards)
       for (const visibleType of VISIBLE_CARD_TYPES) {
         if (visibleType.type === CardType.ATTACK  && !randomizerSettings.allowAttacks)  // Supposons que randomizerSettings.allowAttacks existe
           continue;
-        if (allSupplyCardsToUse.some(card => {
-          if (card.isOfType(visibleType.type))
-            console.log(visibleType.type, card.id)
-          return card.isOfType(visibleType.type)
-        }))
+        if (allSupplyCardsToUse.some(card => card.isOfType(visibleType.type)))
           outputTypes.push(visibleType);
       }
-
-
-      //Duration
     
       return outputTypes;
     })
@@ -157,6 +148,7 @@ export default defineComponent({
     const visibleCosts = VISIBLE_COSTS;
 
     const specifying = computed(() => { return randomizerStore.specifyingReplacementSupplyCard });
+    const specifying_names= computed(() => { return randomizerStore.selection.selectedSupplyIds.map(c=>t(c)).join(', ') });
     const handleSpecifyingChanged = () => {
       // Focus the modal so that escape works properly.	
       setTimeout(() => {
@@ -198,6 +190,7 @@ export default defineComponent({
     
     return {
       specifying,
+      specifying_names,
       selectedSetId,
       selectedType,
       selectedCosts,

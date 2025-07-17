@@ -1,8 +1,6 @@
 <template>
   <Page :subtitle="$t('search_cards_page_subtitle')">
     <div class="content">
-      <div class="sidebar">
-      <div class="search-criteria-container">
         <SearchFilters
           :searchName="searchName"
           :selectedSetIds="selectedSetIds"
@@ -13,8 +11,6 @@
           @update:selectedCardTypes="selectedCardTypes = $event"
           @update:selectedCostTypes="selectedCostTypes = $event"
         />
-      </div>
-      </div>
       <SearchResultsDisplay :cards="filteredCards" />
     </div>
   </Page>
@@ -120,55 +116,3 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-.content-wrapper {
-  display: flex;
-  flex-direction: column; /* Default: criteria on top, results below for mobile */
-  gap: 20px;
-  padding: 20px;
-  width: 100%;
-}
-
-.search-criteria-container {
-  /* This container helps encapsulate the filters and can be styled independently */
-  flex-shrink: 0; /* Prevent it from shrinking */
-}
-
-/* Mobile layout: criteria on top */
-@media (max-width: 768px) {
-  .content-wrapper {
-    flex-direction: column; /* Sur mobile, les critères en haut et les résultats en bas */
-    gap: 20px;
-  }
-
-  .search-criteria-container {
-    width: 100%; /* Les critères prennent toute la largeur */
-    position: static; /* Pas de position sticky sur mobile */
-  }
-
-  .search-results {
-    margin-right: 0; /* Pas d'espace entre les critères et les résultats */
-  }
-}
-
-/* Desktop/Tablet layout: criteria on the right */
-@media (min-width: 769px) {
-  .content-wrapper {
-    flex-direction: row; /* Sur ordinateur, les critères à droite et les résultats à gauche */
-    align-items: flex-start; /* Alignement en haut */
-  }
-
-  .search-criteria-container {
-    order: 2; /* Les critères à droite */
-    width: 300px; /* Largeur fixe pour la barre latérale des critères */
-    position: sticky; /* Les critères restent visibles lors du défilement */
-    top: 20px; /* Décalage par rapport au haut */
-  }
-
-  .search-results {
-    order: 1; /* Les résultats à gauche */
-    flex-grow: 1; /* Les résultats prennent l'espace restant */
-    margin-right: 20px; /* Espace entre les critères et les résultats */
-  }
-}
-</style>

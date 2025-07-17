@@ -115,6 +115,11 @@ export default defineComponent({
         ownedSets: ownedSetIds.value,
         isUsingOnlyOwnedsets: ownedRestricted.value
       });
+      // Sélectionne tous les sets possédés pour le randomizer
+      randomizerStore.UPDATE_SETTINGS({
+        selectedSets: ownedSetIds.value.map(DominionSets.convertToSetId)
+      } as SettingsParams);
+
       if (!ownedSetIds.value.some(setid => SetsStore.selectedSetId == setid)){
         SetsStore.selectedSetId=ownedSetIds.value[0];
       }

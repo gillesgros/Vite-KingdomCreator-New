@@ -102,22 +102,32 @@
           </Listbox>
         </div>
       </div>
+      <div class="clear"></div>
+      <div class="sidebar-content-title">{{ $t("Sort") }}</div>
+      <div class="filter-group">
+        <div class="option" v-for="sortOption in sortOptions" :key="sortOption.value">
+          <label class="checkbox">
+            <input type="radio" name="sortOption" :value="sortOption.value" v-model="selectedSortOption">
+            <span>{{ $t(sortOption.display) }}</span>
+          </label>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from 'vue';
-import type { PropType } from 'vue';
+import { defineComponent, computed, ref } from 'vue';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid';
 import { useI18n } from 'vue-i18n';
 import { useSettingsStore } from "../pinia/settings-store";
-
+import { useSearchStore } from "../pinia/search-store";
 import type { SetId } from "../dominion/set-id";
 import { DominionSets } from "../dominion/dominion-sets";
 import { CardType, VISIBLE_CARD_TYPES } from "../dominion/card-type";
 import { CostType, VISIBLE_COSTS } from "../dominion/cost-type";
+import { SortOption } from "../settings/settings";
 
 export default defineComponent({
   name: "SearchFilters",
@@ -129,43 +139,48 @@ export default defineComponent({
     CheckIcon,
     ChevronUpDownIcon,
   },
-  props: {
-    searchName: {
-      type: String,
-      required: true,
-    },
-    selectedSetIds: {
-      type: Array as PropType<SetId[]>,
-      required: true,
-    },
-    selectedCardTypes: {
-      type: Array as PropType<CardType[]>,
-      required: true,
-    },
-    selectedCostTypes: {
-      type: Array as PropType<CostType[]>,
-      required: true,
-    },
-  },
-  emits: ['update:searchName', 'update:selectedSetIds', 'update:selectedCardTypes', 'update:selectedCostTypes'],
-  setup(props, { emit }) {
+  setup() {
     const { t } = useI18n();
+    const SearchStore = useSearchStore();
     const SettingsStore = useSettingsStore();
 
+    const searchName = computed({
+      get: () => SearchStore.searchName,
+      set: (val: string) => SearchStore.searchName = val
+    });
+    const selectedSetIds = computed({
+      get: () => SearchStore.selectedSetIds,
+      set: (val: SetId[]) => SearchStore.selectedSetIds = val
+    });
+    const selectedCardTypes = computed({
+      get: () => SearchStore.selectedCardTypes,
+      set: (val: CardType[]) => SearchStore.selectedCardTypes = val
+    });
+    const selectedCostTypes = computed({
+      get: () => SearchStore.selectedCostTypes,
+      set: (val: CostType[]) => SearchStore.selectedCostTypes = val
+    });
+    const sortOptions = [
+      { display: "Set", value: "SET" },
+      { display: "Alphabetical", value: "ALPHABETICAL" },
+      { display: "Cost", value: "COST" },
+    ];
+    const selectedSortOption = computed({
+      get: () => SearchStore.selectedSortOption,
+      set: (val: string) => SearchStore.selectedSortOption = val
+    });
+
     const updateSearchName = (event: Event) => {
-      emit('update:searchName', (event.target as HTMLInputElement).value);
+      searchName.value = (event.target as HTMLInputElement).value;
     };
-
     const updateSelectedSetIds = (value: SetId[]) => {
-      emit('update:selectedSetIds', value);
+      selectedSetIds.value = value;
     };
-
     const updateSelectedCardTypes = (value: CardType[]) => {
-      emit('update:selectedCardTypes', value);
+      selectedCardTypes.value = value;
     };
-
     const updateSelectedCostTypes = (value: CostType[]) => {
-      emit('update:selectedCostTypes', value);
+      selectedCostTypes.value = value;
     };
 
     const sets = computed(() => {
@@ -223,6 +238,10 @@ export default defineComponent({
     };
 
     return {
+      searchName,
+      selectedSetIds,
+      selectedCardTypes,
+      selectedCostTypes,
       updateSearchName,
       updateSelectedSetIds,
       updateSelectedCardTypes,
@@ -233,13 +252,17 @@ export default defineComponent({
       getButtonTextForSets,
       getButtonTextForTypes,
       getButtonTextForCosts,
+      sortOptions,
+      selectedSortOption,
     };
   },
 });
 </script>
 
 <style scoped>
-
+:root {
+  --primary-font: 'Segoe UI', 'Arial', sans-serif;
+}
 
 .filter-group {
   display: flex;
@@ -299,6 +322,8 @@ export default defineComponent({
   padding: .5rem 2.5rem .5rem .75rem;
   border: 1px solid #ccc;
   background-color: #fff;
+  font-family: var(--primary-font);
+  font-weight: bold;
   /* font-size: 0.9em; */
 }
 
@@ -425,4 +450,5 @@ export default defineComponent({
   pointer-events: none;
   cursor: default;
 }
+
 </style>

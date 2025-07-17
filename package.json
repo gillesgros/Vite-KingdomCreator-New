@@ -32,6 +32,7 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "csv-parse": "^6.1.0",
     "@inquirer/checkbox": "^4.1.9",
     "@inquirer/select": "^4.2.4",
     "@intlify/unplugin-vue-i18n": "^6.0.8",

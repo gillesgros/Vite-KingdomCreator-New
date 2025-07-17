@@ -22,6 +22,7 @@ docs/dominion-content.js
 docs/locales/*.json
 process/processed/
 process/resources/Pages.csv
+process/resources/~$Pages.xlsx
 package-lock.json   
 bun.lock
 src/i18n/locales/messages/
@@ -41,3 +42,4 @@ coverage
 
 .DS_Store
 dist
+

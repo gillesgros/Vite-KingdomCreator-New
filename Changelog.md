@@ -12,6 +12,10 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v22
 
 ### Changelog
+**2025/07/10 - 6.4.9**  
+>**Fix** - Proper alchemy divider usage based on '3+ Alchemy cards' or randomly
+>**Feat** - show console.info if session variable 'console.info' is set to true
+
 **2025/07/10 - 6.4.8**  
 Dev deploy on github pages  
 Dev deploy on 71yeti.fr

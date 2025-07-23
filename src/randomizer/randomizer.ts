@@ -242,17 +242,19 @@ export class Randomizer {
       remainingCards -= NUM_PRIORITIZED_SET;
     }
 
-    if (randomizerOptions.useAlchemyRecommendation) {
-      if (this.shouldUseAlchemyDivider(randomizerOptions)) {
-        const alchemyCardsToUse = this.getNumberOfAlchemyCardsToUse(randomizerOptions, remainingCards);
-        console.info('[Randomizer - createSupply] Using Alchemy divider, number of cards:', alchemyCardsToUse);
-        supplyBuilder.addDivider(new SetSupplyDivider(SetId.ALCHEMY, alchemyCardsToUse));
-        remainingCards -= alchemyCardsToUse;
-      } else if (randomizerOptions.setIds.length > 1) {
-        // Only ban all of the Alchemy cards when Alchemy isn't the only set selected.
-        console.info('[Randomizer - createSupply] Ban all Alchemy sets');
-        supplyBuilder.addBan(new SetSupplyBan([SetId.ALCHEMY]));
-      }
+    // Add the Alchemy divider if "+3 Alchemy cards" is selected or
+    // if Alchemy set is prioritized or randomly (1 chance out of number of sets)
+    if (randomizerOptions.useAlchemyRecommendation || this.shouldUseAlchemyDivider(randomizerOptions)) {
+      // Determine the number of Alchemy cards to use.
+      const alchemyCardsToUse = this.getNumberOfAlchemyCardsToUse(randomizerOptions, remainingCards);
+      console.info('[Randomizer - createSupply] Using Alchemy divider, number of cards:', alchemyCardsToUse);
+      supplyBuilder.addDivider(new SetSupplyDivider(SetId.ALCHEMY, alchemyCardsToUse));
+      remainingCards -= alchemyCardsToUse;
+    }
+    // if not banning all Alchemy cards to respect the recommendation 3 to 5 alchemy cards
+    else if (randomizerOptions.setIds.length > 1) {
+      console.info('[Randomizer - createSupply] Ban all Alchemy sets');
+      supplyBuilder.addBan(new SetSupplyBan([SetId.ALCHEMY]));
     }
 
     let highCardsInKingdom = -1;
@@ -277,7 +279,7 @@ export class Randomizer {
         this.correctSupplyBuilderForRequiredReaction(
           supplyBuilder, existingCards, supply.supplyCards);
       if (correctedSupplyBuilder) {
-        console.info('[Randomizer] Correction: supplyBuilder adjusted for required reaction if attacks.');
+        console.info('[Randomizer - createSupply] Correction: supplyBuilder adjusted for required reaction if attacks.');
         supplyBuilder = correctedSupplyBuilder;
         console.info('[Randomizer - createSupply] Correct Supply for Reaction, Cards to keep:', existingCards.map(c => c.id).sort());
         console.log(supplyBuilder)

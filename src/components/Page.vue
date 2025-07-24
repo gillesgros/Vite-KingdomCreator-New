@@ -185,6 +185,8 @@ export default defineComponent({
     const menuItems = ref<{ condensed: LocalMenuItem[]; extended: LocalMenuItem[] }>({ condensed: [], extended: [] });
 
     const getMenuItem = ((FirstPart: boolean) => {
+      console.log("getMenuItem called with isCondensedMenuActive:", isCondensedMenuActive.value)
+      if (isCondensedMenuActive.value) return MENU_ITEMS;
       return FirstPart ? menuItems.value.condensed : menuItems.value.extended;
     });
 

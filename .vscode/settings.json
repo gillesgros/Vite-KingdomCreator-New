@@ -31,7 +31,7 @@
     },
     "typescript.tsdk": "node_modules\\typescript\\lib",
     "editor.multiCursorModifier": "ctrlCmd",
-    //"workbench.colorTheme": "Default Dark Modern",
+    "workbench.colorTheme": "Default Dark+",
     "files.eol": "\n"
 
 }

@@ -1,3 +1,6 @@
+import '../utils/console-utils';
+// to allow console.info to be control by Console.info' == 'true' in sessionStorage
+
 import type { Addon, Addons } from "../dominion/addon";
 import { Addons_TYPE } from "../dominion/addon";
 import { CardSupplyBan } from "./card-supply-ban";
@@ -244,7 +247,7 @@ export class Randomizer {
 
     // Add the Alchemy divider if "+3 Alchemy cards" is selected or
     // if Alchemy set is prioritized or randomly (1 chance out of number of sets)
-    if (randomizerOptions.useAlchemyRecommendation || this.shouldUseAlchemyDivider(randomizerOptions)) {
+    if (this.shouldUseAlchemyDivider(randomizerOptions)) {
       // Determine the number of Alchemy cards to use.
       const alchemyCardsToUse = this.getNumberOfAlchemyCardsToUse(randomizerOptions, remainingCards);
       console.info('[Randomizer - createSupply] Using Alchemy divider, number of cards:', alchemyCardsToUse);
@@ -290,13 +293,12 @@ export class Randomizer {
     return supply;
   }
 
-  private static getAddons(setIds: SetId[]): { events: Event[], landmarks: Landmark[], projects: Project[],
-         ways: Way[], allies: Ally[], prophecies: Prophecy[], traits: Trait[]  } {
+  private static getAddons(setIds: SetId[]): Addons {
     const setsToUse = Cards.filterSetsByAllowedSetIds(DominionSets.getAllSets(), setIds);
     // ajout des exclusions/
     const excludedCardIds = initializeExcludedCardIds(setIds, []);
-    const cards = Cards.getAllCardsFromSets(setsToUse)
-        .filter(card => !excludedCardIds.includes(card.id)); 
+    const cards = this.removeDuplicateCards(Cards.getAllCardsFromSets(setsToUse)
+        .filter(card => !excludedCardIds.includes(card.id)) as SupplyCard[],[]);
     if (FORCE_ADDONS_USE()) {
         console.info('[Randomizer - getAddons] Cards candidate - FORCE_ADDONS_USE:', (cards.filter(card => (card instanceof Event)||(card instanceof Landmark)||
             (card instanceof Project)||(card instanceof Way)||(card instanceof Trait))).map(c => c.id));
@@ -412,7 +414,7 @@ export class Randomizer {
 
   static getMetadata(setIds: SetId[]) {
     const setsToUse = Cards.filterSetsByAllowedSetIds(DominionSets.getAllSets(), setIds);
-    const useColonies = this.shouldUseSpecialtyCardFromSet([SetId.PROSPERITY, SetId.PROSPERITY_2], setsToUse);
+    const useColonies = this.shouldUseSpecialtyCardFromSet([SetId.PROSPERITY, SetId.PROSPERITY_2, SetId.PROSPERITY_2_ADD], setsToUse);
     const useShelters = this.shouldUseSpecialtyCardFromSet([SetId.DARK_AGES], setsToUse);
     return new KingdomMetadata(useColonies, useShelters);
   }
@@ -550,9 +552,20 @@ export class Randomizer {
     if (randomizerOptions.setIds.indexOf(SetId.ALCHEMY) == -1) {
       return false;
     }
-    if (randomizerOptions.setIds.length < 3) {
+    // Now Alchemy Set is selected, but not prioritized.
+    
+    // If the Alchemy recommendation is enabled, use the divider.
+    // This is to respect the recommendation of 3 to 5 Alchemy cards in the kingdom.
+    if (randomizerOptions.useAlchemyRecommendation) {
       return true;
     }
+    
+    if (randomizerOptions.setIds.length < 3) {
+      // use the divider if there are less than 3 sets.
+      return true;
+    }
+    // Use the divider randomly if there are at least 3 sets. 
+    // Randomly use the divider with a probability of 1 / number of sets.
     const useRandomly = !getRandomInt(0, randomizerOptions.setIds.length);
     return useRandomly;
   }
@@ -668,3 +681,4 @@ export class Randomizer {
     return newSetId + '_' + cardId.split('_')[1];
   }
 }
+

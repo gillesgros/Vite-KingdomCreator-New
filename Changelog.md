@@ -12,13 +12,23 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v22
 
 ### Changelog
-**2025/07/10 - 6.4.9**  
+**2025/07/24 - 6.5.0**
+Dev deploy on github pages 
+>**Fix** - deduplication of candaidate cards for Addons generation
+>**Fix** - Add Prosperity Update Pack SetId for Colony/Platine usage
+>**Feat** - Start adding generation process documentation.
+>**Fix** - proper menu display on 1st load (on occasion)
 >**Fix** - Proper alchemy divider usage based on '3+ Alchemy cards' or randomly
->**Feat** - show console.info if session variable 'console.info' is set to true
+>**Fix** - Rendering menu dynamicaly
+
+**2025/07/23 - 6.4.9**  
+Dev deploy on github pages  
+>**Fix** - Proper alchemy divider usage based on '3+ Alchemy cards' or randomly **Broken**
+>**Feat** - Show console.info if sessionStorage variable 'console.info' is set to true
+>**Feat** - Startin adding generation process documentation.
 
 **2025/07/10 - 6.4.8**  
 Dev deploy on github pages  
-Dev deploy on 71yeti.fr
 >**Fix** - blakevanlan/KingdomCreator #202 - Typo in Owned Set Settings menu  
 >**Fix** - blakevanlan/KingdomCreator #196 - Bug with Addons Settings  
 >**Feat** - blakevanlan/KingdomCreator #93 - Request cost deselect all button  

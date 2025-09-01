@@ -1,23 +1,23 @@
 <template>
   <span v-if="addons.length == 0"></span>
   <span v-else-if="addons.length == 1">
-    {{ $t(addons[0]) }}
+    {{ $t(addons[0] ?? '') }}
   </span>
   <i18n-t scope="global" v-else-if="addons.length >= 2" :keypath="addonFormat" tag="span">
     <template v-slot:one>
-      {{ $t(addons[0]) }}
+      {{ $t(addons[0] ?? '') }}
     </template>
     <template v-slot:two>
-      {{ $t(addons[1]) }}
+      {{ $t(addons[1] ?? '') }}
     </template>
     <template v-if="addons.length >= 3" v-slot:three>
-      {{ $t(addons[2]) }}
+      {{ $t(addons[2] ?? '') }}
     </template>
     <template v-if="addons.length >= 4" v-slot:four>
-      {{ $t(addons[3]) }}
+      {{ $t(addons[3] ?? '') }}
     </template>
     <template v-if="addons.length >= 5" v-slot:five>
-      {{ $t(addons[4]) }}
+      {{ $t(addons[4] ?? '') }}
     </template>
   </i18n-t>
 </template>

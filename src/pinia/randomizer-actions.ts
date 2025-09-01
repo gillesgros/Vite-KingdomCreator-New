@@ -199,7 +199,7 @@ export function randomizeSelectedAlly(context: randomizerStoreState, supply: Sup
   }
   console.log('RANDOMIZE_ALLY')
   EventTracker.trackEvent(EventType.RANDOMIZE_ALLY);
-  return Randomizer.getRandomAlly(supply, selectedAlly[0].id);
+  return Randomizer.getRandomAlly(supply, selectedAlly[0]!.id);
 }
 
 export function randomizeSelectedProphecy(context: randomizerStoreState, supply: Supply) {
@@ -212,7 +212,7 @@ export function randomizeSelectedProphecy(context: randomizerStoreState, supply:
   }
   console.log('RANDOMIZE_PROPHECY')
   EventTracker.trackEvent(EventType.RANDOMIZE_PROPHECY);
-  return Randomizer.getRandomProphecy(supply, selectedProphecy[0].id);
+  return Randomizer.getRandomProphecy(supply, selectedProphecy[0]!.id);
 }
 
 export function isDistributeCostAllowed (context: randomizerStoreState) {

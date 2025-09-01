@@ -149,13 +149,13 @@ export default defineComponent({
     const getpreviousBlockType = (index: number) => {
       if (index === 0)
         return '';
-      return props.blocks[index - 1].type;
+      return props.blocks[index - 1]!.type;
     };
 
     const getnextBlockType = (index: number) => {
       if (index === props.blocks.length - 1)
         return '';
-      return props.blocks[index + 1].type;
+      return props.blocks[index + 1]!.type;
     };
 
     const leftRightMargin = computed(() => {
@@ -165,8 +165,8 @@ export default defineComponent({
 
       if (getnextBlockType(props.blockIndex) === 'coin') {
         rightMargin=0
-        if (props.blocks[props.blockIndex + 1].inner === 'P' 
-            || props.blocks[props.blockIndex + 1].inner.startsWith('D')) rightMargin = 1
+        if (props.blocks[props.blockIndex + 1]!.inner === 'P' 
+            || props.blocks[props.blockIndex + 1]!.inner.startsWith('D')) rightMargin = 1
       }
       if (getpreviousBlockType(props.blockIndex) === 'coin' ) leftMargin = 0
       if ((getpreviousBlockType(props.blockIndex) === 'italics' 
@@ -182,7 +182,7 @@ export default defineComponent({
       if (props.block.type === 'bold_italics') {
         if (props.blockIndex == props.blocks.length - 1) rightMargin = 1
         else {
-          if (props.blocks[props.blockIndex + 1].inner.startsWith('.') || props.blocks[props.blockIndex + 1].inner.startsWith(',')) rightMargin = 0
+          if (props.blocks[props.blockIndex + 1]!.inner.startsWith('.') || props.blocks[props.blockIndex + 1]!.inner.startsWith(',')) rightMargin = 0
         }
       } 
 

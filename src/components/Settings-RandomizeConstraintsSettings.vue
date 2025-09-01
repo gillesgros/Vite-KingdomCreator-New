@@ -3,9 +3,9 @@
     <div class="SettingTitle">{{ $t("Randomize constraints Settings") }}</div>
     <div class="sets-description">{{ $t("settings_subtitle_constraint") }}</div>
 
-    <div class="llevel1-div">
-      <div class="llevel2-div">
-        <SwitchGroup as="div" class="llevel3-Switch switchGroupcss">
+    <div class="switch-groupedline">
+      <div class="switch-labelAndswitch">
+        <SwitchGroup as="div" class="switch-flex switchGroupcss">
           <SwitchLabel>{{ $t("Use constraint on randomization") }}</SwitchLabel>
           <Switch as="button" v-model="constraintRandomizer" v-slot="{ checked }"
             :class="constraintRandomizer ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'" class="relative-switchcss">
@@ -15,8 +15,8 @@
       </div>
     </div>
     <div class="custom-settings">
-      <div class="constraint-container ">
-        <div class="kingdomlabel-settings">{{ $t("Sets") }}</div>
+      <div class="ownnedset-constraint-container">
+        <div class="setlabel-settings">{{ $t("Sets") }}</div>
 
         <label class="checkbox">
           <input type="radio" style="margin-left:5px;" v-model="setsOrderType" :value="'alpha'" />
@@ -33,7 +33,7 @@
           <div class="sets-column" v-for="(setId, index) in listedSetids" :key="index">
             <label class="checkbox constraintsettingscheckbox">
               <input type="checkbox" :checked="selectedSets[setId]" v-model="selectedSets[setId]">
-              <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - 1st</span></span>
+              <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - {{ $t("1st") }}</span></span>
             </label>
             <div class="nb-min-max">
               {{ $t("nb min(/nb max)") }}
@@ -47,7 +47,7 @@
               <Listbox v-model="selectedCards[setId]" multiple>
                 <div class="settingsInput" style="position:relative; width:240px">
                   <ListboxButton class="listboxCard">
-                    <span class="truncate-block"> {{ textForlistbox(selectedCards[setId], setId) }} {{ $t("cards_removed", lenghtcount(selectedCards[setId])) }} </span>
+                    <span class="truncate-block"> {{ textForlistbox(selectedCards[setId] as string[], setId) }} {{ $t("cards_removed", lenghtcount(selectedCards[setId] as string[])) }} </span>
                     <span class="chevronlistbox">
                       <ChevronUpDownIcon class="chevronlistboxIcon" />
                     </span>
@@ -277,25 +277,9 @@ export default defineComponent({
   padding-left: 2%;
   padding-right: 2%;
   width: 100%;
-  border-left: 0px solid #ccc;
+  border-top: 1px solid #ccc;
 }
 
-@media (max-width: 900px) {
-  .OwnedSize {
-    /* Adjust styles for smaller screens, if needed */
-    width: 100%;
-    /* Adjust width for smaller devices */
-    border-left: none
-  }
-}
-
-.constraint-container {
-  border-bottom: 2px solid #ccc;
-  padding-bottom: 2px;
-  margin-bottom: 10px;
-  display: flex;
-  gap: 4rem;
-}
 
 .sets-container {
   display: flex;
@@ -368,8 +352,8 @@ export default defineComponent({
 .chevronlistboxIcon {
   width: 1.25rem;
   --text-opacity: 1;
-  color: #CCC;
-  height: 1.25rem;
+  color: #02779E;
+   height: 1.25rem;
 }
 
 .listboxTransition {

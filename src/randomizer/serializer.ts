@@ -34,14 +34,14 @@ export function serializeKingdom(kingdom: Kingdom): {[index: string]: string} {
       const landmarkToSerialize=[...kingdom.landmarks]
       for (const index in landmarkToSerialize)
       {
-        if (landmarkToSerialize[index].id == OBELISK_LANDMARK_ID) {
+        if (landmarkToSerialize[index]!.id == OBELISK_LANDMARK_ID) {
           landmarkToSerialize[index] = new Landmark(
-                landmarkToSerialize[index].id, 
-                landmarkToSerialize[index].shortId+"("+kingdom.supply.obeliskCard.shortId+")",
-                landmarkToSerialize[index].setId,
-                landmarkToSerialize[index].name,
-                landmarkToSerialize[index].orderstring,
-                landmarkToSerialize[index].cost)
+                landmarkToSerialize[index]!.id, 
+                landmarkToSerialize[index]!.shortId+"("+kingdom.supply.obeliskCard.shortId+")",
+                landmarkToSerialize[index]!.setId,
+                landmarkToSerialize[index]!.name,
+                landmarkToSerialize[index]!.orderstring,
+                landmarkToSerialize[index]!.cost)
         }
       }
       result.landmarks = serializeCards(landmarkToSerialize);
@@ -60,14 +60,14 @@ export function serializeKingdom(kingdom: Kingdom): {[index: string]: string} {
       const wayToSerialize=[...kingdom.ways]
       for (const index in wayToSerialize)
       {
-        if (wayToSerialize[index].id == MOUSE_WAY_ID) {
+        if (wayToSerialize[index]!.id == MOUSE_WAY_ID) {
           wayToSerialize[index] = new Way(
-            wayToSerialize[index].id, 
-            wayToSerialize[index].shortId+"("+kingdom.supply.mouseWay.shortId+")",
-            wayToSerialize[index].setId,
-            wayToSerialize[index].name,
-            wayToSerialize[index].orderstring,
-            wayToSerialize[index].cost)
+            wayToSerialize[index]!.id, 
+            wayToSerialize[index]!.shortId+"("+kingdom.supply.mouseWay.shortId+")",
+            wayToSerialize[index]!.setId,
+            wayToSerialize[index]!.name,
+            wayToSerialize[index]!.orderstring,
+            wayToSerialize[index]!.cost)
         }
       }
       result.ways = serializeCards(wayToSerialize);
@@ -83,14 +83,14 @@ export function serializeKingdom(kingdom: Kingdom): {[index: string]: string} {
       const prophecyToSerialize=[kingdom.prophecy]
       for (const index in prophecyToSerialize)
       {
-        if (prophecyToSerialize[index].id == APPROACHINGARMY_ID) {
+        if (prophecyToSerialize[index]!.id == APPROACHINGARMY_ID) {
           prophecyToSerialize[index] = new Prophecy(
-            prophecyToSerialize[index].id, 
-            prophecyToSerialize[index].shortId+"("+kingdom.supply.approachingArmyCard.shortId+")",
-            prophecyToSerialize[index].setId,
-            prophecyToSerialize[index].name,
-            prophecyToSerialize[index].orderstring,
-            prophecyToSerialize[index].cost)
+            prophecyToSerialize[index]!.id, 
+            prophecyToSerialize[index]!.shortId+"("+kingdom.supply.approachingArmyCard.shortId+")",
+            prophecyToSerialize[index]!.setId,
+            prophecyToSerialize[index]!.name,
+            prophecyToSerialize[index]!.orderstring,
+            prophecyToSerialize[index]!.cost)
         }
       }
       result.prophecy = serializeCards(prophecyToSerialize);
@@ -103,12 +103,12 @@ export function serializeKingdom(kingdom: Kingdom): {[index: string]: string} {
     for (const index in traitToSerialize)
     {
       traitToSerialize[index] = new Trait(
-        traitToSerialize[index].id, 
-        traitToSerialize[index].shortId+"("+kingdom.supply.traitsSupply[index].shortId+")",
-        traitToSerialize[index].setId,
-        traitToSerialize[index].name,
-        traitToSerialize[index].orderstring,
-        traitToSerialize[index].cost)
+        traitToSerialize[index]!.id, 
+        traitToSerialize[index]!.shortId+"("+kingdom.supply.traitsSupply[index]!.shortId+")",
+        traitToSerialize[index]!.setId,
+        traitToSerialize[index]!.name,
+        traitToSerialize[index]!.orderstring,
+        traitToSerialize[index]!.cost)
     } 
     result.traits = serializeCards(traitToSerialize);
     // pour chaque (traits, index), creer traiToSerialze 
@@ -203,7 +203,7 @@ export function deserializeKingdom(serializedKingdom: any, selectedSets: string[
       return match ? match[1] : ''; });
 
   const traitSupplyCards = /* transform pious(masterpiece) => masterpiece */
-      findByIds(traitssupplyIds, DominionSets.getSupplyCardById, "", selectedSets)
+      findByIds(traitssupplyIds as string [], DominionSets.getSupplyCardById, "", selectedSets)
 
   const allies = findByIds(allyIds, DominionSets.getAllyById, "ally_", selectedSets).slice(0, 1);
   const prophecies = findByIds(prophecyIds, DominionSets.getProphecyById, "prophecy_", selectedSets).slice(0, 1);
@@ -305,8 +305,8 @@ function extractStringParenthesis(arr: string[]): [string [], string[]] {
   for (let str of arr) {
     const match = str.match(/^(.*?)\((.*?)\)$/); // recherche la chaine entre ()
     if (match) {
-      array1.push(match[2]); // ajoute la cha�ne entre () � l'array1
-      array2.push(match[1]); // ajoute la cha�ne avant () � l'array2
+      array1.push(match[2] as string); // ajoute la cha�ne entre () � l'array1
+      array2.push(match[1] as string); // ajoute la cha�ne avant () � l'array2
     } else {
       array2.push(str); // sinon ajoute la string � l'array2
     }

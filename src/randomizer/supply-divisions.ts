@@ -52,8 +52,8 @@ export class SupplyDivisions {
     const cards: SupplyCard[][] = [];
     for (let i = 0; i < divisions.length; i++) {
       const division = divisions[i];
-      if (division.selectedCards.length || !division.isFilled) {
-        cards.push(division.availableCards.filter(Cards.filterByRequiredType(cardType)))
+      if (division!.selectedCards.length || !division!.isFilled) {
+        cards.push(division!.availableCards.filter(Cards.filterByRequiredType(cardType)))
       } else {
         cards.push([]);
       }
@@ -91,7 +91,7 @@ export class SupplyDivisions {
     for (let division of divisions) {
       while (!division.isFilled) {
         const selectedCard = selectRandom(division.availableCards);
-        division = division.createDivisionBySelectingCard(selectedCard.id, division.availableCards);
+        division = division.createDivisionBySelectingCard(selectedCard!.id, division.availableCards);
       }
       results.push(division);
     }

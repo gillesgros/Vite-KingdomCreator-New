@@ -1,6 +1,6 @@
 import type { Locale } from "vue-i18n";
 import { Language } from "../i18n/language";
-import { MultipleVersionSets, ImgNotInFR } from "../dominion/set-id";
+import { MultipleVersionSets, IMAGES_MISSING_FROM_TRANSLATIONS, SetId } from "../dominion/set-id";
 import { DominionSets } from "../dominion/dominion-sets";
 
 const IMAGE_PREFEX = "./img/cards";
@@ -17,55 +17,34 @@ export enum ShowOverlayOptions {
 
 export function getCardImageUrl(cardId: string, language: Language) {
   const SetName = cardId.split('_', 2);
-  const lastletter = SetName[0].slice(SetName[0].length - 1, SetName[0].length)
-  const last4letters = SetName[0].slice(SetName[0].length - 4, SetName[0].length)
+  const SetName_0_ = SetName[0] ?? ''
 
-  const cardName = cardId.replace(SetName[0] + '_', '')
+  const lastletter = SetName_0_.slice(SetName_0_.length - 1, SetName_0_.length)
+  const last4letters = SetName_0_.slice(SetName_0_.length - 4, SetName_0_.length)
+
+  const cardName = cardId.replace(SetName_0_ + '_', '')
   let localCardId = cardName
 
-  switch (language) {
-    case Language.FRENCH:
-        if (ImgNotInFR.some(x => x === SetName[0])) {
-          return `${IMAGE_PREFEX}/${SetName[0]}/${SetName[0]}_${cardName}.jpg`;
-        }
-        if (findMultipleVersionSets(SetName[0]).length == 0) {
-          return `${IMAGE_PREFEX}.${language}/${SetName[0]}/${cardName}.jpg`;
-        } else {
-          if (lastletter == "2") {
-            localCardId = SetName[0].slice(0, SetName[0].length - 1) + '_' + cardName
-            if (!DominionSets.cards[localCardId]) {
-              localCardId = SetName[0].slice(0, SetName[0].length - 1) + '2add_' + cardName
-              if (!DominionSets.cards[localCardId]) {
-                return `${IMAGE_PREFEX}.${language}/${SetName[0]}/${cardName}.jpg`;
-              } else {
-                return `${IMAGE_PREFEX}.${language}/${SetName[0].slice(0, SetName[0].length - 1) + '2add'}/${cardName}.jpg`;
-              }
-            } else {
-              return `${IMAGE_PREFEX}.${language}/${SetName[0].slice(0, SetName[0].length - 1)}/${cardName}.jpg`;
-            }
-          } else {
-            return `${IMAGE_PREFEX}.${language}/${SetName[0]}/${cardName}.jpg`;
-          }
-        }
-    default:
-      if (findMultipleVersionSets(SetName[0]).length == 0) {
-        return `${IMAGE_PREFEX}/${SetName[0]}/${SetName[0]}_${cardName}.jpg`;
-      } else {
-        if (lastletter == "2") {
-          localCardId = SetName[0].slice(0, SetName[0].length - 1) + '_' + cardName
+  if (IMAGES_MISSING_FROM_TRANSLATIONS.get(language)?.has(SetName_0_ as SetId)) {
+    return `${IMAGE_PREFEX}/${SetName_0_}/${SetName_0_}_${cardName}.jpg`;
+  }
+  if (findMultipleVersionSets(SetName_0_).length == 0) {
+      return `${IMAGE_PREFEX}.${language}/${SetName_0_}/${cardName}.jpg`;
+  } else {
+      if (lastletter == "2") {
+      localCardId = SetName_0_.slice(0, SetName_0_.length - 1) + '_' + cardName
+      if (!DominionSets.cards[localCardId]) {
+          localCardId = SetName_0_.slice(0, SetName_0_.length - 1) + '2add_' + cardName
           if (!DominionSets.cards[localCardId]) {
-            localCardId = SetName[0].slice(0, SetName[0].length - 1) + '2add_' + cardName
-            if (!DominionSets.cards[localCardId]) {
-              return `${IMAGE_PREFEX}/${SetName[0]}/${SetName[0]}_${cardName}.jpg`;
-            } else {
-              return `${IMAGE_PREFEX}/${SetName[0].slice(0, SetName[0].length - 1) + '2add'}/${localCardId}.jpg`;
-            }
+          return `${IMAGE_PREFEX}.${language}/${SetName_0_}/${cardName}.jpg`;
           } else {
-            return `${IMAGE_PREFEX}/${SetName[0].slice(0, SetName[0].length - 1)}/${localCardId}.jpg`;
+          return `${IMAGE_PREFEX}.${language}/${SetName_0_.slice(0, SetName_0_.length - 1) + '2add'}/${cardName}.jpg`;
           }
-        } else {
-          return `${IMAGE_PREFEX}/${SetName[0]}/${SetName[0]}_${cardName}.jpg`;
-        }
+      } else {
+          return `${IMAGE_PREFEX}.${language}/${SetName_0_.slice(0, SetName_0_.length - 1)}/${cardName}.jpg`;
+      }
+      } else {
+      return `${IMAGE_PREFEX}.${language}/${SetName_0_}/${cardName}.jpg`;
       }
   }
 }
@@ -101,10 +80,11 @@ export function ChangeCss(selector: string, property: string, value: string) {
   for (let i = 0; i < document.styleSheets.length; i++) {//Loop through all styles
     //Try add rule
     try {
-      document.styleSheets[i].insertRule(selector + ' {' + property + ':' + value + '}', document.styleSheets[i].cssRules.length);
+      document.styleSheets[i]?.insertRule(selector + ' {' + property + ':' + value + '}', document.styleSheets[i]?.cssRules.length);
     } catch (err) {
       try {
-        document.styleSheets[i].addRule(selector, property + ':' + value);
+        console.log("Failed to insert rule. trying addRule");
+        document.styleSheets[i]?.addRule(selector, property + ':' + value);
       } catch (err) {
         // console.log("do nothing")
       }

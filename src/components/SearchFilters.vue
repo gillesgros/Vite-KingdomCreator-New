@@ -104,13 +104,11 @@
       </div>
       <div class="clear"></div>
       <div class="sidebar-content-title">{{ $t("Sort") }}</div>
-      <div class="filter-group">
-        <div class="option" v-for="sortOption in sortOptions" :key="sortOption.value">
-          <label class="checkbox">
-            <input type="radio" name="sortOption" :value="sortOption.value" v-model="selectedSortOption">
-            <span>{{ $t(sortOption.display) }}</span>
-          </label>
-        </div>
+      <div class="option" v-for="sortOption in sortOptions" :key="sortOption.value">
+        <label class="checkbox">
+          <input type="radio" name="sortOption" :value="sortOption.value" v-model="selectedSortOption">
+          <span>{{ $t(sortOption.display) }}</span>
+        </label>
       </div>
     </div>
   </div>

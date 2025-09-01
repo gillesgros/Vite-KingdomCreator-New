@@ -3,9 +3,9 @@
     <div class="SettingTitle">{{ $t("Owned sets Settings") }}</div>
     <div class="sets-description">{{ $t("settings_subtitle_owned_sets") }}</div>
 
-    <div class="llevel1-div">
-      <div class="llevel2-div">
-        <SwitchGroup as="div" class="llevel3-Switch switchGroupcss">
+    <div class="switch-groupedline">
+      <div class="switch-labelAndswitch">
+        <SwitchGroup as="div" class="switch-flex switchGroupcss">
           <SwitchLabel>{{ $t("Use Custom Configuration for Set Display") }}</SwitchLabel>
           <Switch as="button" v-model="ownedRestricted" v-slot="{ checked }" :class="ownedRestricted ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'"
             class="relative-switchcss">
@@ -14,50 +14,37 @@
         </SwitchGroup>
       </div>
     </div>
-    <div class="custom-settings">
-      <div class="onwedset-container ">
-        <div class="kingdomlabel-settings" >{{ $t("Sets") }}</div>
-
-        <label class="checkbox">
+    <div class="sidebar"> 
+      <div class="sidebar-content filters">
+        <div class="ownnedset-constraint-container">
+          <div class="setlabel-settings">{{ $t("Sets") }}</div>
+          <label class="checkbox sidebar-content-option">
             <input type="radio" style="margin-left:5px;" v-model="setsOrderType" :value="'alpha'" />
             <span>{{ $t("Alphabetical") }}</span>
-        </label> 
-        <label class="checkbox" style="margin-left:10px;">
+          </label>
+          <label class="checkbox sidebar-content-option" style="margin-left:10px;">
             <input type="radio" style="margin-left:5px;" v-model="setsOrderType" :value="'date'" />
             <span>{{ $t("Date") }}</span>
-        </label>
+          </label>
 
-      </div> 
-      <div class="sets-container">
-    <div class="sets-grid">
-      <div class="sets-column" v-for="(setId, index) in listedSetids.slice(0, Math.ceil(listedSetids.length / 2))" :key="index">
-        <label class="checkbox">
-          <input type="checkbox" v-model="ownedSetIds" :id="setId" :value="setId">
-          <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - 1st</span></span>
-        </label>
-        <template v-for="(version, versionIndex) in FindMultipleVersionSets(setId)" :key="versionIndex">
-          <label class="checkbox suboption-set">
-            <input type="checkbox" v-model="ownedSetIds" :id="version.idv2" :value="version.idv2">
-            <span>2nd</span>
-          </label>
-        </template>
+        </div>
+
+        <div class="sets">
+          <div class="set" v-for="setId in listedSetids" :key="setId">
+            <label class="checkbox">
+              <input :id="setId" type="checkbox" v-model="ownedSetIds"  :value="setId">
+              <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - {{ $t("1st") }}</span></span>
+            </label>
+            <span v-if="FindMultipleVersionSets(setId).length !== 0">
+              <label class="checkbox suboption-set">
+                <input :id="(FindMultipleVersionSets(setId))[0]!.idv2" type="checkbox" v-model="ownedSetIds" 
+                  :value="(FindMultipleVersionSets(setId))[0]!.idv2">
+                <span>{{ $t("2nd") }}</span>
+              </label>
+            </span>
+          </div>
+        </div>
       </div>
-      </div>
-      <div class="sets-grid">
-      <div class="sets-column" v-for="(setId, index) in listedSetids.slice(Math.ceil(listedSetids.length / 2))" :key="index">
-        <label class="checkbox">
-          <input type="checkbox" v-model="ownedSetIds" :id="setId" :value="setId">
-          <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - 1st</span></span>
-        </label>
-        <template v-for="(version, versionIndex) in FindMultipleVersionSets(setId)" :key="versionIndex">
-          <label class="checkbox suboption-set">
-            <input type="checkbox" v-model="ownedSetIds" :id="version.idv2" :value="version.idv2">
-            <span>2nd</span>
-          </label>
-        </template>
-      </div>
-    </div>
-  </div>
     </div>
   </div>
 </template>
@@ -121,10 +108,10 @@ export default defineComponent({
       } as SettingsParams);
 
       if (!ownedSetIds.value.some(setid => SetsStore.selectedSetId == setid)){
-        SetsStore.selectedSetId=ownedSetIds.value[0];
+        SetsStore.selectedSetId = ownedSetIds.value[0] ?? SetsStore.selectedSetId;
       }
       if (!ownedSetIds.value.some(setid => SetsStore.selectedBoxesSetId== setid)){
-        SetsStore.selectedBoxesSetId=ownedSetIds.value[0];
+        SetsStore.selectedBoxesSetId=ownedSetIds.value[0] ?? SetsStore.selectedBoxesSetId;
       }
       const ownedIdsSet = new Set(ownedSetIds.value);
       const filteredSelectedIds = randomizerStore.settings.selectedSets.filter((sid) => ownedIdsSet.has(sid) === true);
@@ -150,6 +137,18 @@ export default defineComponent({
 </script>
 
 <style scoped>
+
+.content .sidebar
+{
+  width: unset;
+  float: unset;
+  margin-bottom: unset;
+}
+
+.sidebar .sidebar-content {
+  border-width: 0px; 
+} 
+
 .OwnedSize {
   padding-left: 2%;
   padding-right: 2%;
@@ -165,34 +164,25 @@ export default defineComponent({
   }
 }
 
-.onwedset-container{
-  border-bottom: 2px solid #ccc;
-  padding-bottom: 2px;
-  margin-bottom: 10px;
-  display: flex;
-  gap: 4rem;
-}
+
+.content
+  .sets
+    .set {
+      width: 50%;
+      float: left;
+    }
+
 
 .sets-container {
-  display: flex;
-  flex-direction: row;
-  row-gap: 1%;
+  width: 100%;
+  padding: 10px;
 }
 
-.sets-grid {
+
+
+.sets-row {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  row-gap: 1%;
-  width: 60%;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
 }
-.sets-grid:nth-child(2){
-  width: 40%;
-}
-
-.sets-column {
-  display: flex;
-  flex-direction: row;
-}
-
-
 </style>

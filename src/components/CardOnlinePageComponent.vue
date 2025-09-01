@@ -155,7 +155,7 @@
     </div>
   </div>
   <pre v-if="CardsToDisplay.length == 1" class="content Coef_scale12 card-rows" style="white-space: pre-wrap; font-family:Arial, Helvetica, sans-serif">
-    {{ CardsToDisplay[0].text_html }}
+    {{ CardsToDisplay[0]!.text_html }}
   </pre>
 </template>
 
@@ -300,8 +300,8 @@ export default defineComponent({
         const newWork: DigitalCard = {
             ...Work_Card, // Copy properties from Work_Card
             // Override secific properties
-            artwork: LocalTemp_CardsList[0].artwork,
-            frenchName: LocalTemp_CardsList[0].frenchName,
+            artwork: LocalTemp_CardsList[0]!.artwork,
+            frenchName: LocalTemp_CardsList[0]!.frenchName,
             text_html: Work_Card.text_html,
           };
  
@@ -741,8 +741,8 @@ export default defineComponent({
         const newWork: DigitalCard = {
             ...Work_Card, // Copy properties from Work_Card
             // Override secific properties
-            artwork: LocalTemp_CardsList[0].artwork,
-            frenchName: LocalTemp_CardsList[0].frenchName,
+            artwork: LocalTemp_CardsList[0]!.artwork,
+            frenchName: LocalTemp_CardsList[0]!.frenchName,
             text_html: Work_Card.text_html,
           };
  

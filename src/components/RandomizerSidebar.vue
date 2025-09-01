@@ -28,8 +28,8 @@
           </label>
           <span v-if="FindMultipleVersionSets(setId).length !== 0">
             <label class="checkbox suboption-set">
-              <input :id="(FindMultipleVersionSets(setId))[0].idv2" type="checkbox" v-model="selectedSetIds" 
-                :value="(FindMultipleVersionSets(setId))[0].idv2">
+              <input :id="(FindMultipleVersionSets(setId))[0]!.idv2" type="checkbox" v-model="selectedSetIds" 
+                :value="(FindMultipleVersionSets(setId))[0]!.idv2">
               <span>{{ $t("2nd") }}</span>
             </label>
           </span>
@@ -245,7 +245,7 @@ export default defineComponent({
       get: () => { return randomizerSettings.value.prioritizeSet != null },
       set: (value: boolean) => {
         const setId = value && selectedSetIds.value.length
-          ? DominionSets.convertToSetId((selectedSetIds.value).concat().sort()[0])
+          ? DominionSets.convertToSetId((selectedSetIds.value).concat().sort()[0] as string)
           : null;
         updateRandomizerSettings({ prioritizeSet: setId });
       }

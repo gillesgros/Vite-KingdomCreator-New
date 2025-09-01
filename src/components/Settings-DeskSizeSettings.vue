@@ -3,9 +3,9 @@
     <div class="SettingTitle">{{ $t("Desk Size Setting") }}</div>
     <div class="sets-description">{{ $t("settings_subtitle_desksize") }}</div>
 
-    <div class="llevel1-div">
-      <div class="llevel2-div">
-        <SwitchGroup as="div" class="llevel3-Switch switchGroupcss">
+    <div class="switch-groupedline">
+      <div class="switch-labelAndswitch">
+        <SwitchGroup as="div" class="switch-flex switchGroupcss">
           <SwitchLabel>{{ $t("Use Custom Configuration for DeckSize") }}</SwitchLabel>
           <Switch as="button" v-model="isUsingCustomDesksize" v-slot="{ checked }" :class="isUsingCustomDesksize ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'"
             class="relative-switchcss">

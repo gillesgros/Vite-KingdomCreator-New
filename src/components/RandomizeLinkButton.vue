@@ -65,8 +65,8 @@ export default defineComponent({
           props.kingdom.projectIds.map(Id => DominionSets.getProjectById(Id)),
           props.kingdom.wayIds.map(Id => DominionSets.getWayById(Id)),
           props.kingdom.boonIds.map(Id => DominionSets.getBoonById(Id)),
-          props.kingdom.allyIds.map(Id => DominionSets.getAllyById(Id))[0],
-          props.kingdom.prophecyIds.map(Id => DominionSets.getProphecyById(Id))[0],
+          props.kingdom.allyIds.map(Id => DominionSets.getAllyById(Id))[0] ?? null,
+          props.kingdom.prophecyIds.map(Id => DominionSets.getProphecyById(Id))[0] ?? null,
           props.kingdom.traitIds.map(Id => DominionSets.getTraitById(Id)),
           props.kingdom.metadata)
 

@@ -12,6 +12,13 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v22
 
 ### Changelog
+**2025/09/05 - 6.6.0**
+Dev deploy on github pages 
+>**Fix** - blakevanlan/KingdomCreator #207 - Underling cost  
+>**Feat** - blakevanlan/KingdomCreator PR #209 - Added missing Dutch Seaside translations  
+>**Feat** - blakevanlan/KingdomCreator PR #206 - Polish translations  
+>**Feat** - add and update ToDo
+
 **2025/07/24 - 6.5.0**
 Dev deploy on github pages 
 >**Fix** - deduplication of candaidate cards for Addons generation

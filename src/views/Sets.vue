@@ -86,11 +86,11 @@ export default defineComponent({
     });
 
     const setfilter = (setid: string) => {
-      let elm = document.getElementById(setid)!;
-      if (elm.getAttribute('class')!.includes(setid)) {
-        elm.setAttribute('class', 'preset-kingdom_set-name filter-in ')
+      const elm = document.getElementById(setid);
+      if (elm?.getAttribute('class')?.includes(setid)) {
+        elm?.setAttribute('class', 'preset-kingdom_set-name filter-in ')
       } else {
-        elm.setAttribute('class', 'preset-kingdom_set-name filter-out ' + setid)
+        elm?.setAttribute('class', 'preset-kingdom_set-name filter-out ' + setid)
       }
       forceRerender();
     };
@@ -98,8 +98,8 @@ export default defineComponent({
     const resetfilter = () => {
       let dominionSets = DominionSets.getAllSets()
       for (let set in dominionSets) {
-        let elm = document.getElementById(dominionSets[set].setId)!;
-        elm.setAttribute('class', 'preset-kingdom_set-name filter-out ' + dominionSets[set].setId)
+        let elm = dominionSets[set]?.setId ? document.getElementById(dominionSets[set].setId)! : null;
+        elm?.setAttribute('class', 'preset-kingdom_set-name filter-out ' + dominionSets[set]?.setId)
       }
       forceRerender()
     };

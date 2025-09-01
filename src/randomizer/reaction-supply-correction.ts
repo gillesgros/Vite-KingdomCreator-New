@@ -49,13 +49,13 @@ export class ReactionSupplyCorrection implements SupplyCorrection {
     for (let i = 0; i < divisions.length; i++) {
       const division = divisions[i];
       if (division == divisionContainingCard) {
-        if (division.unfilledCount >= 2 && availableReactionsPerDivision[i].length > 0) {
+        if (division.unfilledCount >= 2 && availableReactionsPerDivision[i]!.length > 0) {
           // Allow the attack because the division with the attack also has available
           // reactions and enough spots for one.
           return true;
         }
       } else {
-        if (!division.isFilled && availableReactionsPerDivision[i].length > 0) {
+        if (!division!.isFilled && availableReactionsPerDivision[i]!.length > 0) {
           // Another division is unfilled with available reactions.
           return true;
         }
@@ -111,7 +111,7 @@ export class ReactionSupplyCorrection implements SupplyCorrection {
     for (let division of divisions) {
       while (!division.isFilled) {
         const selectedCard = this.getRandomCard(division.availableCards);
-        division = division.createDivisionBySelectingCard(selectedCard.id);
+        division = division.createDivisionBySelectingCard(selectedCard!.id);
       }
       results.push(division);
     }
@@ -128,9 +128,9 @@ export class ReactionSupplyCorrection implements SupplyCorrection {
     }
     const segmentedRange = new SegmentedRange(0, counts);
     const divisionIndex = segmentedRange.getRandomSegmentIndex();
-    const cardToLock = this.getRandomCard(availableCardsPerDivision[divisionIndex]);
+    const cardToLock = this.getRandomCard(availableCardsPerDivision[divisionIndex] as SupplyCard[]);
     newDivisions[divisionIndex] =
-        newDivisions[divisionIndex].createDivisionByLockingCard(cardToLock.id);
+        newDivisions[divisionIndex]!.createDivisionByLockingCard(cardToLock!.id);
     return newDivisions;
   }
 

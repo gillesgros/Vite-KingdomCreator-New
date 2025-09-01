@@ -58,12 +58,12 @@ export default defineComponent({
       let newBoonIndex = 0;
       const newActiveBoons: Boon[] = [];
       for (let i = 0; i < activeBoons.value.length; i++) {
-        if (removeIds.has(activeBoons.value[i].id)) {
+        if (removeIds.has(activeBoons.value[i]!.id)) {
           if (newBoonIndex < newBoons.length) {
-            newActiveBoons.push(newBoons[newBoonIndex++]);
+            newActiveBoons.push(newBoons[newBoonIndex++] as Boon);
           }
         } else {
-          newActiveBoons.push(activeBoons.value[i]);
+          newActiveBoons.push(activeBoons.value[i] as Boon);
         }
       }
       activeBoons.value = newActiveBoons.concat(newBoons.slice(newBoonIndex));

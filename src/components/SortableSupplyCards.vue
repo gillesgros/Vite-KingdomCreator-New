@@ -193,7 +193,7 @@ export default defineComponent({
     }
     const traitsTitle = (supplyCard: SupplyCard) => {
       const index = kingdom.value.supply.traitsSupply.indexOf(supplyCard)
-      return "trait#"+ kingdom.value.traits[index].id;
+      return "trait#"+ kingdom.value.traits[index]!.id;
     }
     const handleSpecify = (supplyCard: SupplyCard) => {
       randomizerStore.UPDATE_SPECIFYING_REPLACEMENT_SUPPLY_CARD(supplyCard);
@@ -226,7 +226,7 @@ export default defineComponent({
       for (let i = 0; i < sortedSupplyCards.length; i++) {
         mappedSupplyCards[getElementIndex(i)] = sortedSupplyCards[i];
       }
-      supplyCards.value = mappedSupplyCards;
+      supplyCards.value = mappedSupplyCards as SupplyCard[];
     }
 
     const updateSupplyCards = () => {
@@ -312,7 +312,7 @@ export default defineComponent({
       for (let newVisualIndex = 0; newVisualIndex < sortedSupplyCards.length; newVisualIndex++) {
         descriptors.push({
           newVisualIndex: newVisualIndex,
-          elementIndex: cardIds.indexOf(sortedSupplyCards[newVisualIndex].id),
+          elementIndex: cardIds.indexOf(sortedSupplyCards[newVisualIndex]!.id),
         });
       }
       return descriptors;
@@ -320,11 +320,11 @@ export default defineComponent({
 
     const getPositionForElementIndex = (index: number): Coordinate => {
       const container = getSupplyCardContainers()[index];
-      return { x: container.offsetLeft, y: container.offsetTop };
+      return { x: container!.offsetLeft, y: container!.offsetTop };
     }
 
     const getSupplyCardElement = (index: number) => {
-      return getSupplyCardContainers()[index].firstElementChild! as HTMLElement;
+      return getSupplyCardContainers()[index]!.firstElementChild! as HTMLElement;
     }
 
     const getSupplyCardContainers = () => {
@@ -344,11 +344,11 @@ export default defineComponent({
       let supplyCardsToAddIndex = 0;
       for (let i = 0; i < oldSupplyCards.length; i++) {
         const supplyCard = oldSupplyCards[i];
-        if (oldIds.has(supplyCard.id)) {
-          supplyCards.push(supplyCardsToAdd[supplyCardsToAddIndex]);
+        if (oldIds.has(supplyCard!.id)) {
+          supplyCards.push(supplyCardsToAdd[supplyCardsToAddIndex] as SupplyCard);
           supplyCardsToAddIndex += 1;
         } else {
-          supplyCards.push(supplyCard);
+          supplyCards.push(supplyCard as SupplyCard);
         }
       }
       return supplyCards;

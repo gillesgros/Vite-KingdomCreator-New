@@ -29,35 +29,23 @@
 
       </div> 
       <div class="sets-container">
-    <div class="sets-grid">
-      <div class="sets-column" v-for="(setId, index) in listedSetids.slice(0, Math.ceil(listedSetids.length / 2))" :key="index">
-        <label class="checkbox">
-          <input type="checkbox" v-model="ownedSetIds" :id="setId" :value="setId">
-          <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - 1st</span></span>
-        </label>
-        <template v-for="(version, versionIndex) in FindMultipleVersionSets(setId)" :key="versionIndex">
-          <label class="checkbox suboption-set">
-            <input type="checkbox" v-model="ownedSetIds" :id="version.idv2" :value="version.idv2">
-            <span>2nd</span>
-          </label>
-        </template>
+        <div class="sets">
+          <div class="sets-row" v-for="i in Math.ceil(listedSetids.length / 2)" :key="i">
+            <div class="set" v-for="setId in listedSetids.slice((i-1)*2, i*2)" :key="setId">
+              <label class="checkbox">
+                <input type="checkbox" v-model="ownedSetIds" :id="setId" :value="setId">
+                <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - {{ $t("1st") }}</span></span>
+              </label>
+              <template v-for="(version, versionIndex) in FindMultipleVersionSets(setId)" :key="versionIndex">
+                <label class="checkbox suboption-set">
+                  <input type="checkbox" v-model="ownedSetIds" :id="version.idv2" :value="version.idv2">
+                  <span>{{ $t("2nd") }}</span>
+                </label>
+              </template>
+            </div>
+          </div>
+        </div>
       </div>
-      </div>
-      <div class="sets-grid">
-      <div class="sets-column" v-for="(setId, index) in listedSetids.slice(Math.ceil(listedSetids.length / 2))" :key="index">
-        <label class="checkbox">
-          <input type="checkbox" v-model="ownedSetIds" :id="setId" :value="setId">
-          <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - 1st</span></span>
-        </label>
-        <template v-for="(version, versionIndex) in FindMultipleVersionSets(setId)" :key="versionIndex">
-          <label class="checkbox suboption-set">
-            <input type="checkbox" v-model="ownedSetIds" :id="version.idv2" :value="version.idv2">
-            <span>2nd</span>
-          </label>
-        </template>
-      </div>
-    </div>
-  </div>
     </div>
   </div>
 </template>
@@ -121,10 +109,10 @@ export default defineComponent({
       } as SettingsParams);
 
       if (!ownedSetIds.value.some(setid => SetsStore.selectedSetId == setid)){
-        SetsStore.selectedSetId=ownedSetIds.value[0];
+        SetsStore.selectedSetId = ownedSetIds.value[0] ?? SetsStore.selectedSetId;
       }
       if (!ownedSetIds.value.some(setid => SetsStore.selectedBoxesSetId== setid)){
-        SetsStore.selectedBoxesSetId=ownedSetIds.value[0];
+        SetsStore.selectedBoxesSetId=ownedSetIds.value[0] ?? SetsStore.selectedBoxesSetId;
       }
       const ownedIdsSet = new Set(ownedSetIds.value);
       const filteredSelectedIds = randomizerStore.settings.selectedSets.filter((sid) => ownedIdsSet.has(sid) === true);
@@ -168,31 +156,25 @@ export default defineComponent({
 .onwedset-container{
   border-bottom: 2px solid #ccc;
   padding-bottom: 2px;
-  margin-bottom: 10px;
+  /*margin-bottom: 10px;*/
   display: flex;
   gap: 4rem;
 }
 
 .sets-container {
-  display: flex;
-  flex-direction: row;
-  row-gap: 1%;
+  width: 100%;
+  padding: 10px;
 }
 
-.sets-grid {
+.sets {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sets-row {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  row-gap: 1%;
-  width: 60%;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
-.sets-grid:nth-child(2){
-  width: 40%;
-}
-
-.sets-column {
-  display: flex;
-  flex-direction: row;
-}
-
-
 </style>

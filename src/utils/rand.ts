@@ -12,12 +12,12 @@ export function getRandomInts(count: number, max: number): Set<number> {
   return nums;
 }
 
-export function selectRandom<T>(list: T[]): T {
+export function selectRandom<T>(list: T[]): T | undefined {
   return list[getRandomInt(0, list.length)];
 }
 
 export function selectRandomN<T>(list: T[], n: number): T[] {
   const results: T[] = [];
-  getRandomInts(n, list.length).forEach(i => results.push(list[i]));
+  getRandomInts(n, list.length).forEach(i => results.push(list[i] ?? ({} as T)));
   return results;
 }

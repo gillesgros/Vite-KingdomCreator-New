@@ -90,12 +90,12 @@ export default defineComponent({
       const newContainers = [];
       for (let i = 0; i < activeContainers.value.length; i++) {
         const container = activeContainers.value[i];
-        if (container.addon != null
+        if (container?.addon != null
           && containsAddon(addons.value, container.addon)) {
           newContainers.push(container);
         } else {
           newContainers.push({
-            addon: newAddons.length > newAddonsIndex ? newAddons[newAddonsIndex++] : null
+            addon: newAddons.length > newAddonsIndex ? newAddons[newAddonsIndex++] ?? null : null
           });
         }
       }

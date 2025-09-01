@@ -185,7 +185,6 @@ export default defineComponent({
     const menuItems = ref<{ condensed: LocalMenuItem[]; extended: LocalMenuItem[] }>({ condensed: [], extended: [] });
 
     const getMenuItem = ((FirstPart: boolean) => {
-      console.log("getMenuItem called with isCondensedMenuActive:", isCondensedMenuActive.value)
       if (isCondensedMenuActive.value) return MENU_ITEMS;
       return FirstPart ? menuItems.value.condensed : menuItems.value.extended;
     });
@@ -207,7 +206,7 @@ export default defineComponent({
 
         for (let i = 0; i < MENU_ITEMS.length; i++) {
           const menuItem = MENU_ITEMS[i];
-          const translatedTitle = t(menuItem.title);
+          const translatedTitle = t(menuItem!.title);
           const itemWidth = translatedTitle.length * 6 + 90;
 
           if (currentWidth + itemWidth > totalWidth) {

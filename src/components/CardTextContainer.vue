@@ -90,7 +90,7 @@ export default defineComponent({
         for (const test of regextests) {
           const match = text.match(test.regex);
           if (match) {
-            blocks.push({ type: test.type, inner: match[1] });
+            blocks.push({ type: test.type, inner: match[1] ?? '' });
             text = text.slice(match[0].length);
             matched = true;
             break;

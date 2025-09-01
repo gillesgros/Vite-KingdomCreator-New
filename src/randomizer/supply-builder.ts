@@ -93,11 +93,11 @@ export class SupplyBuilder {
     divisions = SupplyDivisions.applyCorrections(divisions, this.corrections);
     divisions = SupplyDivisions.fillDivisions(divisions);
 
-    const baneCard = this.selectBaneCard(divisions);
-    const ferrymanCard = this.selectFerrymanCard(divisions);
+    const baneCard = this.selectBaneCard(divisions) ?? null;
+    const ferrymanCard = this.selectFerrymanCard(divisions) ?? null;
     const mousewayCard = this.selectMousewayCard(divisions);
-    const obeliskCard = this.selectObeliskCard(divisions);
-    const riverboatCard = this.selectRiverboatCard(divisions);
+    const obeliskCard = this.selectObeliskCard(divisions) ?? null;
+    const riverboatCard = this.selectRiverboatCard(divisions) ?? null;
     const approachingArmyCard = this.selectApproachingArmyCard(divisions);
     return this.gatherCardsIntoSupply(divisions, baneCard, ferrymanCard, mousewayCard, obeliskCard, riverboatCard, approachingArmyCard);
   }
@@ -132,16 +132,16 @@ export class SupplyBuilder {
 
       // Select a random division to lock in a required card.
       const divisionIndex = segmentedRange.getRandomSegmentIndex();
-      const cards = requirement.getSatisfyingCardsFromDivisions([divisions[divisionIndex]]);
+      const cards = requirement.getSatisfyingCardsFromDivisions([divisions[divisionIndex] as SupplyDivision]);
       while (cards.length >0 ) {
         const randomIndex = getRandomInt(0, cards.length);
         const selectedCard = cards[randomIndex];
         cards.splice(randomIndex, 1);
 
         // Check if the selected card is allowed by the corrections.
-        if (this.allowLockedCard(divisions, selectedCard)) {
+        if (this.allowLockedCard(divisions, selectedCard as SupplyCard)) {
           divisions[divisionIndex] = 
-              divisions[divisionIndex].createDivisionByLockingCard(selectedCard.id, cards);
+              divisions[divisionIndex]!.createDivisionByLockingCard(selectedCard!.id, cards);
           break;
         }
 
@@ -182,7 +182,7 @@ export class SupplyBuilder {
         cardsForNewDivision.push(existingCard)
       } else {
         const division = divisions[divisionIndex];
-        divisions[divisionIndex] = division.createDivisionByLockingCard(existingCard.id,division.availableCards);
+        divisions[divisionIndex] = division!.createDivisionByLockingCard(existingCard.id,division!.availableCards);
       }
     }
 
@@ -194,8 +194,8 @@ export class SupplyBuilder {
     for (let i = 0; i < cardsForNewDivision.length; i++) {
       const divisionIndex = this.getIndexOfDivisionWithMostUnfilledCards(divisions);
       const division = divisions[divisionIndex];
-      divisions[divisionIndex] = new SupplyDivision(division.availableCards,
-          division.lockedCards, division.selectedCards, division.totalCount - 1, division.replacements);
+      divisions[divisionIndex] = new SupplyDivision(division!.availableCards,
+          division!.lockedCards, division!.selectedCards, division!.totalCount - 1, division!.replacements);
     }
 
     divisions.push(new SupplyDivision([], cardsForNewDivision, [], cardsForNewDivision.length, new Map()));
@@ -255,9 +255,6 @@ export class SupplyBuilder {
   }
 
   private selectMousewayCard(divisions: SupplyDivision[]) {
-    /*if (!this.requiresMousewayCard(divisions)) {
-      return null;
-    }*/
     if (this.forceMousewayCard) {
       return this.forceMousewayCard;
     }
@@ -385,7 +382,7 @@ export class SupplyBuilder {
     for (let i = 0; i < divisions.length; i++) {
       // Each card should only fit within a single division.
       const division = divisions[i];
-      if (!division.isFilled && Cards.findCardById(division.availableCards, cardId)) {
+      if (!division!.isFilled && Cards.findCardById(division!.availableCards, cardId)) {
         return i;
       }
     }
@@ -396,8 +393,8 @@ export class SupplyBuilder {
     let mostUnfilledCards = 0;
     let winningIndex = -1;
     for (let i = 0; i < divisions.length; i++) {
-      if (divisions[i].unfilledCount > mostUnfilledCards) {
-        mostUnfilledCards = divisions[i].unfilledCount;
+      if (divisions[i]!.unfilledCount > mostUnfilledCards) {
+        mostUnfilledCards = divisions[i]!.unfilledCount;
         winningIndex = i;
       }
     }

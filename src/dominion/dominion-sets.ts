@@ -72,7 +72,7 @@ export class DominionSets {
     const cards: Card[] = [];
     const cardIds = Object.keys(DominionSets.cards);
     for (const cardId of cardIds) {
-      cards.push(DominionSets.cards[cardId]);
+      cards.push(DominionSets.cards[cardId] as Card);
     }
     return cards;
   }

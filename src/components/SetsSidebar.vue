@@ -22,16 +22,16 @@
       <div class="sets">
         <div class="set" v-for="set in kingdomsets" :key="set">
           <label class="checkbox">
-            <input type="radio" v-model="selectedSetId" :id="set" :value="set"
+            <input type="radio" v-model="selectedSetId" :id="`radio${set}`" :value="set"
               @change="handleSelectionChange(set)" />
-              <span>{{ $t(set) }} <span v-if="findMultipleVersionSets(set).length !== 0"> - 1st</span></span>
+              <span>{{ $t(set) }} <span v-if="findMultipleVersionSets(set).length !== 0"> - {{ $t("1st") }}</span></span>
           </label>
           <span v-if="findMultipleVersionSets(set).length !== 0">
             <label class="checkbox suboption-set">
-              <input type="radio" v-model="selectedSetId" :id="set"
-                :value="findMultipleVersionSets(set)[0].idv2" 
-                @change="handleSelectionChange(findMultipleVersionSets(set)[0].idv2)" />
-              <span>2nd</span>
+              <input type="radio" v-model="selectedSetId" :id="`radio${set}`"
+                :value="findMultipleVersionSets(set)[0]!.idv2" 
+                @change="handleSelectionChange(findMultipleVersionSets(set)[0]!.idv2)" />
+              <span>{{ $t("2nd") }}</span>
             </label>
           </span>
         </div>

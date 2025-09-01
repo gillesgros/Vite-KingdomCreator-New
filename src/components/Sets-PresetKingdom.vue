@@ -173,19 +173,24 @@ export default defineComponent({
       const cardIds = props.kingdom.supplyIds.concat();
       let Cards = SupplyCardSorter.sort(getCards(cardIds) as SupplyCard[], setsStore.sortSet as SortOption, t);
       if (props.kingdom.baneCardId) {
-        Cards.push(getCards([props.kingdom.baneCardId])[0]);
+        const baneCardId = getCards([props.kingdom.baneCardId])[0]
+        if (baneCardId) Cards.push(baneCardId);
       }
       if (props.kingdom.ferrymanCardId) {
-        Cards.push(getCards([props.kingdom.ferrymanCardId])[0]);
+        const ferrymanCard = getCards([props.kingdom.ferrymanCardId])[0];
+        if (ferrymanCard) Cards.push(ferrymanCard);
       }
       if (props.kingdom.wayofthemouseCardId) {
-        Cards.push(getCards([props.kingdom.wayofthemouseCardId])[0]);
+        const wayofthemouseCardId = getCards([props.kingdom.wayofthemouseCardId])[0]
+        if (wayofthemouseCardId) Cards.push(wayofthemouseCardId);
       }
       if (props.kingdom.riverboatActionCardId) {
-        Cards.push(getCards([props.kingdom.riverboatActionCardId])[0]);
+        const riverboatActionCardId = getCards([props.kingdom.riverboatActionCardId])[0]
+        if (riverboatActionCardId) Cards.push(riverboatActionCardId);
       }
       if (props.kingdom.approachingArmyCardId) {
-        Cards.push(getCards([props.kingdom.approachingArmyCardId])[0]);
+        const approachingArmyCard = getCards([props.kingdom.approachingArmyCardId])[0]
+        if (approachingArmyCard) Cards.push(approachingArmyCard);
       }
       return Cards;
     };

@@ -25,7 +25,7 @@ export class Cost {
       CostType.TREASURE_7,
       CostType.TREASURE_8_OR_MORE,
     ];
-    return costs[Math.min(this.treasure, 8)];
+    return costs[Math.min(this.treasure, 8)] as CostType;
   }
 
   public static fromJson(json: any) {

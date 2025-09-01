@@ -399,7 +399,7 @@ export class Randomizer {
     const cards = Cards.getAllCardsFromSets(this.setsToUse())
         .filter(card => !this.excludedCardIds().includes(card.id)); 
     const allies = Cards.getAllAllies(cards).filter(Cards.filterByExcludedIds(skipAllyId ? [skipAllyId] : []));
-    return selectRandomN(allies, 1)[0];
+    return selectRandomN(allies, 1)[0] ?? null;
   }
 
   static getRandomProphecy(supply: Supply, skipProphecyId: string | null = null): Prophecy | null {
@@ -409,7 +409,7 @@ export class Randomizer {
     const cards = Cards.getAllCardsFromSets(this.setsToUse())
         .filter(card => !this.excludedCardIds().includes(card.id)); 
     const prophecies = Cards.getAllProphecies(cards).filter(Cards.filterByExcludedIds(skipProphecyId ? [skipProphecyId] : []));
-    return selectRandomN(prophecies, 1)[0];
+    return selectRandomN(prophecies, 1)[0] ?? null;
   }
 
   static getMetadata(setIds: SetId[]) {
@@ -437,7 +437,7 @@ export class Randomizer {
     if (Localaddons.ways.some(way => DominionSets.getWayById(MOUSE_WAY_ID).id === way.id)) {
       if(!supply.mouseWay) {
         const candidateCards = supply.replacements
-          .getReplacementsForId(supply.supplyCards[0].id)
+          .getReplacementsForId(supply.supplyCards[0]!.id)
           .filter(card => {
             return card.cost.debt == 0 &&
               card.cost.potion == 0 &&
@@ -447,7 +447,7 @@ export class Randomizer {
         const randomIndex = Math.floor(Math.random() * candidateCards.length);
         if (candidateCards.length != 0) {
           calculatedmouseWayCard = candidateCards[randomIndex];
-          localReplacements = new Replacements(Replacements.createReplacementByRemoveCards(supply.replacements.replacements, [calculatedmouseWayCard.id]));
+          localReplacements = new Replacements(Replacements.createReplacementByRemoveCards(supply.replacements.replacements, [calculatedmouseWayCard!.id]));
         }
       } else {
         calculatedmouseWayCard = supply.mouseWay
@@ -465,16 +465,16 @@ export class Randomizer {
         const index = oldkingdom.traits.findIndex((oldtrait) => oldtrait.id === trait.id);
         if (index>=0) {
           // trait unchanged
-          if (supply.supplyCards.some(card => card.id === oldkingdom.supply.traitsSupply[index].id)) {
-            calculatedTraitsSupplyCard.push(oldkingdom.supply.traitsSupply[index]);
+          if (supply.supplyCards.some(card => card.id === oldkingdom.supply.traitsSupply[index]!.id)) {
+            calculatedTraitsSupplyCard.push(oldkingdom.supply.traitsSupply[index] as SupplyCard);
           } else {
             const randomTraitCard = this.selectRandomCards(onlyTraitsPossibleSupplies, 1)[0];
-            calculatedTraitsSupplyCard.push(randomTraitCard);
+            calculatedTraitsSupplyCard.push(randomTraitCard as SupplyCard);
             onlyTraitsPossibleSupplies = onlyTraitsPossibleSupplies.filter((card) => card != randomTraitCard);
             }
         } else {
           const randomTraitCard = this.selectRandomCards(onlyTraitsPossibleSupplies, 1)[0];
-          calculatedTraitsSupplyCard.push(randomTraitCard);
+          calculatedTraitsSupplyCard.push(randomTraitCard as SupplyCard);
           onlyTraitsPossibleSupplies = onlyTraitsPossibleSupplies.filter((card) => card != randomTraitCard);
         }
       }
@@ -498,14 +498,14 @@ export class Randomizer {
     }
     
     const NewSupply = new Supply(
-      supply.supplyCards,             /* supply Cards */
-      supply.baneCard,                /* bane if needed */
-      supply.ferrymanCard,            /* ferryman carrd to add if needed */
-      calculatedObeliskCard,          /* obeliskCard if needed */
-      calculatedmouseWayCard,         /* mouseWayCard if needed */
-      supply.riverboatCard,           /* riverboatCard if needed */
-      calculateApproachingArmyCard,     /* approachingArmyCard if needed */
-      calculatedTraitsSupplyCard,     /* supply for traits */
+      supply.supplyCards,                       /* supply Cards */
+      supply.baneCard,                          /* bane if needed */
+      supply.ferrymanCard,                      /* ferryman carrd to add if needed */
+      calculatedObeliskCard ?? null,            /* obeliskCard if needed */
+      calculatedmouseWayCard ?? null,           /* mouseWayCard if needed */
+      supply.riverboatCard,                     /* riverboatCard if needed */
+      calculateApproachingArmyCard ?? null,     /* approachingArmyCard if needed */
+      calculatedTraitsSupplyCard,               /* supply for traits */
       localReplacements
     )
     return NewSupply
@@ -519,7 +519,7 @@ export class Randomizer {
     const numberOfSpecialtySetCards = this.removeDuplicateCards(
       indexes
         .filter(val => val !== -1)
-        .map((index) => setsBeingUsed[index].supplyCards)
+        .map((index) => setsBeingUsed[index]!.supplyCards)
         .reduce((partialSum, a) => partialSum.concat(a), [])
       , []).length
     const numberOfCardsBeingUsed = this.removeDuplicateCards(
@@ -536,7 +536,7 @@ export class Randomizer {
     const randomIndices = getRandomInts(numberToSelect, cards.length);
     const selectedCards: T[] = [];
     for (const index of randomIndices) {
-      selectedCards.push(cards[index]);
+      selectedCards.push(cards[index] as T);
     }
     return selectedCards;
   }

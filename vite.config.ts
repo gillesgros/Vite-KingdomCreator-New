@@ -23,7 +23,7 @@ const changelogPath = path.join(__dirname, 'Changelog.md');
 const readmePath = path.join(__dirname, 'README.md');
 const packageVersion = packageJson.version;
 console.log('packageVersion: ', packageJson.version);  
-const regex = /^### Changelog\s*\n\s*\*\*\d{4}\/\d{2}\/\d{2} - (\d+\.\d+\.\d+)/m;
+const regex = /^##{1,2} Changelog\s*\n\s*\*\*\d{4}\/\d{2}\/\d{2} - (\d+\.\d+\.\d+)/m;
 const changelogText = fs.readFileSync(changelogPath, 'utf-8');
 const changelogVersionMatch = changelogText.match(regex);
 const changelogVersion = changelogVersionMatch ? changelogVersionMatch[1] : null;

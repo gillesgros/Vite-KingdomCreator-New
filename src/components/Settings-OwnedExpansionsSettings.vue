@@ -6,7 +6,15 @@
     <div class="switch-groupedline">
       <div class="switch-labelAndswitch">
         <SwitchGroup as="div" class="switch-flex switchGroupcss">
-          <SwitchLabel>{{ $t("Use Custom Configuration for Set Display") }}</SwitchLabel>
+          <SwitchLabel as="div">
+            {{ $t("Use Custom Configuration for Set Display") }}
+          </SwitchLabel>
+          <div class="question-mark-tooltip">
+              <a :href="'/' + $t('HowDoesItWorks') + '.md'"
+                 target="_blank" :title="$t('ShortOwnedSets')">
+                <QuestionMarkCircleIcon class="QuestionMark" />
+              </a>
+            </div>
           <Switch as="button" v-model="ownedRestricted" v-slot="{ checked }" :class="ownedRestricted ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'"
             class="relative-switchcss">
             <span class="SwitchSpan" :class="{ 'translate-x-5': checked, 'translate-x-0': !checked }" />
@@ -55,6 +63,7 @@
 /* import Vue, typescript */
 import { defineComponent, ref, computed, watch } from "vue";
 import { SwitchGroup, Switch, SwitchLabel } from "@headlessui/vue";
+import { QuestionMarkCircleIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n'
 
 /* import Dominion Objects and type*/
@@ -74,6 +83,7 @@ export default defineComponent({
     SwitchGroup,
     Switch,
     SwitchLabel,
+    QuestionMarkCircleIcon,
   },
   setup() {
     const SettingsStore = useSettingsStore();

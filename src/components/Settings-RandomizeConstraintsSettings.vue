@@ -6,7 +6,15 @@
     <div class="switch-groupedline">
       <div class="switch-labelAndswitch">
         <SwitchGroup as="div" class="switch-flex switchGroupcss">
-          <SwitchLabel>{{ $t("Use constraint on randomization") }}</SwitchLabel>
+          <SwitchLabel as="div">
+            {{ $t("Use constraint on randomization") }}
+          </SwitchLabel>
+            <div class="question-mark-tooltip">
+              <a :href="'/' + $t('HowDoesItWorks') + '.md'"
+                 target="_blank" :title="$t('ShortRandomizeConstraints')">
+                <QuestionMarkCircleIcon class="QuestionMark" />
+              </a>
+            </div>
           <Switch as="button" v-model="constraintRandomizer" v-slot="{ checked }"
             :class="constraintRandomizer ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'" class="relative-switchcss">
             <span class="SwitchSpan" :class="{ 'translate-x-5': checked, 'translate-x-0': !checked }" />
@@ -84,6 +92,7 @@ import { defineComponent, ref, computed, watch } from "vue";
 import { SwitchGroup, Switch, SwitchLabel } from "@headlessui/vue";
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption, ListboxLabel } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid';
+import { QuestionMarkCircleIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n'
 
 
@@ -107,7 +116,8 @@ export default defineComponent({
   components: {
     SwitchGroup, Switch, SwitchLabel,
     Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions,
-    CheckIcon, ChevronUpDownIcon
+    CheckIcon, ChevronUpDownIcon,
+    QuestionMarkCircleIcon,
   },
   setup() {
     const SettingsStore = useSettingsStore()

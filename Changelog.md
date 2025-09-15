@@ -12,7 +12,12 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
-**2025/09/05 - 6.6.0**
+**2025/09/15 - 6.6.1** - Dev 6.7 Work in progress
+Dev deploy on github pages 
+>***Feat*** - add help markdown file display in settings page 
+
+
+**2025/09/12 - 6.6.0**
 Dev deploy on github pages 
 >***Fix*** - blakevanlan/KingdomCreator #207 - Underling cost  
 >***Feat*** - blakevanlan/KingdomCreator PR #209 - Added missing Dutch Seaside translations  

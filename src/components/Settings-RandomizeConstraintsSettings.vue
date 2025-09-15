@@ -10,8 +10,8 @@
             {{ $t("Use constraint on randomization") }}
           </SwitchLabel>
             <div class="question-mark-tooltip">
-              <a :href="'/' + $t('HowDoesItWorks') + '.md'"
-                 target="_blank" :title="$t('ShortRandomizeConstraints')">
+               <a :href="'/help?' + $t('HowDoesItWorksRandomizeConstraints') + '.md'"
+                 target="ShortRandomizeConstraints" :title="$t('ShortRandomizeConstraints')">
                 <QuestionMarkCircleIcon class="QuestionMark" />
               </a>
             </div>

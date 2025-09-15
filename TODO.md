@@ -31,6 +31,7 @@ ok tracer les requetes utilisateurs
 [x] - Fix - menu sur téléphone
 [x] - Fix - custom settings téléphone 
 [x] - Fix - custom settings owned order display
+[x] - Feat - Allow help display
 
 [ ] - Doc - custom settings 
 [ ] - Feat - search non supply

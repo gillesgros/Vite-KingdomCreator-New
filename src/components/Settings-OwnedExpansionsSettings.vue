@@ -10,8 +10,8 @@
             {{ $t("Use Custom Configuration for Set Display") }}
           </SwitchLabel>
           <div class="question-mark-tooltip">
-              <a :href="'/' + $t('HowDoesItWorks') + '.md'"
-                 target="_blank" :title="$t('ShortOwnedSets')">
+              <a :href="'/help?' + $t('HowDoesItWorksOwnedSets') + '.md'"
+                 target="ShortOwnedSets" :title="$t('ShortOwnedSets')">
                 <QuestionMarkCircleIcon class="QuestionMark" />
               </a>
             </div>

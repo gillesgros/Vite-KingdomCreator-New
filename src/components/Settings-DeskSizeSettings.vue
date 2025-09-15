@@ -10,8 +10,8 @@
               {{ $t("Use Custom Configuration for DeckSize") }}
             </SwitchLabel>
             <div class="question-mark-tooltip">
-              <a :href="'/' + $t('HowDoesItWorks') + '.md'"
-                 target="_blank" :title="$t('ShortDeskSize')">
+              <a :href="'/help?' + $t('HowDoesItWorks') + '.md'"
+                 target="ShortDeskSize" :title="$t('ShortDeskSize')">
                 <QuestionMarkCircleIcon class="QuestionMark" />
               </a>
             </div>
@@ -82,10 +82,13 @@
 </template>
 
 <script lang="ts">
+
 import { defineComponent, ref, watch } from "vue";
 import { SwitchGroup, SwitchLabel, Switch } from "@headlessui/vue";
 import { useSettingsStore } from "../pinia/settings-store";
 import { QuestionMarkCircleIcon } from '@heroicons/vue/24/outline';
+import { defineAsyncComponent } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 export default defineComponent({
   name: "DeskSizeSettings",
@@ -98,7 +101,6 @@ export default defineComponent({
   setup() {
     const SettingsStore = useSettingsStore();
     const isUsingCustomDesksize = ref(SettingsStore.isUsingCustomDesksize);
-  
     const KingdomNb = ref(SettingsStore.KingdomNb);
     const AddonsNb = ref(SettingsStore.AddonsNb);
     const EventsMax = ref(SettingsStore.addonMax.Events);
@@ -108,6 +110,16 @@ export default defineComponent({
     const TraitsMax = ref(SettingsStore.addonMax.Traits);
     const forceAddonsUse = ref(SettingsStore.forceAddonsUse)
 
+    // Pour l'affichage du markdown
+    const showHowDoesItWorks = ref(false);
+    const howDoesItWorksContent = ref('');
+      const { t } = useI18n();
+    const loadHowDoesItWorks = async () => {
+        const response = await fetch('/' + t('HowDoesItWorks') + '.md');
+      howDoesItWorksContent.value = await response.text();
+      showHowDoesItWorks.value = true;
+    };
+
     watch(AddonsNb,
       () => {
         if (AddonsNb.value < EventsMax.value) EventsMax.value = AddonsNb.value
@@ -116,20 +128,19 @@ export default defineComponent({
         if (AddonsNb.value < WaysMax.value) WaysMax.value = AddonsNb.value
         if (AddonsNb.value < TraitsMax.value) TraitsMax.value = AddonsNb.value
       },
-      { immediate: true } // Trigger calculation on initial render
+      { immediate: true }
     );
 
-   // Watch for changes in Max values and update AddonsNb if needed
-   watch(
+    watch(
       [EventsMax, LandmarksMax, ProjectsMax, WaysMax, TraitsMax],
       () => {
         const minAddonsNb = Math.max(EventsMax.value, LandmarksMax.value, ProjectsMax.value, 
               WaysMax.value, TraitsMax.value)
         if (AddonsNb.value < minAddonsNb) {
-          AddonsNb.value = minAddonsNb; // Set to minimum allowed value
+          AddonsNb.value = minAddonsNb;
         }
       },
-      { immediate: true } // Trigger calculation on initial render
+      { immediate: true }
     );
 
     const updateStoreValues = () => {
@@ -164,7 +175,10 @@ export default defineComponent({
       LandmarksMax,
       ProjectsMax,
       WaysMax,
-      TraitsMax
+      TraitsMax,
+      showHowDoesItWorks,
+      howDoesItWorksContent,
+      loadHowDoesItWorks
     };
   },
 });

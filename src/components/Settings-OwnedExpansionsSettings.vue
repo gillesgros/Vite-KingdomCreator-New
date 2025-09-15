@@ -10,10 +10,12 @@
             {{ $t("Use Custom Configuration for Set Display") }}
           </SwitchLabel>
           <div class="question-mark-tooltip">
-              <a :href="'/help?' + $t('HowDoesItWorksOwnedSets') + '.md'"
-                 target="ShortOwnedSets" :title="$t('ShortOwnedSets')">
+              <RouterLink :to="getHelpMarkdownUrl($t('HowDoesItWorksOwnedSets')+ '.md' )"
+                :title="$t('ShortOwnedSets')"
+                target="_blank"
+              >
                 <QuestionMarkCircleIcon class="QuestionMark" />
-              </a>
+              </RouterLink>
             </div>
           <Switch as="button" v-model="ownedRestricted" v-slot="{ checked }" :class="ownedRestricted ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'"
             class="relative-switchcss">
@@ -62,6 +64,7 @@
 
 /* import Vue, typescript */
 import { defineComponent, ref, computed, watch } from "vue";
+import { RouterLink } from 'vue-router';
 import { SwitchGroup, Switch, SwitchLabel } from "@headlessui/vue";
 import { QuestionMarkCircleIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n'
@@ -84,6 +87,7 @@ export default defineComponent({
     Switch,
     SwitchLabel,
     QuestionMarkCircleIcon,
+    RouterLink,
   },
   setup() {
     const SettingsStore = useSettingsStore();
@@ -135,12 +139,20 @@ export default defineComponent({
       return MultipleVersionSets.filter(set => { return (set.id === setValue) })
     }
 
+    const getHelpMarkdownUrl = (filename: string) => {
+      return {
+          path: '/help',
+          query: { file: filename }
+          }
+    };
+
     return {
       ownedRestricted,
       listedSetids,
       setsOrderType,
       ownedSetIds,
       FindMultipleVersionSets,
+      getHelpMarkdownUrl
     };
   },
 });

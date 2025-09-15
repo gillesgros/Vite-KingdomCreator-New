@@ -8,7 +8,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { VueMarkdownIt } from '@f3ve/vue-markdown-it'
 
 export default defineComponent({
@@ -20,10 +20,13 @@ export default defineComponent({
     const markdownContent = ref('')
     const error = ref('')
     const route = useRoute()
+    const router = useRouter()
 
     onMounted(async () => {
+      const base = router.options.history.base;
+
       const fileParam = route.query?.file || route.query?.f || Object.keys(route.query)[0]
-      console.log("fileParam",fileParam)
+
       let fileName = ''
       if (typeof fileParam === 'string') {
         fileName = fileParam
@@ -35,7 +38,7 @@ export default defineComponent({
         return
       }
       try {
-        const response = await fetch('/' + fileName)
+        const response = await fetch(base + '/' + fileName)
         const contentType = response.headers.get('content-type') || ''
         const text = await response.text()
         // Vérifie si le fichier est vraiment du markdown et non une page HTML d'erreur

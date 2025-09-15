@@ -10,10 +10,12 @@
               {{ $t("Use Custom Configuration for DeckSize") }}
             </SwitchLabel>
             <div class="question-mark-tooltip">
-              <a :href="'/help?' + $t('HowDoesItWorks') + '.md'"
-                 target="ShortDeskSize" :title="$t('ShortDeskSize')">
+              <RouterLink :to="getHelpMarkdownUrl($t('HowDoesItWorks')+ '.md' )"
+                :title="$t('ShortDeskSize')"
+                target="_blank"
+              >
                 <QuestionMarkCircleIcon class="QuestionMark" />
-              </a>
+              </RouterLink>
             </div>
           <Switch as="button" v-model="isUsingCustomDesksize" v-slot="{ checked }" :class="isUsingCustomDesksize ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'"
             class="relative-switchcss">
@@ -84,10 +86,10 @@
 <script lang="ts">
 
 import { defineComponent, ref, watch } from "vue";
+import { RouterLink } from 'vue-router';
 import { SwitchGroup, SwitchLabel, Switch } from "@headlessui/vue";
 import { useSettingsStore } from "../pinia/settings-store";
 import { QuestionMarkCircleIcon } from '@heroicons/vue/24/outline';
-import { defineAsyncComponent } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 export default defineComponent({
@@ -97,6 +99,7 @@ export default defineComponent({
     SwitchLabel,
     SwitchGroup,
     QuestionMarkCircleIcon,
+    RouterLink,
   },
   setup() {
     const SettingsStore = useSettingsStore();
@@ -109,16 +112,6 @@ export default defineComponent({
     const WaysMax = ref(SettingsStore.addonMax.Ways);
     const TraitsMax = ref(SettingsStore.addonMax.Traits);
     const forceAddonsUse = ref(SettingsStore.forceAddonsUse)
-
-    // Pour l'affichage du markdown
-    const showHowDoesItWorks = ref(false);
-    const howDoesItWorksContent = ref('');
-      const { t } = useI18n();
-    const loadHowDoesItWorks = async () => {
-        const response = await fetch('/' + t('HowDoesItWorks') + '.md');
-      howDoesItWorksContent.value = await response.text();
-      showHowDoesItWorks.value = true;
-    };
 
     watch(AddonsNb,
       () => {
@@ -159,6 +152,13 @@ export default defineComponent({
       });
     };
 
+    const getHelpMarkdownUrl = (filename: string) => {
+      return {
+          path: '/help',
+          query: { file: filename }
+          }
+    };
+
     watch(
       [isUsingCustomDesksize, KingdomNb, AddonsNb, forceAddonsUse, 
         EventsMax, LandmarksMax, ProjectsMax, WaysMax, 
@@ -176,9 +176,7 @@ export default defineComponent({
       ProjectsMax,
       WaysMax,
       TraitsMax,
-      showHowDoesItWorks,
-      howDoesItWorksContent,
-      loadHowDoesItWorks
+      getHelpMarkdownUrl
     };
   },
 });

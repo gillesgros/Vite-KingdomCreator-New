@@ -55,9 +55,6 @@ export default defineConfig( ({ mode}) => {
     appType: 'spa',
     base: baseDir,
     publicDir: false, //  Do not use publicDir feature to avoid duplcation of all image and pdf files.
-    /*
-    Do not use publicDir feature to avoid duplcation of all image and pdf files.
-    */
     define: {
       Pkgejson_Version: JSON.stringify(packageJson.version),
       Pkgejson_Name: JSON.stringify(packageJson.name),
@@ -70,7 +67,6 @@ export default defineConfig( ({ mode}) => {
         https://vitejs.dev/guide/api-plugin#universal-hooks */
         transformIndexHtml(html) {
           const datetime = new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'medium' });
-          //console.log('\nGenerate Date and Time: ', datetime);
           return html.replace(/id="datetime">/g, `id="datetime">${datetime}`);
         }
       },
@@ -114,7 +110,8 @@ export default defineConfig( ({ mode}) => {
         verbose: false
       }),
        viteStaticCopy({
-        targets: [ { src: 'styles/normalize-v8.css', dest: 'assets/' }
+        targets: [ { src: 'styles/normalize-v8.css', dest: 'assets/' },
+                    { src: 'help/*.md', dest: './' }
           ]
       })
     ],

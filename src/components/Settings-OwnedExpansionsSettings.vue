@@ -24,7 +24,7 @@
         </SwitchGroup>
       </div>
     </div>
-    <div class="sidebar"> 
+    <div class="sidebar">  
       <div class="sidebar-content filters">
         <div class="ownnedset-constraint-container">
           <div class="setlabel-settings">{{ $t("Sets") }}</div>
@@ -36,7 +36,12 @@
             <input type="radio" style="margin-left:5px;" v-model="setsOrderType" :value="'date'" />
             <span>{{ $t("Date") }}</span>
           </label>
-
+          <label class="checkbox sidebar-content-option" style="margin-left:10px;">
+            <input type="checkbox" 
+                   :checked="listedSetids.length > 0 && ownedSetIds.length === listedSetids.length"
+                   @change="toggleAllSets($event)" />
+            <span>{{ $t('Select All') }}</span>
+          </label>
         </div>
 
         <div class="sets">
@@ -74,6 +79,7 @@ import { DominionSets } from "../dominion/dominion-sets";
 import { MultipleVersionSets, HideMultipleVersionSets, Sets_To_Ignore_Regroup } from "../dominion/set-id";
 import { Year_set } from "../dominion/digital_cards/digital-cards-Illustrator"
 import type { SettingsParams } from "../settings/settings";
+import type {SetId} from "../dominion/set-id";
 
 /* imoprt store  */
 import { useSettingsStore } from "../pinia/settings-store";
@@ -110,30 +116,34 @@ export default defineComponent({
       }
       );
 
-    watch([ownedSetIds, ownedRestricted] , () => {
-      if (ownedSetIds.value.length == 0) ownedRestricted.value=false
-      SettingsStore.updateSettings({ 
-        ownedSets: ownedSetIds.value,
-        isUsingOnlyOwnedsets: ownedRestricted.value
-      });
-      // Sélectionne tous les sets possédés pour le randomizer
-      randomizerStore.UPDATE_SETTINGS({
-        selectedSets: ownedSetIds.value.map(DominionSets.convertToSetId)
-      } as SettingsParams);
+        watch([ownedSetIds, ownedRestricted], ([newOwnedSetIds, newOwnedRestricted], [oldOwnedSetIds, oldOwnedRestricted]) => {
+          // Détection fine des changements de SetId
+          const added = newOwnedSetIds.filter((x) => !oldOwnedSetIds.includes(x));
+          const removed = oldOwnedSetIds.filter((x) => !newOwnedSetIds.includes(x));
+          if (added.length) console.log('Ajouté(s) :', added);
+          if (removed.length) console.log('Retiré(s) :', removed)
 
-      if (!ownedSetIds.value.some(setid => SetsStore.selectedSetId == setid)){
-        SetsStore.selectedSetId = ownedSetIds.value[0] ?? SetsStore.selectedSetId;
-      }
-      if (!ownedSetIds.value.some(setid => SetsStore.selectedBoxesSetId== setid)){
-        SetsStore.selectedBoxesSetId=ownedSetIds.value[0] ?? SetsStore.selectedBoxesSetId;
-      }
-      const ownedIdsSet = new Set(ownedSetIds.value);
-      const filteredSelectedIds = randomizerStore.settings.selectedSets.filter((sid) => ownedIdsSet.has(sid) === true);
+          if (newOwnedSetIds.length == 0) newOwnedRestricted = false;
+          SettingsStore.updateSettings({
+            ownedSets: newOwnedSetIds,
+            isUsingOnlyOwnedsets: newOwnedRestricted
+          });
+          if (oldOwnedRestricted == false) return;
 
-      randomizerStore.UPDATE_SETTINGS({
-          selectedSets: filteredSelectedIds.map(DominionSets.convertToSetId)
-        } as SettingsParams);
-    });
+          if (!newOwnedSetIds.some((setid: string) => SetsStore.selectedSetId == setid)) {
+            SetsStore.selectedSetId = newOwnedSetIds[0] ?? SetsStore.selectedSetId;
+          }
+          if (!newOwnedSetIds.some((setid: string) => SetsStore.selectedBoxesSetId == setid)) {
+            SetsStore.selectedBoxesSetId = newOwnedSetIds[0] ?? SetsStore.selectedBoxesSetId;
+          }
+          const ownedIdsSet = new Set(newOwnedSetIds);
+          const filteredSelectedIds = randomizerStore.settings.selectedSets.filter((sid) => ownedIdsSet.has(sid) === true);
+
+          randomizerStore.UPDATE_SETTINGS({
+            selectedSets: filteredSelectedIds.map(DominionSets.convertToSetId)
+          } as SettingsParams);
+        });
+
 
     const FindMultipleVersionSets = (setValue: string) => {
       return MultipleVersionSets.filter(set => { return (set.id === setValue) })
@@ -146,13 +156,24 @@ export default defineComponent({
           }
     };
 
+    // Fonction pour sélectionner/désélectionner tous les sets
+    const toggleAllSets = (event: Event) => {
+      const checked = (event.target as HTMLInputElement).checked;
+      if (checked) {
+        ownedSetIds.value = [...listedSetids.value];
+      } else {
+        ownedSetIds.value = [];
+      }
+    }
+
     return {
       ownedRestricted,
       listedSetids,
       setsOrderType,
       ownedSetIds,
       FindMultipleVersionSets,
-      getHelpMarkdownUrl
+      getHelpMarkdownUrl,
+      toggleAllSets
     };
   },
 });

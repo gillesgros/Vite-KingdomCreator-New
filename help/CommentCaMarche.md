@@ -99,13 +99,13 @@ Décision d’utiliser les Provinces et Platines ou les Refuges avec Nb_Carte_Cr
 
 ---
 # Les Tooltips de la page principale
-Require +2 Action : force a card allowing 1 or more actions
-Require Drawer : force a card allowing to draw cards
-Require Buy : force a card allowing 1 or more actionextra buy
+Require +2 Action : include a card allowing 1 or more actions
+Require Drawer : include a card allowing to draw cards
+Require Buy : include a card allowing 1 or more extra buy
 Allow Attacks : allow attacks card to be in the deck
-Require Reaction : force a reaction card in the deck if an attack is present
-Require Trashing : force a card allowing trash cards
+Require Reaction : include a reaction card in the deck if an attack is present
+Require Trashing : include a card allowing trash cards
 
-3+ Alchemy Cards : force 3 or more card of Alchemy set in the deck
-Distribute Cost : force 3 to 5 cards of cost 5 or more
-Prioritize Set : force 5 cards of the selected set
+3+ Alchemy Cards : include 3 or more card of Alchemy set in the deck
+Distribute Cost : include 3 to 5 cards of cost 5 or more
+Prioritize Set : include 5 cards of the selected set

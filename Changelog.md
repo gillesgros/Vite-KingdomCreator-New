@@ -12,10 +12,16 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2025/09/27 - 6.6.2** - Dev 6.7 Work in progress
+Dev deploy on github pages 
+>***Feat*** - add tooltip on main page
+>***Fix*** - selection ownedset impacting Randomizer selection and Box content
+>***Feat*** - Add select/unselect all Randomizer sidebas /Settings owned set 
+>***Feat*** - custom settings owned set
+
 **2025/09/15 - 6.6.1** - Dev 6.7 Work in progress
 Dev deploy on github pages 
 >***Feat*** - add help markdown file display in settings page 
-
 
 **2025/09/12 - 6.6.0**
 Dev deploy on github pages 

@@ -33,7 +33,13 @@ ok tracer les requetes utilisateurs
 [x] - Fix - custom settings owned order display
 [x] - Feat - Allow help display
 
-[ ] - Doc - custom settings 
+[x] - Feat - Add tooltip on main page
+[x] - Fix - selection own versus Random
+[x] - Fix - selection own verus Box
+[x] - Feat - Add select/unselect all Randomizer/Settings
+[x] - Doc - custom settings owned set
+
+[ ] - Doc - custom settings constraint randomizer
 [ ] - Feat - search non supply
 [ ] - Feat - full setup
 [ ] - Feat - nb card par extension (en créant de division)

@@ -40,7 +40,7 @@ ok tracer les requetes utilisateurs
 [x] - Doc - custom settings owned set
 
 [ ] - Doc - custom settings constraint randomizer
-[ ] - Feat - search non supply
+[W] - Feat - search non supply
 [ ] - Feat - full setup
 [ ] - Feat - nb card par extension (en créant de division)
 [ ] - Feat - specify addon replacement

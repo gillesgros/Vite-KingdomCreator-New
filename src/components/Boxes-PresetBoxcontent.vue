@@ -68,7 +68,11 @@ import type { DominionSet } from "../dominion/dominion-set";
 import { DominionSets } from "../dominion/dominion-sets";
 import type { SupplyCard } from "../dominion/supply-card";
 import { SupplyCardSorter } from "../utils/supply-card-sorter";
-import { ShowOverlayOptions } from '../utils/resources';  
+import { ShowOverlayOptions } from '../utils/resources'; 
+import { OTHER_CARD_TYPES, OTHER_CARD_TYPES_HORIZONTAL, 
+          OTHER_CARD_TYPES_MAT_HORIZONTAL, OTHER_CARD_TYPES_MAT, 
+          OTHER_CARD_TYPES_MAT_SQUARE } from '../utils/cards-other' 
+import { getOtherCards } from '../utils/cards-other'
 
 /* import store  */
 import { useWindowStore } from '../pinia/window-store';
@@ -81,50 +85,6 @@ import { Shape as shapeFromGridLayout } from "./GridLayout.vue";
 
 const FOUR_COLUMN_SUPPLY_CARD_WIDTH = 450;
 const TWO_COLUMN_ADDON_WIDTH = 525;
-
-interface genericCardTypes {
-  cardType: string;
-  title: string;
-}
-
-const OTHER_CARD_TYPES: genericCardTypes[] = [
-  { cardType: "Knight", title: "Supply Cards - Knights" }, /* dark Ages */
-  { cardType: "Castle", title: "Supply Cards - Castles" }, /* empires */
-  { cardType: "Basic Cards Treasure", title: "Basic Cards" },
-  { cardType: "Basic Cards Victory", title: "Basic Cards" },
-  { cardType: "Basic Cards", title: "Basic Cards" },
-  { cardType: "Ruins", title: "Basic Cards - Ruins" }, /* dark Ages */
-  { cardType: "Shelter", title: "Basic Cards - Shelters" }, /* dark Ages */
-  { cardType: "Non-Supply Cards", title: "Non-Supply Cards" },
-  { cardType: "Split Cards", title: "Supply Cards Split Piles" },
-  { cardType: "Travellers Page", title: "Supply Cards - Travellers - Page Progression" }, /* adventures */
-  { cardType: "Travellers Peasant", title: "Supply Cards - Travellers - Peasant Progression" }, /* adventures */
-  { cardType: "Prize", title: "Non-Supply Cards" },
-  { cardType: "Heirloom", title: "Non-Supply Cards - Heirlooms" }, /*nocturne */
-  { cardType: "Loot", title: "Loot Cards" },
-  { cardType: "version", title: "Multiples versions of Cards" },
-
-];
-
-const OTHER_CARD_TYPES_HORIZONTAL: genericCardTypes[] = [
-  { cardType: "Hexes", title: "Hexes" }, /*nocturne */
-  { cardType: "States", title: "States" }, /*nocturne */
-  { cardType: "Artifacts", title: "Artifacts" }, /* Renaissance */
-];
-
-const OTHER_CARD_TYPES_MAT_HORIZONTAL: genericCardTypes[] = [
-  { cardType: "Mat Horizontal", title: "Mat included in box" },
-];
-
-const OTHER_CARD_TYPES_MAT: genericCardTypes[] = [
-  { cardType: "Mat Vertical", title: "Mat included in box" },
-];
-
-const OTHER_CARD_TYPES_MAT_SQUARE: genericCardTypes[] = [
-  { cardType: "Mat Square", title: "Mat included in box" },
-  { cardType: "advToken", title: "Tokens included in box" },
-  { cardType: "Tokens", title: "Tokens included in box" },
-];
 
 
 export default defineComponent({
@@ -155,17 +115,13 @@ export default defineComponent({
       return Shape.SQUARE
     };
 
-    const getCards = (cardIds: any[], origine = SortOption.ALPHABETICAL) => {
+    const getCards = (cardIds: any[], origine = SortOption.SET) => {
       if (origine == SortOption.SET) 
-        return SupplyCardSorter.sort(cardIds as SupplyCard[], setsStore.sortBoxesSet, t);
+        return SupplyCardSorter.sort(cardIds as SupplyCard[], setsStore.sortBoxesSet, t); 
       else 
-      //console.log("cardIds", cardIds, "origine", origine, SupplyCardSorter.sort(cardIds as SupplyCard[], origine, t))
         return SupplyCardSorter.sort(cardIds as SupplyCard[], origine, t);
     };
 
-    const getOtherCards = (usingSet: DominionSet, typeRequested: string) => {
-      return usingSet.otherCards.filter((card) => ((card.type).includes(typeRequested)));
-    };
 
     // const OtherCardTypes = (isVertical: boolean) => {
     //   return isVertical ? OTHER_CARD_TYPES : OTHER_CARD_TYPES_HORIZONTAL;

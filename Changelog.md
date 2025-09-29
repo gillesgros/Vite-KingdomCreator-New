@@ -12,6 +12,15 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2025/09/29 - 6.6.2** - Dev 6.7 Work in progress
+Dev deploy on github pages 
+>***Fix*** - sort on search page
+>***Feat*** - Add Othercards on search page
+
+**2025/09/28 - 6.6.2** - Dev 6.7 Work in progress
+Dev deploy on github pages 
+>***Fix*** - sort for Box content
+
 **2025/09/27 - 6.6.2** - Dev 6.7 Work in progress
 Dev deploy on github pages 
 >***Feat*** - add tooltip on main page

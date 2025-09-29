@@ -3,7 +3,7 @@
     <div class="content">
       <div class="sets-description">{{$t("search_page_description")}}</div>
         <SearchFilters />
-      <SearchResultsDisplay :cards="filteredCards" />
+      <SearchResultsDisplay :cards="filteredCards"/>
     </div>
   </Page>
 </template>
@@ -23,8 +23,11 @@ import type { SetId } from "../dominion/set-id";
 import { DominionSets } from "../dominion/dominion-sets";
 import { CardType } from "../dominion/card-type";
 import { Cards } from "../utils/cards";
+import type { Card } from "../dominion/card";
 import { Randomizer } from "../randomizer/randomizer";
-
+import { OTHER_CARD_TYPES, OTHER_CARD_TYPES_HORIZONTAL } from '../utils/cards-other';
+import type { OtherCard } from '../dominion/other-card';
+import { SupplyCard } from '../dominion/supply-card';
 
 export default defineComponent({
   name: "SearchCards",
@@ -53,7 +56,12 @@ export default defineComponent({
 
     const allDominionCards = computed(() => {
       const sets = DominionSets.getAllSets().filter(set => setsToUse.value.includes(set.setId));
-      const cards = Cards.getAllSupplyCards(Cards.getAllCardsFromSets(sets));
+      const cards = Cards.getAllSupplyCards(Cards.getAllCardsFromSets(sets))
+      const otherCards = Cards.getAllOtherCardsFromSets(sets);
+      for (const otherCardType of OTHER_CARD_TYPES) {
+        const xx = otherCards.filter((card) => ((card as OtherCard).type.includes(otherCardType.cardType)));
+        cards.push(...xx as SupplyCard[]);
+      }
       return cards.filter(card => !excludedCards.value.includes(card.id));
     });
 
@@ -63,7 +71,7 @@ export default defineComponent({
     }
 
     const filteredCards = computed(() => {
-      let cards = allDominionCards.value;
+      let cards = allDominionCards.value
 
       if (SearchStore.selectedSetIds.length > 0) {
         cards = cards.filter(card => SearchStore.selectedSetIds.includes(card.setId));
@@ -89,8 +97,13 @@ export default defineComponent({
 
       // to remove duplicate and avoid problem with multiple version of Set           
       cards = Randomizer.removeDuplicateCards(cards, []);
-      console.log("cards in filteredcards after deduplicate:", cards);
+      // complete multiple version by based on id - remove duplicate
+      cards = cards.filter((card, index, self) => {
+        const x = card.id.replace('tohidesplitcard','')
+        return index === self.findIndex((c) => c.id === x)
+      });
 
+      console.log(filteredHorizontalCards.value)
       // Tri selon l'option sélectionnée
       switch (SearchStore.selectedSortOption) {
         case 'SET':
@@ -99,7 +112,7 @@ export default defineComponent({
           return cards.sort((a, b) => {
             const costA = a.cost ? a.cost.treasure + a.cost.potion * 10 + a.cost.debt * 100 : 0;
             const costB = b.cost ? b.cost.treasure + b.cost.potion * 10 + b.cost.debt * 100 : 0;
-            return costA - costB;
+            return costA - costB !== 0 ? costA- costB : (a.name || '').localeCompare(b.name || '');
           });
         case 'ALPHABETICAL':
         default:
@@ -107,8 +120,25 @@ export default defineComponent({
       }
     });
 
+    const allHorizontalDominionCards = computed(() => {
+      const sets = DominionSets.getAllSets().filter(set => setsToUse.value.includes(set.setId));
+      const cards = Cards.getAllNonSupplyCards(Cards.getAllCardsFromSets(sets))
+      const otherCards = Cards.getAllOtherCardsFromSets(sets);
+      for (const otherCardType of OTHER_CARD_TYPES_HORIZONTAL) {
+        const xx = otherCards.filter((card) => ((card as OtherCard).type.includes(otherCardType.cardType)));
+        cards.push(...xx as Card[]);
+      }
+      return cards.filter(card => !excludedCards.value.includes(card.id));
+    });
+    
+    const filteredHorizontalCards = computed(()=> {
+       let cards = allHorizontalDominionCards.value; 
+       console.log("allHorizontalDominionCards", allHorizontalDominionCards.value)
+    });
+  
     return {
       filteredCards,
+      filteredHorizontalCards
     };
   },
 });

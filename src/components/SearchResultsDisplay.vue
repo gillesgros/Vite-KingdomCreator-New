@@ -3,20 +3,34 @@
     <h3>{{ $t("Results") }} ({{ cards.length }})</h3>
     <div class="card-grid">
       <div v-for="card in cards" :key="card.id" class="card-grid-item">
-
-      <div class="beforeStaticSet">
-        <StaticCardWithSet :card="card" style="position:relative;"/>
-      </div>
+        <div class="beforeStaticSet">
+          <StaticCardWithSet :card="card" style="position:relative;"/>
+        </div>
         <div class="card-details">
           <span class="card-name">{{ $t(card.id) }}</span>
           <span class="card-set">{{ getSetName(card.setId) }}</span>
           <span class="card-cost">{{ getCostName(card.cost) }}</span>
           <span class="card-types">{{ getCardTypeNames(card) }}</span>
         </div>
-
       </div>
     </div>
     <p v-if="cards.length === 0">{{ $t("No cards found matching your criteria.") }}</p>
+
+    <template v-if="horizontalCards && horizontalCards.length">
+      <h3 style="margin-top:2em;">{{ $t("Horizontal Cards") }} ({{ horizontalCards.length }})</h3>
+      <div class="card-grid">
+        <div v-for="card in horizontalCards as Card[]" :key="card.id" class="card-grid-item">
+          <div class="beforeStaticSet">
+            <StaticCardWithSet :card="card" style="position:relative;"/>
+          </div>
+          <div class="card-details">
+            <span class="card-name">{{ $t(card.id) }}</span>
+            <span class="card-set">{{ getSetName(card.setId) }}</span>
+            <span class="card-cost">{{ getCostName((card as Addon).cost) }}</span>
+          </div>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -27,8 +41,11 @@ import { useI18n } from 'vue-i18n';
 import { CardType, VISIBLE_CARD_TYPES } from "../dominion/card-type";
 import type { Cost } from '../dominion/cost';
 import type { SupplyCard } from '../dominion/supply-card';
+import type { Card } from '../dominion/card';
 import { DominionSets } from '../dominion/dominion-sets';
-import StaticCardWithSet from "./StaticCardWithSet.vue";
+import StaticCardWithSet from './StaticCardWithSet.vue';
+import { Addons_TYPE } from '../dominion/addon'
+import type {Addon } from '../dominion/addon'
 
 export default defineComponent({
   name: "SearchResultsDisplay",
@@ -40,11 +57,17 @@ export default defineComponent({
       type: Array as PropType<SupplyCard[]>,
       required: true,
     },
+    horizontalCards: {
+      type: Array as PropType<Card[]>,
+      required: false,
+      default: () => []
+    }
   },
   setup() {
     const { t, locale } = useI18n();
 
     const getCostName = (cost: Cost) => {
+      if (cost) {
       const parts: string[] = [];
       if (cost.treasure > 0) {
         parts.push(`${cost.treasure} ${t("Coins",cost.treasure)}`);
@@ -55,8 +78,24 @@ export default defineComponent({
       if (cost.debt > 0) {
         parts.push(`${cost.debt} ${t("Debt",cost.debt)}`);
       }
-      return parts.length > 0 ? parts.join(' + ') : `${t("Coins",0)}`;
+      return parts.length > 0 ? parts.join(' + ') : '';
+      //`${t("Coins",0)}`;
+      }
+      return ''
     };
+
+    const getCostNameFromCard =(card: Card) => {
+      console.log( card.constructor.name)
+      switch (card.constructor.name) {
+        case Addons_TYPE.EVENT:
+        case Addons_TYPE.LANDMARK:
+          console.log(getCostName((card as Addon).cost))
+          return getCostName((card as Addon).cost);
+      default:
+        throw new Error(`Unknown card type: `);
+      return false
+      }
+    }
 
     const getCardTypeNames = (card: SupplyCard) => {
       // On parcourt dynamiquement tous les types de CardType
@@ -74,6 +113,7 @@ export default defineComponent({
 
     return {
       getCostName,
+      getCostNameFromCard,
       getCardTypeNames,
       getSetName,
     };

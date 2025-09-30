@@ -11,6 +11,8 @@ import { defineComponent, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { VueMarkdownIt } from '@f3ve/vue-markdown-it'
 
+const HELP_BASE= 'help/'
+
 export default defineComponent({
   name: "Help",
   components: {
@@ -38,7 +40,7 @@ export default defineComponent({
         return
       }
       try {
-        const response = await fetch(base + '/' + fileName)
+        const response = await fetch(base + '/' +  HELP_BASE + fileName)
         const contentType = response.headers.get('content-type') || ''
         const text = await response.text()
         // Vérifie si le fichier est vraiment du markdown et non une page HTML d'erreur

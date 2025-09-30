@@ -9,20 +9,19 @@
         <span>{{ $t("Sets") }}</span>
         <div class="sidebar-content-option">
           <label class="checkbox sidebar-content-option">
-            <input type="checkbox" 
-                   :checked="setIds.length > 0 && selectedSetIds.length === setIds.length"
-                   @change="toggleAllSets($event)" />
+            <input id="selectAllSets" type="checkbox"
+              :checked="setIds.length > 0 && selectedSetIds.length === setIds.length" @change="toggleAllSets" />
             <!-- <span>{{ $t('Select All') }}</span> -->
           </label>
           <label class="checkbox sidebar-content-option" style="margin-left:10px;">
-              <input id="alpha" type="radio" style="margin-left:5px;" v-model="setsOrderType" :value="'alpha'"
+            <input id="alpha" type="radio" style="margin-left:5px;" v-model="setsOrderType" :value="'alpha'"
               @change="handleSetOrderTypeChange('alpha')" />
-              <span>{{ $t("Alphabetical") }}</span>
-          </label> 
+            <span>{{ $t("Alphabetical") }}</span>
+          </label>
           <label class="checkbox sidebar-content-option" style="margin-left:10px;">
-              <input id="date" type="radio" style="margin-left:5px;" v-model="setsOrderType" :value="'date'"
+            <input id="date" type="radio" style="margin-left:5px;" v-model="setsOrderType" :value="'date'"
               @change="handleSetOrderTypeChange('date')" />
-              <span>{{ $t("Date") }}</span>
+            <span>{{ $t("Date") }}</span>
           </label>
 
         </div>
@@ -30,12 +29,13 @@
       <div class="sets">
         <div class="set" v-for="setId in setIds" :key="setId">
           <label class="checkbox">
-            <input :id="setId" type="checkbox" v-model="selectedSetIds"  :value="setId">
-            <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - {{ $t("1st") }}</span></span>
+            <input :id="setId" type="checkbox" v-model="selectedSetIds" :value="setId">
+            <span>{{ $t(setId) }} <span v-if="FindMultipleVersionSets(setId).length !== 0"> - {{ $t("1st")
+                }}</span></span>
           </label>
           <span v-if="FindMultipleVersionSets(setId).length !== 0">
             <label class="checkbox suboption-set">
-              <input :id="(FindMultipleVersionSets(setId))[0]!.idv2" type="checkbox" v-model="selectedSetIds" 
+              <input :id="(FindMultipleVersionSets(setId))[0]!.idv2" type="checkbox" v-model="selectedSetIds"
                 :value="(FindMultipleVersionSets(setId))[0]!.idv2">
               <span>{{ $t("2nd") }}</span>
             </label>
@@ -123,7 +123,7 @@
 
 <script lang="ts">
 /* import Vue, typescript */
-import { defineComponent, ref, computed, watch } from "vue";
+import { defineComponent, ref, computed, watch, onMounted, nextTick } from "vue";
 import { useI18n } from 'vue-i18n'
 
 /* import Dominion Objects and type*/
@@ -164,20 +164,23 @@ export default defineComponent({
     const randomizerSettings = computed(() => { return randomizerStore.settings.randomizerSettings });
     const setsOrderType = ref(setsStore.setsOrderType)
 
+    let selectAllState: 'checked' | 'unchecked' | 'indeterminate' = 'unchecked';
+    let PreviousSelectAllState: 'checked' | 'unchecked' | 'indeterminate' = 'unchecked';
+    let previousSelectedSetIds: SetId[] = [];
 
-    const setIds = computed(() => { 
-        const AllSetIdsToConsider = DominionSets.getAllSetsIds()
-            .filter(setId => {
-              if (settingsStore.isUsingOnlyOwnedsets)
-                return settingsStore.ownedSets.indexOf(setId as never) != -1
-              return true;
-              })
-            .filter(setId => !HideMultipleVersionSets.includes(setId) && !Sets_To_Ignore_Regroup.has(setId))
-        const sortedSets = setsOrderType.value === 'date'   // Check if sortType has a value (not undefined)
-            ? AllSetIdsToConsider.sort((a, b) => (Year_set.find(set => set.id === a)?.order ||0) - (Year_set.find(set => set.id === b)?.order ||0))
-            : AllSetIdsToConsider.sort((a, b) => t(a).localeCompare(t(b)))
-        return sortedSets;
-      });
+    const setIds = computed(() => {
+      const AllSetIdsToConsider = DominionSets.getAllSetsIds()
+        .filter(setId => {
+          if (settingsStore.isUsingOnlyOwnedsets)
+            return settingsStore.ownedSets.indexOf(setId as never) != -1
+          return true;
+        })
+        .filter(setId => !HideMultipleVersionSets.includes(setId) && !Sets_To_Ignore_Regroup.has(setId))
+      const sortedSets = setsOrderType.value === 'date'   // Check if sortType has a value (not undefined)
+        ? AllSetIdsToConsider.sort((a, b) => (Year_set.find(set => set.id === a)?.order || 0) - (Year_set.find(set => set.id === b)?.order || 0))
+        : AllSetIdsToConsider.sort((a, b) => t(a).localeCompare(t(b)))
+      return sortedSets;
+    });
 
     const selectedSetIds = ref(settings.value.selectedSets);
     watch(selectedSetIds, (values: string[]) => {
@@ -188,14 +191,54 @@ export default defineComponent({
       randomizerStore.UPDATE_SETTINGS({
         selectedSets: values.map(DominionSets.convertToSetId)
       } as SettingsParams);
+      // Met à jour l'état du tri-state
+      nextTick(() => {
+        const checkbox = document.getElementById('selectAllSets') as HTMLInputElement;
+        if (!checkbox) return;
+        if (values.length === setIds.value.length) {
+          selectAllState = 'checked';
+          checkbox.checked = true;
+          checkbox.indeterminate = false;
+        } else if (values.length === 0) {
+          selectAllState = 'unchecked';
+          checkbox.checked = false;
+          checkbox.indeterminate = false;
+        } else {
+          selectAllState = 'indeterminate';
+          checkbox.checked = false;
+          checkbox.indeterminate = true;
+        }
+      });
+    })
+
+    onMounted(() => {
+      //const values = selectedSetIds.value;
+      nextTick(() => {
+        const checkbox = document.getElementById('selectAllSets') as HTMLInputElement;
+        if (!checkbox) return;
+        const values = selectedSetIds.value;
+        if (values.length === setIds.value.length) {
+          selectAllState = 'checked';
+          checkbox.checked = true;
+          checkbox.indeterminate = false;
+        } else if (values.length === 0) {
+          selectAllState = 'unchecked';
+          checkbox.checked = false;
+          checkbox.indeterminate = false;
+        } else {
+          selectAllState = 'indeterminate';
+          checkbox.checked = false;
+          checkbox.indeterminate = true;
+        }
+      });
     })
 
     const FindMultipleVersionSets = (setValue: string) => {
-      if (settingsStore.isUsingOnlyOwnedsets){
+      if (settingsStore.isUsingOnlyOwnedsets) {
         const AllSetIdsToConsider = DominionSets.getAllSetsIds()
-            .filter(setId => { return settingsStore.ownedSets.indexOf(setId as never) != -1 })
+          .filter(setId => { return settingsStore.ownedSets.indexOf(setId as never) != -1 })
         return MultipleVersionSets.filter(set => { return (set.id === setValue) })
-                .filter(set => AllSetIdsToConsider.some(setid => setid===set.idv2))
+          .filter(set => AllSetIdsToConsider.some(setid => setid === set.idv2))
       } else {
         return MultipleVersionSets.filter(set => { return (set.id === setValue) })
       }
@@ -275,14 +318,37 @@ export default defineComponent({
     };
 
     // Fonction pour sélectionner/désélectionner tous les sets
-    const toggleAllSets = (event: Event) => {
-      const checked = (event.target as HTMLInputElement).checked;
-      if (checked) {
+    const toggleAllSets = () => {
+      //console.log('click')
+      const checkbox = document.getElementById('selectAllSets') as HTMLInputElement;
+      if (!checkbox) return;
+      // Cycle à 3 états
+      if (selectAllState === 'unchecked') {
+        //    previousSelectedSetIds = [...selectedSetIds.value];
         selectedSetIds.value = [...setIds.value];
+        selectAllState = 'checked';
+      } else if (selectAllState === 'checked') {
+        selectedSetIds.value = previousSelectedSetIds.length > 0 ? [...previousSelectedSetIds] : [];
+        selectAllState = 'indeterminate';
       } else {
+        previousSelectedSetIds = [...selectedSetIds.value];
         selectedSetIds.value = [];
+        selectAllState = 'unchecked';
       }
-    }
+      nextTick(() => {
+        if (!checkbox) return;
+        if (selectAllState === 'indeterminate') {
+          checkbox.checked = false;
+          checkbox.indeterminate = true;
+        } else if (selectAllState === 'checked') {
+          checkbox.checked = true;
+          checkbox.indeterminate = false;
+        } else {
+          checkbox.checked = false;
+          checkbox.indeterminate = false;
+        }
+      });
+    };
 
     const updateRandomizerSettings = (params: RandomizerSettingsParams) => {
       randomizerStore.UPDATE_SETTINGS({

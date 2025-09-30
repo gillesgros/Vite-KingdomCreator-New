@@ -159,9 +159,9 @@ export default defineComponent({
       set: (val: CostType[]) => SearchStore.selectedCostTypes = val
     });
     const sortOptions = [
-      { display: "Set", value: "SET" },
-      { display: "Alphabetical", value: "ALPHABETICAL" },
-      { display: "Cost", value: "COST" },
+      { display: "Set", value: SortOption.SET },
+      { display: "Alphabetical", value: SortOption.ALPHABETICAL },
+      { display: "Cost", value: SortOption.COST },
     ];
     const selectedSortOption = computed({
       get: () => SearchStore.selectedSortOption,

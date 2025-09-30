@@ -18,6 +18,7 @@ import { exit } from 'process';
 
 const devServerPort = 5173;
 const publicationDir = 'docs';
+const publicationHelpDir = 'help';
 
 const changelogPath = path.join(__dirname, 'Changelog.md');
 const readmePath = path.join(__dirname, 'README.md');
@@ -111,7 +112,7 @@ export default defineConfig( ({ mode}) => {
       }),
        viteStaticCopy({
         targets: [ { src: 'styles/normalize-v8.css', dest: 'assets/' },
-                    { src: 'help/*.md', dest: './' }
+                    { src: 'help/*.md', dest: './' + publicationHelpDir + '/' },
           ]
       })
     ],

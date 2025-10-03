@@ -6,7 +6,17 @@
     <div class="switch-groupedline">
       <div class="switch-labelAndswitch">
         <SwitchGroup as="div" class="switch-flex switchGroupcss">
-          <SwitchLabel>{{ $t("Use Custom Configuration for DeckSize") }}</SwitchLabel>
+            <SwitchLabel as="div">
+              {{ $t("Use Custom Configuration for DeckSize") }}
+            </SwitchLabel>
+            <div class="question-mark-tooltip">
+              <RouterLink :to="getHelpMarkdownUrl($t('HowDoesItWorks')+ '.md' )"
+                :title="$t('ShortDeskSize')"
+                target="_blank"
+              >
+                <QuestionMarkCircleIcon class="QuestionMark" />
+              </RouterLink>
+            </div>
           <Switch as="button" v-model="isUsingCustomDesksize" v-slot="{ checked }" :class="isUsingCustomDesksize ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'"
             class="relative-switchcss">
             <span class="SwitchSpan" :class="{ 'translate-x-5': checked, 'translate-x-0': !checked }" />
@@ -74,9 +84,13 @@
 </template>
 
 <script lang="ts">
+
 import { defineComponent, ref, watch } from "vue";
+import { RouterLink } from 'vue-router';
 import { SwitchGroup, SwitchLabel, Switch } from "@headlessui/vue";
 import { useSettingsStore } from "../pinia/settings-store";
+import { QuestionMarkCircleIcon } from '@heroicons/vue/24/outline';
+import { useI18n } from 'vue-i18n';
 
 export default defineComponent({
   name: "DeskSizeSettings",
@@ -84,11 +98,12 @@ export default defineComponent({
     Switch,
     SwitchLabel,
     SwitchGroup,
+    QuestionMarkCircleIcon,
+    RouterLink,
   },
   setup() {
     const SettingsStore = useSettingsStore();
     const isUsingCustomDesksize = ref(SettingsStore.isUsingCustomDesksize);
-  
     const KingdomNb = ref(SettingsStore.KingdomNb);
     const AddonsNb = ref(SettingsStore.AddonsNb);
     const EventsMax = ref(SettingsStore.addonMax.Events);
@@ -106,20 +121,19 @@ export default defineComponent({
         if (AddonsNb.value < WaysMax.value) WaysMax.value = AddonsNb.value
         if (AddonsNb.value < TraitsMax.value) TraitsMax.value = AddonsNb.value
       },
-      { immediate: true } // Trigger calculation on initial render
+      { immediate: true }
     );
 
-   // Watch for changes in Max values and update AddonsNb if needed
-   watch(
+    watch(
       [EventsMax, LandmarksMax, ProjectsMax, WaysMax, TraitsMax],
       () => {
         const minAddonsNb = Math.max(EventsMax.value, LandmarksMax.value, ProjectsMax.value, 
               WaysMax.value, TraitsMax.value)
         if (AddonsNb.value < minAddonsNb) {
-          AddonsNb.value = minAddonsNb; // Set to minimum allowed value
+          AddonsNb.value = minAddonsNb;
         }
       },
-      { immediate: true } // Trigger calculation on initial render
+      { immediate: true }
     );
 
     const updateStoreValues = () => {
@@ -138,6 +152,13 @@ export default defineComponent({
       });
     };
 
+    const getHelpMarkdownUrl = (filename: string) => {
+      return {
+          path: '/help',
+          query: { file: filename }
+          }
+    };
+
     watch(
       [isUsingCustomDesksize, KingdomNb, AddonsNb, forceAddonsUse, 
         EventsMax, LandmarksMax, ProjectsMax, WaysMax, 
@@ -154,13 +175,16 @@ export default defineComponent({
       LandmarksMax,
       ProjectsMax,
       WaysMax,
-      TraitsMax
+      TraitsMax,
+      getHelpMarkdownUrl
     };
   },
 });
 </script>
 
 <style scoped>
+
+
 .DeskSize {
   padding-left: 2%;
   padding-right: 2%;

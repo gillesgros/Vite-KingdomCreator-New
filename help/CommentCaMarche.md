@@ -4,7 +4,7 @@ L'algorithme de génération d'un deck de cartes (ou "kingdom") dans notre appli
 Ci-après le mode Standard, sans application d’un paramétrage avancé spécifique.  
 
 ---
-**1\. Sélection des Sets de Cartes**
+## 1. Sélection des Sets de Cartes
 
 - **Choix des sets** : L'utilisateur sélectionne un ou plusieurs sets parmi ceux disponibles (par exemple, "Base", "Alchemy", "Seaside").
 - **Contenu des sets** : Chaque set contient différents types de cartes
@@ -12,7 +12,7 @@ Ci-après le mode Standard, sans application d’un paramétrage avancé spécif
   * **Cartes Complémentaires** : Événements (Events), repères (Landmarks), projets (Projects), etc...
 
 ---
-**2\. Application des Contraintes pour Générer le Deck**
+## 2. Application des Contraintes pour Générer le Deck
 
 L'utilisateur peut définir des contraintes spécifiques pour guider la génération aléatoire du deck. Ces contraintes permettent de personnaliser le deck en fonction des préférences ou des besoins stratégiques.
 
@@ -28,7 +28,7 @@ L'utilisateur peut définir des contraintes spécifiques pour guider la généra
 - **Prioritize Sets** : Prioriser un set pour garantir qu'il soit bien représenté dans le deck par 5 cartes.
 
 ---
-**3\. Sélection Aléatoire des Cartes « Royaume »**
+## 3. Aléatoire des Cartes « Royaume »
 
 Une fois les sets sélectionnés, l'algorithme procède à la sélection des cartes Royaume.
 
@@ -43,7 +43,7 @@ Une fois les sets sélectionnés, l'algorithme procède à la sélection des car
 - **Satisfaction des contraintes** : Pour chaque contrainte de type "Require", si elle n’est pas satisfaite avec les cartes déjà sélectionnées, l'algorithme identifie les regroupements de cartes permettant de répondre à la contrainte et en sélectionne une ou plusieurs au hasard.
 
 ---
-**4\. Vérification et Ajustements**
+## 4. Vérification et Ajustements
 
 Une fois les cartes initialement sélectionnées, l'algorithme vérifie que toutes les contraintes définies par l'utilisateur sont respectées. Si une contrainte n'est pas satisfaite, des ajustements sont effectués :
 
@@ -56,7 +56,7 @@ L'algorithme est conçu pour gérer les cas particuliers et les exceptions :
 - **Conflits entre contraintes** : Si des conflits surviennent entre plusieurs contraintes, l'algorithme priorise celles qui ont le plus d'impact sur la jouabilité.
 
 ---
-**5\. Ajout des Cartes Spéciales**
+## 5. Ajout des Cartes Spéciales
 
 En fonction des règles spécifiques de certains sets ou des options activées, des cartes spéciales peuvent être ajoutées au deck :
 
@@ -65,14 +65,14 @@ En fonction des règles spécifiques de certains sets ou des options activées, 
 -   **Autres cartes spéciales** : Certaines cartes comme "Obelisk", "MouseWay",ou "Approaching Army" peuvent nécessiter l’ajout de cartes selon les règles spécifiques des sets.
 
 ---
-**6\. Finalisation du Deck**
+## 6. Finalisation du Deck
 
 Une fois toutes les contraintes respectées et les cartes spéciales ajoutées, l'algorithme finalise le deck :
 - **Organisation des cartes** : Les cartes sont regroupées et organisées pour former un deck complet.
 - **Gestion des remplacements** : Les remplacements possibles pour certaines cartes sont enregistrés, permettant à l'utilisateur de personnaliser le deck après sa génération.
 
 ---
-**7\. Génération des Cartes Addons**
+## 7. Génération des Cartes Addons
 
 En plus des cartes "Royaume", l'algorithme génère également des cartes complémentaires pour enrichir le deck. Ces cartes incluent les addons, les alliés (ally), les prophéties (prophecy) et les bénédictions (boons).
 Les événements (Events), repères (Landmarks), projets (Projects), voies (Ways) et traits (traits) sont ajoutés comme suit :
@@ -80,7 +80,7 @@ Les événements (Events), repères (Landmarks), projets (Projects), voies (Ways
 *	Parmi toutes les cartes composants les sets sélectionné (après Déduplication), 2 fois le nombre de cartes de type Royaume (20 cartes) sont sélectionnées aléatoirement. Parmi ces cartes, les Addons sont retenus.
 
 ---
-**8\. Complément et ajustement en fonction des Addons**
+## 8. Complément et ajustement en fonction des Addons
 Selon les cartes Royaume et les cartes Addons sélectionnées d’autres cartes peuvent être identifiée ou sélectionnées :
 -	Si la carte Druide est présenté, 3 aubaines (Boons) sont sélectionnées aléatoirement
 -	Si une carte Liaison est présente dans les cartes Royaume, une carte Allié (Ally) est sélectionnée aléatoirement.
@@ -88,7 +88,7 @@ Selon les cartes Royaume et les cartes Addons sélectionnées d’autres cartes 
 -	Dans les cartes Royaume sont identifiées les cartes correspondant au besoin des cartes Obélisque (repère) (Obelisk (Landmark)), Voie de la souris (Voie) (Way of the mouse (Way)), l’armée en approche pour la prophétie Armée en Approche (Approaching Army Prophecy) et les cartes royaume à associer au traits.
 
 ---
-**9\. Utilisation des Provinces/Platines et des Refuges (Shelters)**
+## 9. Utilisation des Provinces/Platines et des Refuges (Shelters)
 Selon 
 - le nombre de cartes correspondant aux critères (Nb_Carte_Critère) (set Prospérité 1ère,2ème édition ou update pack ou Set Ages des Ténèbres), 
 - le nombre des cartes dédupliquées (Nb_Cartes).  
@@ -97,15 +97,15 @@ Décision d’utiliser les Provinces et Platines ou les Refuges avec Nb_Carte_Cr
 
 
 
-Les tooltips : 
-
-Require +2 Action : force a card allowing 1 or more actions
-Require Drawer : force a card allowing to draw cards
-Require Buy : force a card allowing 1 or more actionextra buy
+---
+# Les Tooltips de la page principale
+Require +2 Action : include a card allowing 1 or more actions
+Require Drawer : include a card allowing to draw cards
+Require Buy : include a card allowing 1 or more extra buy
 Allow Attacks : allow attacks card to be in the deck
-Require Reaction : force a reaction card in the deck if an attack is present
-Require Trashing : force a card allowing trash cards
+Require Reaction : include a reaction card in the deck if an attack is present
+Require Trashing : include a card allowing trash cards
 
-3+ Alchemy Cards : force 3 or more card of Alchemy set in the deck
-Distribute Cost : force 3 to 5 cards of cost 5 or more
-Prioritize Set : force 5 cards of the selected set
+3+ Alchemy Cards : include 3 or more card of Alchemy set in the deck
+Distribute Cost : include 3 to 5 cards of cost 5 or more
+Prioritize Set : include 5 cards of the selected set

@@ -12,6 +12,7 @@ import {Way} from "../dominion/way";
 import {Ally} from "../dominion/ally";
 import {Trait} from "../dominion/trait";
 import {Prophecy} from "../dominion/prophecy";
+import type { OtherCard } from "@/dominion/other-card";
 
 export class Cards {
 
@@ -19,6 +20,14 @@ export class Cards {
     let cards: Card[] = [];
     for (const set of sets) {
       cards = cards.concat(Cards.getAllCardsFromSet(set));
+    }
+    return cards;
+  }
+
+  static getAllOtherCardsFromSets(sets: DominionSet[]): Card[] {
+    let cards: Card[] = [];
+    for (const set of sets) {
+      cards = cards.concat(Cards.getAllOtherCardsFromSet(set));
     }
     return cards;
   }
@@ -32,13 +41,28 @@ export class Cards {
         (set.boons as Card[]),
         (set.allies as Card[]), 
         (set.traits as Card[]), 
-        (set.prophecies as Card[]), 
+        (set.prophecies as Card[])
         );
   }
 
+  static getAllOtherCardsFromSet(set: DominionSet): Card[] {
+    return (set.otherCards as Card[]);
+  }
+  
   static getAllSupplyCards(cards: Card[]): SupplyCard[] {
     return Cards.getCardsOfType<SupplyCard>(cards, SupplyCard);
   }
+
+  static getAllNonSupplyCards(cards: Card[]): Card[] {
+    const nonSupplyCards: Card[] = [];
+    for (const card of cards) {
+      if (!(card instanceof SupplyCard)) {  
+        nonSupplyCards.push(card);
+      }
+    }
+    return nonSupplyCards;
+  }
+
 
   static getAllEvents(cards: Card[]): Event[] {
     return Cards.getCardsOfType<Event>(cards, Event);

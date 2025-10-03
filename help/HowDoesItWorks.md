@@ -4,7 +4,7 @@ The algorithm for generating a card deck (or "kingdom") in our application follo
 Below is the Standard mode, without applying specific advanced settings.
 
 ---
-**1. Selecting Card Sets**
+## 1. Selecting Card Sets
 
 - **Choosing sets**: The user selects one or more sets among those available (for example, "Base", "Alchemy", "Seaside").
 - **Set content**: Each set contains different types of cards:
@@ -12,7 +12,7 @@ Below is the Standard mode, without applying specific advanced settings.
   - **Complementary Cards**: Events, Landmarks, Projects, etc...
 
 ---
-**2. Applying Constraints to Generate the Deck**
+## 2. Applying Constraints to Generate the Deck
 
 The user can define specific constraints to guide the random generation of the deck. These constraints allow for customizing the deck based on preferences or strategic needs.
 
@@ -28,7 +28,7 @@ The user can define specific constraints to guide the random generation of the d
 - **Prioritize Sets**: Prioritizes a set to ensure it is well-represented in the deck by 5 cards.
 
 ---
-**3. Random Selection of "Kingdom" Cards**
+## 3. Random Selection of "Kingdom" Cards
 
 Once the sets are selected, the algorithm proceeds to select the Kingdom cards.
 
@@ -43,7 +43,7 @@ Once the sets are selected, the algorithm proceeds to select the Kingdom cards.
 - **Satisfying constraints**: For each "Require" constraint, if it is not satisfied with the already selected cards, the algorithm identifies card groupings that meet the constraint and selects one or more randomly.
 
 ---
-**4. Verification and Adjustments**
+## 4. Verification and Adjustments
 
 Once the cards are initially selected, the algorithm verifies that all user-defined constraints are met. If a constraint is not satisfied, adjustments are made:
 
@@ -56,7 +56,7 @@ The algorithm is designed to handle special cases and exceptions:
 - **Conflicts between constraints**: If conflicts arise between multiple constraints, the algorithm prioritizes those with the most impact on playability.
 
 ---
-**5. Adding Special Cards**
+## 5. Adding Special Cards
 
 Depending on the specific rules of certain sets or activated options, special cards can be added to the deck:
 
@@ -65,14 +65,14 @@ Depending on the specific rules of certain sets or activated options, special ca
 - **Other special cards**: Certain cards like "Obelisk", "MouseWay", or "Approaching Army" may require adding cards according to the specific rules of the sets.
 
 ---
-**6. Finalizing the Deck**
+## 6. Finalizing the Deck
 
 Once all constraints are met and special cards are added, the algorithm finalizes the deck:
 - **Organizing the cards**: Cards are grouped and organized to form a complete deck.
 - **Managing replacements**: Possible replacements for certain cards are recorded, allowing the user to customize the deck after its generation.
 
 ---
-**7. Generating Addon Cards**
+## 7. Generating Addon Cards
 
 In addition to "Kingdom" cards, the algorithm also generates complementary cards to enrich the deck. These cards include addons, allies, prophecies, and boons.  
 Events, Landmarks, Projects, Ways, and Traits are added as follows:
@@ -80,7 +80,7 @@ Events, Landmarks, Projects, Ways, and Traits are added as follows:
 - From all the cards composing the selected sets (after Deduplication), twice the number of Kingdom-type cards (20 cards) are randomly selected. Among these cards, the Addons are retained.
 
 ---
-**8. Complement and Adjustment Based on Addons**
+## 8. Complement and Adjustment Based on Addons
 Depending on the selected Kingdom and Addon cards, other cards may be identified or selected:
 - If the "Druid" card is present, 3 Boons are randomly selected.
 - If a Liaison card is present in the Kingdom cards, an Ally card is randomly selected.
@@ -88,23 +88,23 @@ Depending on the selected Kingdom and Addon cards, other cards may be identified
 - In the Kingdom cards, cards corresponding to the needs of Obelisk (Landmark), Way of the Mouse (Way), Approaching Army Prophecy, and Kingdom cards associated with Traits are identified.
 
 ---
-**9. Using Provinces/Platinums and Shelters**
+## 9. Using Provinces/Platinums and Shelters
 Depending on:
-- The number of cards meeting the criteria (Nb_Carte_Critère) (Prosperity 1st, 2nd edition, or update pack or Dark Ages set),
-- The number of deduplicated cards (Nb_Cartes),
+- The number of cards meeting the criteria (Nb_Cards_Criteria) (Prosperity 1st, 2nd edition, or update pack or Dark Ages set),
+- The number of deduplicated cards (Nb_Cards),
 
-A decision is made to use Provinces and Platinums or Shelters with Nb_Carte_Critère chance out of Nb_Cartes randomly.
-
-
+A decision is made to use Provinces and Platinums or Shelters with Nb_Cards_Criteria chance out of Nb_Cards randomly.
 
 
-Require +2 Action : force a card allowing 1 or more actions
-Require Drawer : force a card allowing to draw cards
-Require Buy : force a card allowing 1 or more actionextra buy
+---
+# Tooltips on main page
+Require +2 Action : include a card allowing 1 or more actions
+Require Drawer : include a card allowing to draw cards
+Require Buy : include a card allowing 1 or more extra buy
 Allow Attacks : allow attacks card to be in the deck
-Require Reaction : force a reaction card in the deck if an attack is present
-Require Trashing : force a card allowing trash cards
+Require Reaction : include a reaction card in the deck if an attack is present
+Require Trashing : include a card allowing trash cards
 
-3+ Alchemy Cards : force 3 or more card of Alchemy set in the deck
-Distribute Cost : force 3 to 5 cards of cost 5 or more
-Prioritize Set : force 5 cards of the selected set
+3+ Alchemy Cards : include 3 or more card of Alchemy set in the deck
+Distribute Cost : include 3 to 5 cards of cost 5 or more
+Prioritize Set : include 5 cards of the selected set

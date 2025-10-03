@@ -6,7 +6,17 @@
     <div class="switch-groupedline">
       <div class="switch-labelAndswitch">
         <SwitchGroup as="div" class="switch-flex switchGroupcss">
-          <SwitchLabel>{{ $t("Use constraint on randomization") }}</SwitchLabel>
+          <SwitchLabel as="div">
+            {{ $t("Use constraint on randomization") }}
+          </SwitchLabel>
+            <div class="question-mark-tooltip">
+              <RouterLink :to="getHelpMarkdownUrl($t('HowDoesItWorksRandomizeConstraints')+ '.md' )"
+                :title="$t('ShortRandomizeConstraints')"
+                target="_blank"
+              >
+                <QuestionMarkCircleIcon class="QuestionMark" />
+              </RouterLink>
+            </div>
           <Switch as="button" v-model="constraintRandomizer" v-slot="{ checked }"
             :class="constraintRandomizer ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'" class="relative-switchcss">
             <span class="SwitchSpan" :class="{ 'translate-x-5': checked, 'translate-x-0': !checked }" />
@@ -47,7 +57,7 @@
               <Listbox v-model="selectedCards[setId]" multiple>
                 <div class="settingsInput" style="position:relative; width:240px">
                   <ListboxButton class="listboxCard">
-                    <span class="truncate-block"> {{ textForlistbox(selectedCards[setId] as string[], setId) }} {{ $t("cards_removed", lenghtcount(selectedCards[setId] as string[])) }} </span>
+                    <span class="truncate-block"> {{ textForlistbox(selectedCards[setId] as string[], setId) }} {{ $t("cards_removed", lengthcount(selectedCards[setId] as string[])) }} </span>
                     <span class="chevronlistbox">
                       <ChevronUpDownIcon class="chevronlistboxIcon" />
                     </span>
@@ -81,9 +91,11 @@
 
 /* import Vue, typescript */
 import { defineComponent, ref, computed, watch } from "vue";
+import { RouterLink } from 'vue-router';
 import { SwitchGroup, Switch, SwitchLabel } from "@headlessui/vue";
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption, ListboxLabel } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid';
+import { QuestionMarkCircleIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n'
 
 
@@ -107,7 +119,9 @@ export default defineComponent({
   components: {
     SwitchGroup, Switch, SwitchLabel,
     Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions,
-    CheckIcon, ChevronUpDownIcon
+    CheckIcon, ChevronUpDownIcon,
+    QuestionMarkCircleIcon,
+    RouterLink
   },
   setup() {
     const SettingsStore = useSettingsStore()
@@ -167,7 +181,7 @@ export default defineComponent({
     const textForlistbox = (cards: string[], setid: SetId) => {
       return (cards ? cards.length : 0) + " / " + getCardsForSet(setid).length;
     }
-    const lenghtcount= (cards: string[]) => { return cards ? cards.length : 0 }
+    const lengthcount= (cards: string[]) => { return cards ? cards.length : 0 }
 
     // Initialiser les valeurs depuis le store
     const initializeSetConstraints = () => {
@@ -251,12 +265,20 @@ export default defineComponent({
       });
     };
 
+    const getHelpMarkdownUrl = (filename: string) => {
+      return {
+          path: '/help',
+          query: { file: filename }
+          }
+    };
+
     return {
       ownedRestricted,
       constraintRandomizer,
       listedSetids,
       setsOrderType,
       FindMultipleVersionSets,
+      getHelpMarkdownUrl,
 
       selectedSets,
       selectedSetMinCounts,
@@ -265,7 +287,7 @@ export default defineComponent({
       selectedCards,
       getCardsForSet,
       textForlistbox,
-      lenghtcount
+      lengthcount
 
     };
   },

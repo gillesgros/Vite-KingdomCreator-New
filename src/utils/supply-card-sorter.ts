@@ -14,7 +14,7 @@ export class SupplyCardSorter {
     }
     if (sortOption === SortOption.COST) {
       const costComparison = SupplyCardSorter.compareCosts(a, b);
-      if (costComparison !== 0) {
+      if (costComparison != 0) {
         return costComparison;
       }
     }

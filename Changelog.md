@@ -29,6 +29,12 @@ Dev deploy on github pages
 >***Feat*** - Add select/unselect all Randomizer sidebas /Settings owned set 
 >***Feat*** - custom settings owned set
 
+**2026/01/07 - 7.0.1** - Dev 7.0 Work in progress
+Dev deploy on github pages 
+>***Fix*** - blakevanlan/KingdomCreator #207 - Underling cost  
+>***Fix*** - render boxe sort reactive
+>***Feat*** - make sort display moving cards. 
+
 **2025/09/15 - 6.6.1** - Dev 6.7 Work in progress
 Dev deploy on github pages 
 >***Feat*** - add help markdown file display in settings page 

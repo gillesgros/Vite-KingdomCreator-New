@@ -16,6 +16,9 @@ Feel free to propose any improvements you see fit and send me a pull request!
 **2025/09/27 - 6.6.2** - Dev 6.7 Work in progress
 >***Fix & Feat*** (see [Changelog.md](./Changelog.md))
 
+**2026/01/07 - 7.0.1** - Dev 7.0 Work in progress
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
 **2025/09/15 - 6.6.1** - Dev 6.7 Work in progress
 >***Fix & Feat*** (see [Changelog.md](./Changelog.md))
 

@@ -135,7 +135,7 @@ export default defineComponent({
       canHaveTraits,
       isEnlarged,
       activeContainers,
-      handleClick,
+      handleClick
     }
   }
 });

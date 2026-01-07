@@ -9,13 +9,15 @@
         :shape="shape"
       >
         <template v-slot:default="slotProps">
-          <StaticCardWithSet
-            :card="slotProps.item"
-            :is-vertical="false"
-            :showOverlay="showOverlay"
-          />
+          <slot name="card" v-bind="slotProps">
+            <StaticCardWithSet
+              :card="slotProps.item"
+              :is-vertical="false"
+              :showOverlay="showOverlay"
+            />
+          </slot>
         </template>
-    </GridLayout>
+      </GridLayout>
   </div>
 </template>
 

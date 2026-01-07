@@ -6,7 +6,7 @@
           @load="handleFrontImageLoaded" @error="incaseoferror" />
         <div class="flip-card__front-details">
           <slot></slot>
-          <CardOverlay v-if="activeCard" :card="activeCard" />
+          <CardOverlay v-if="showOverlay && activeCard" :card="activeCard" />
         </div>
         <transition name="fade">
           <div class="flip-card__front-highlight" v-if="showHighlight">
@@ -67,6 +67,10 @@ export default defineComponent({
     isVertical: {
       type: Boolean,
       default: false,
+    },
+    showOverlay: {
+      type: Boolean,
+      default: true,
     },
     onCardBackClick: {
       type: Function,
@@ -199,6 +203,8 @@ export default defineComponent({
         : CardState.FRONT_VISIBLE;
     }
 
+    const showOverlay = computed(() => props.showOverlay);
+
     return {
       activeCard,
       rotationDegrees,
@@ -208,7 +214,8 @@ export default defineComponent({
       handleFrontImageLoaded,
       incaseoferror,
       handleClick,
-      handleCardBackClick
+      handleCardBackClick,
+      showOverlay
     }
   }
 });

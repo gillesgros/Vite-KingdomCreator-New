@@ -236,6 +236,7 @@ export default defineComponent({
     }
 
     const attemptToAnimateSupplyCardSort = () => {
+      console.log ("attemptToAnimateSupplyCardSort");
       if (numberOfSupplyCardsLoading > 0 || !requiresSupplyCardSort) {
         return;
       }
@@ -256,7 +257,7 @@ export default defineComponent({
         const activeAnimation =
           gsap.to(element, {
             duration: ANIMATION_DURATION_SEC,
-            // transform: `translate(${x}px,${y}px)`,
+            //transform: `translate(${x}px,${y}px)`,
             x: x, // just use x/y instead of transform because they're faster and more clear
             y: y, // transform because they're faster and more clear
             ease: Sine.easeInOut,
@@ -276,22 +277,29 @@ export default defineComponent({
     }
 
     const animateSupplyCardSort = () => {
+      console.log ("animateSupplyCard supply ", supplyCards.value)
       const sortedCards = SupplyCardSorter.sort(supplyCards.value.concat(), sortOption.value, t);
+      console.log ("animateSupplyCard Sort", sortedCards)
       const descriptors = createMoveDescriptors(sortedCards);
+      console.log ("animateSupplyCard descriptors", descriptors)
       const newMapping: Map<number, number> = new Map();
 
       for (let descriptor of descriptors) {
         const element = getSupplyCardElement(descriptor.elementIndex);
         const startCoord = getPositionForElementIndex(descriptor.elementIndex);
         const endCoord = getPositionForElementIndex(descriptor.newVisualIndex);
-        const x = endCoord.x - startCoord.x;
-        const y = endCoord.y - startCoord.y;
+        var x = endCoord.x - startCoord.x;
+        //if (x == 416) x=417
+        var y = endCoord.y - startCoord.y;
+        if (y == 429) y=430
+        console.log ("animateSupplyCard ", descriptor.elementIndex, supplyCards.value[descriptor.elementIndex]?.id,"move ",x, y)
         let activeAnimation =
           gsap.to(element, {
             duration: ANIMATION_DURATION_SEC,
-            // transform: `translate(${x}px,${y}px)`,
+            //transform: `translate(${x}px,${y}px)`,
             x: x, // just use x/y instead of transform because they're faster and more clear
             y: y, // transform because they're faster and more clear
+            force3D: true,
             ease: Sine.easeInOut,
             onComplete: function () {
               activeAnimation.kill

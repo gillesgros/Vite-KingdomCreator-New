@@ -12,6 +12,12 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/01/07 - 7.0.1** - Dev 7.0 Work in progress
+Dev deploy on github pages 
+>***Fix*** - blakevanlan/KingdomCreator #207 - Underling cost  
+>***Fix*** - render boxe sort reactive
+>***Feat*** - make sort display moving cards for boxes (partial)
+
 **2025/09/30 - 6.6.3** - Dev 6.7 Work in progress
 Dev deploy on github pages 
 >***Fix*** - sort on search page

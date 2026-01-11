@@ -40,6 +40,16 @@ ok tracer les requetes utilisateurs
 [x] - Doc - custom settings owned set
 [x] - Feat - search non supply
 
+
+
+http://localhost:5173/index?lang=en&supply=bridgetroll,castles,cityquarter,kitsune,magpie,messenger,page,riverboat,rusticvillage,wildhunt&riverboat=distantlands&events=lostarts&landmarks=labyrinth&prophecy=approachingarmy(enchantress)
+
+[x] fix sort with added supplycards
+[ ] sort added cards
+[ ] feat sort addons
+[ ] feat sort box non blink and back
+[ ] fix replace guilds/cornucopia
+
 [ ] - Doc - custom settings constraint randomizer
 
 [ ] - Feat - specify addon replacement

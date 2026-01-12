@@ -76,6 +76,10 @@ export default defineComponent({
       type: Function,
       default: null,
     },
+    disableFlip: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props,  { emit }) {
     const randomizerStore = useRandomizerStore();
@@ -84,8 +88,8 @@ export default defineComponent({
     const language = computed(()=>{return i18nStore.language});
 
     const activeCard= ref<Card>(props.card);
-    const cardState = ref(CardState.BACK_VISIBLE);
-    const animationParams = ref<AnimationParams>({ rotation: 0});
+    const cardState = ref(props.disableFlip ? CardState.FRONT_VISIBLE : CardState.BACK_VISIBLE);
+    const animationParams = ref<AnimationParams>({ rotation: props.disableFlip ? 1 : 0 });
     const isFrontLoaded = ref(false);
     let activeAnimation : any = null;
 
@@ -99,6 +103,10 @@ export default defineComponent({
 
 
     const handleCardChanged = () =>{
+      if (activeAnimation) {
+        activeAnimation.kill();
+        activeAnimation = null;
+      }
       updateCardState();
     }
     watch(props, handleCardChanged)
@@ -159,12 +167,23 @@ export default defineComponent({
             updateActiveCard();
           }
           if (isFrontLoaded.value) {
-            flipToFront();
+            if (props.disableFlip) {
+              cardState.value = CardState.FRONT_VISIBLE;
+              animationParams.value.rotation = 1;
+            } else {
+              flipToFront();
+            }
           }
           break;
         case CardState.FRONT_VISIBLE:
           if (ValueisActiveCardOutdated) {
-            flipToBack();
+            if (props.disableFlip) {
+              cardState.value = CardState.BACK_VISIBLE;
+              animationParams.value.rotation = 0;
+              updateActiveCard();
+            } else {
+              flipToBack();
+            }
           }
           break;
         default:

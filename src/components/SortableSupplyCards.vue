@@ -18,6 +18,7 @@
           <BaneCardCover isType="Obelisk" v-if="isObeliskCard(slotProps.item)" />
           <BaneCardCover isType="MouseWay" v-if="isMouseWayCard(slotProps.item)" />
           <BaneCardCover isType="Riverboat" v-if="isRiverboatCard(slotProps.item)" />
+          <BaneCardCover isType="ApproachingArmy" v-if="isApproachingArmyCard(slotProps.item)" />
           <BaneCardCover :is-type="traitsTitle(slotProps.item)" v-if="isTraitsCard(slotProps.item)" />
         </FlippingCard>
       </template>
@@ -89,7 +90,17 @@ export default defineComponent({
     let replacingCard: SupplyCard | null = null;
 
     onMounted(() => {
-      supplyCards.value = kingdom.value.supply.supplyCards;
+      const fullCards = kingdom.value.supply.supplyCards.concat();
+      if (kingdom.value.supply.ferrymanCard) {
+        fullCards.push(kingdom.value.supply.ferrymanCard);
+      }
+      if (kingdom.value.supply.riverboatCard) {
+        fullCards.push(kingdom.value.supply.riverboatCard);
+      }
+      if (kingdom.value.supply.approachingArmyCard) {
+        fullCards.push(kingdom.value.supply.approachingArmyCard);
+      }
+      supplyCards.value = fullCards;
       updateActiveSupplyCards();
     });
 
@@ -98,24 +109,7 @@ export default defineComponent({
     });
 
     const supplyCardsWithBaneFerrymanMouseWay = computed(() => {
-      //const cards =  SupplyCardSorter.sort(this.supplyCards.concat() as SupplyCard[], this.sortOption, this.$t.bind(this));
-      const cards = supplyCards.value.concat();
-      if (kingdom.value.supply.baneCard) {
-        cards.push(kingdom.value.supply.baneCard);
-      }
-      if (kingdom.value.supply.ferrymanCard) {
-        cards.push(kingdom.value.supply.ferrymanCard);
-      }
-      if (kingdom.value.supply.mouseWay) {
-        cards.push(kingdom.value.supply.mouseWay);
-      }
-      if (kingdom.value.supply.riverboatCard) {
-        cards.push(kingdom.value.supply.riverboatCard);
-      }
-      if (kingdom.value.supply.approachingArmyCard) {
-        cards.push(kingdom.value.supply.approachingArmyCard);
-      }
-      return cards;
+      return supplyCards.value;
     });
 
     const handleKingdomChanged = () => {
@@ -218,8 +212,17 @@ export default defineComponent({
         return;
       }
       kingdomId = kingdom.value.id;
-      const sortedSupplyCards =
-        SupplyCardSorter.sort(kingdom.value.supply.supplyCards.concat(), sortOption.value, t);
+      const fullCards = kingdom.value.supply.supplyCards.concat();
+      if (kingdom.value.supply.ferrymanCard) {
+        fullCards.push(kingdom.value.supply.ferrymanCard);
+      }
+      if (kingdom.value.supply.riverboatCard) {
+        fullCards.push(kingdom.value.supply.riverboatCard);
+      }
+      if (kingdom.value.supply.approachingArmyCard) {
+        fullCards.push(kingdom.value.supply.approachingArmyCard);
+      }
+      const sortedSupplyCards = SupplyCardSorter.sort(fullCards, sortOption.value, t);
 
       // Remap the sorted supply cards to where the elements currently reside.
       const mappedSupplyCards = [];
@@ -230,9 +233,18 @@ export default defineComponent({
     }
 
     const updateSupplyCards = () => {
-      requiresSupplyCardSort = true;
-      supplyCards.value = replaceSupplyCards(
-        supplyCards.value, kingdom.value.supply.supplyCards);
+      const fullCards = kingdom.value.supply.supplyCards.concat();
+      if (kingdom.value.supply.ferrymanCard) {
+        fullCards.push(kingdom.value.supply.ferrymanCard);
+      }
+      if (kingdom.value.supply.riverboatCard) {
+        fullCards.push(kingdom.value.supply.riverboatCard);
+      }
+      if (kingdom.value.supply.approachingArmyCard) {
+        fullCards.push(kingdom.value.supply.approachingArmyCard);
+      }
+      supplyCards.value = SupplyCardSorter.sort(fullCards, sortOption.value, t);
+      requiresSupplyCardSort = false;
     }
 
     const attemptToAnimateSupplyCardSort = () => {
@@ -345,32 +357,7 @@ export default defineComponent({
         : visualIndex;
     }
 
-    const replaceSupplyCards = (oldSupplyCards: SupplyCard[], newSupplyCards: SupplyCard[]) => {
-      const supplyCards: SupplyCard[] = [];
-      const supplyCardsToAdd = getSupplyCardsToAdd(oldSupplyCards, newSupplyCards);
-      const oldIds = getOldIds(oldSupplyCards, newSupplyCards);
-      let supplyCardsToAddIndex = 0;
-      for (let i = 0; i < oldSupplyCards.length; i++) {
-        const supplyCard = oldSupplyCards[i];
-        if (oldIds.has(supplyCard!.id)) {
-          supplyCards.push(supplyCardsToAdd[supplyCardsToAddIndex] as SupplyCard);
-          supplyCardsToAddIndex += 1;
-        } else {
-          supplyCards.push(supplyCard as SupplyCard);
-        }
-      }
-      return supplyCards;
-    }
 
-    const getSupplyCardsToAdd = (oldSupplyCards: SupplyCard[], newSupplyCards: SupplyCard[]) => {
-      const existingIds = new Set(oldSupplyCards.map((card) => card.id));
-      return newSupplyCards.filter((card) => !existingIds.has(card.id));
-    }
-
-    const getOldIds = (oldSupplyCards: SupplyCard[], newSupplyCards: SupplyCard[]) => {
-      const newIds = new Set(newSupplyCards.map((card) => card.id));
-      return new Set(oldSupplyCards.filter((card) => !newIds.has(card.id)).map((card) => card.id));
-    }
     return {
       supplyCardsWithBaneFerrymanMouseWay,
       numberOfColumns,

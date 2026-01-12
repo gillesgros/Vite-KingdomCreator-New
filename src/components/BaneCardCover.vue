@@ -93,6 +93,9 @@ export default defineComponent({
 .riverboat-div{
   bottom: 10%;
 }
+.approachingarmy-div{
+  bottom: 10%;
+}
 
 .card-cover-text {
   position: absolute;

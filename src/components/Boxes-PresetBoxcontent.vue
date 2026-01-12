@@ -9,7 +9,8 @@
       <GenericLayout :items="displayedCards" :title="$t('Kingdoms Cards')" 
         :shape="Shape.CARD" :showOverlay="OverlayCheck" :generic-nb-columns="numberOfColumnsForSupplyCards" :is-vertical="true">
         <template #card="{ item }">
-          <FlippingCard :card="item" :is-vertical="true" :show-overlay="shouldShowOverlay(item)">
+          <FlippingCard :card="item" :is-vertical="true" :show-overlay="shouldShowOverlay(item)" :disable-flip="true"
+            @front-visible="handleSupplyCardFrontVisible" @flipping-to-back="handleSupplyCardFlippingToBack">
             <template #highlight-content>
               <!-- highlight actions for Boxes can be added here -->
             </template>
@@ -123,6 +124,7 @@ export default defineComponent({
     let elementIndexMapping = new Map<number, number>();
     let requiresSort = false;
     let activeAnimations: Set<any> = new Set();
+    let numberOfSupplyCardsLoading = 0;
 
     const getSupplyCardContainers = () => {
       return document.querySelectorAll('.grid-layout_item') as NodeListOf<HTMLElement>;
@@ -146,6 +148,15 @@ export default defineComponent({
         animation.kill();
       }
       activeAnimations.clear();
+    };
+
+    const handleSupplyCardFlippingToBack = (supplyCard: SupplyCard) => {
+      numberOfSupplyCardsLoading += 1;
+    };
+
+    const handleSupplyCardFrontVisible = (supplyCard: SupplyCard) => {
+      numberOfSupplyCardsLoading -= 1;
+      attemptToAnimateSupplyCardSort();
     };
 
     const resetCardPositions = () => {
@@ -223,6 +234,7 @@ export default defineComponent({
       const setObj = sets.value[0];
       if (!setObj) return;
       const sorted = getCards(setObj.supplyCards.concat(getOtherCards(setObj, 'Normal Supply Cards') as any[]));
+      numberOfSupplyCardsLoading += sorted.length;
       const mappedSupplyCards: SupplyCard[] = [];
       for (let i = 0; i < sorted.length; i++) {
         const card = sorted[i];
@@ -284,6 +296,7 @@ export default defineComponent({
     });
 
     watch(() => sets.value[0], () => {
+      cancelActiveAnimations();
       updateActiveCards();
       nextTick(() => resetCardPositions());
     });
@@ -306,7 +319,9 @@ export default defineComponent({
       GetOtherCardTypes,
       challenge_sortBoxesSet,
       shouldShowOverlay,
-      OverlayCheck
+      OverlayCheck,
+      handleSupplyCardFrontVisible,
+      handleSupplyCardFlippingToBack
     };
   },
 });

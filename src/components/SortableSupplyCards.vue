@@ -34,9 +34,8 @@ import gsap, { Sine } from "gsap";
 
 /* import Dominion Objects and type*/
 import type { SupplyCard } from "../dominion/supply-card";
-
-import type { Coordinate } from "../utils/coordinate";
 import { SupplyCardSorter } from "../utils/supply-card-sorter";
+import { cancelActiveAnimations, resetCardPositions, animateCardSort, getElementIndex } from "../utils/card-animation";
 
 /* imoprt store  */
 import { usei18nStore } from "../pinia/i18n-store";
@@ -47,11 +46,6 @@ import { useWindowStore } from "../pinia/window-store";
 import BaneCardCover from "./BaneCardCover.vue";
 import FlippingCard from "./FlippingCard.vue";
 import GridLayout from "./GridLayout.vue";
-
-interface MoveDescriptor {
-  elementIndex: number;
-  newVisualIndex: number;
-}
 
 const ANIMATION_DURATION_SEC = 0.6;
 const WINDOW_RESIZE_DELAY_MSEC = 300;
@@ -90,17 +84,6 @@ export default defineComponent({
     let replacingCard: SupplyCard | null = null;
 
     onMounted(() => {
-      const fullCards = kingdom.value.supply.supplyCards.concat();
-      if (kingdom.value.supply.ferrymanCard) {
-        fullCards.push(kingdom.value.supply.ferrymanCard);
-      }
-      if (kingdom.value.supply.riverboatCard) {
-        fullCards.push(kingdom.value.supply.riverboatCard);
-      }
-      if (kingdom.value.supply.approachingArmyCard) {
-        fullCards.push(kingdom.value.supply.approachingArmyCard);
-      }
-      supplyCards.value = fullCards;
       updateActiveSupplyCards();
     });
 
@@ -130,25 +113,25 @@ export default defineComponent({
     watch(language, handlelanguagenChanged)
 
     const handleHasFullScreenRequested = () => {
-      cancelActiveAnimations();
-      resetCardPositions();
+      cancelActiveAnimations(activeAnimations);
+      resetCardPositions(supplyCards.value, ".grid-layout_item", elementIndexMapping, activeAnimations);
     }
     watch(HasFullScreenRequested, handleHasFullScreenRequested)
 
     const handleWindowWidthChanged = () => {
-      cancelActiveAnimations();
-      resetCardPositions();
+      cancelActiveAnimations(activeAnimations);
+      resetCardPositions(supplyCards.value, ".grid-layout_item", elementIndexMapping, activeAnimations);
       // Schedule a reset to happen again after the user finishes resizing the window to catch
       // any cases where the reset happened before the elements were fully positioned.
       if (resizeTimerId) {
         clearTimeout(resizeTimerId);
       }
-      resizeTimerId = setTimeout(() => resetCardPositions(), WINDOW_RESIZE_DELAY_MSEC)
+      resizeTimerId = setTimeout(() => resetCardPositions(supplyCards.value, ".grid-layout_item", elementIndexMapping, activeAnimations), WINDOW_RESIZE_DELAY_MSEC)
     }
     watch(windowWidth, handleWindowWidthChanged)
 
     const handleNumberOfColumnsChanged = () => {
-      nextTick(() => resetCardPositions());
+      nextTick(() => resetCardPositions(supplyCards.value, ".grid-layout_item", elementIndexMapping, activeAnimations));
     }
     watch(numberOfColumns, handleNumberOfColumnsChanged)
     const isSpecialCard = (supplyCard: SupplyCard) => {
@@ -203,48 +186,25 @@ export default defineComponent({
       replacingCard = supplyCard;
     }
 
-    const updateActiveSupplyCards = () => {
-      if (!kingdom.value) {
-        return;
-      }
-      if (kingdomId == kingdom.value.id && kingdomId != 0) {
-        updateSupplyCards();
-        return;
-      }
-      kingdomId = kingdom.value.id;
+    const getSortedFullCards = () => {
       const fullCards = kingdom.value.supply.supplyCards.concat();
-      if (kingdom.value.supply.ferrymanCard) {
-        fullCards.push(kingdom.value.supply.ferrymanCard);
-      }
-      if (kingdom.value.supply.riverboatCard) {
-        fullCards.push(kingdom.value.supply.riverboatCard);
-      }
-      if (kingdom.value.supply.approachingArmyCard) {
-        fullCards.push(kingdom.value.supply.approachingArmyCard);
-      }
-      const sortedSupplyCards = SupplyCardSorter.sort(fullCards, sortOption.value, t);
+      if (kingdom.value.supply.ferrymanCard) fullCards.push(kingdom.value.supply.ferrymanCard);
+      if (kingdom.value.supply.riverboatCard) fullCards.push(kingdom.value.supply.riverboatCard);
+      if (kingdom.value.supply.approachingArmyCard) fullCards.push(kingdom.value.supply.approachingArmyCard);
+      return SupplyCardSorter.sort(fullCards, sortOption.value, t);
+    };
+
+    const updateActiveSupplyCards = () => {
+      if (!kingdom.value) return;
+      kingdomId = kingdom.value.id;
+      const sortedSupplyCards = getSortedFullCards();
 
       // Remap the sorted supply cards to where the elements currently reside.
       const mappedSupplyCards = [];
       for (let i = 0; i < sortedSupplyCards.length; i++) {
-        mappedSupplyCards[getElementIndex(i)] = sortedSupplyCards[i];
+        mappedSupplyCards[getElementIndex(i, elementIndexMapping)] = sortedSupplyCards[i];
       }
       supplyCards.value = mappedSupplyCards as SupplyCard[];
-    }
-
-    const updateSupplyCards = () => {
-      const fullCards = kingdom.value.supply.supplyCards.concat();
-      if (kingdom.value.supply.ferrymanCard) {
-        fullCards.push(kingdom.value.supply.ferrymanCard);
-      }
-      if (kingdom.value.supply.riverboatCard) {
-        fullCards.push(kingdom.value.supply.riverboatCard);
-      }
-      if (kingdom.value.supply.approachingArmyCard) {
-        fullCards.push(kingdom.value.supply.approachingArmyCard);
-      }
-      supplyCards.value = SupplyCardSorter.sort(fullCards, sortOption.value, t);
-      requiresSupplyCardSort = false;
     }
 
     const attemptToAnimateSupplyCardSort = () => {
@@ -253,110 +213,16 @@ export default defineComponent({
         return;
       }
       requiresSupplyCardSort = false;
-      cancelActiveAnimations();
+      cancelActiveAnimations(activeAnimations);
       animateSupplyCardSort();
-    }
-
-    const resetCardPositions = () => {
-      for (let visualIndex = 0; visualIndex < supplyCards.value.length; visualIndex++) {
-        const elementIndex = getElementIndex(visualIndex);
-        const element = getSupplyCardElement(elementIndex);
-        const startCoord = getPositionForElementIndex(elementIndex);
-        const endCoord = getPositionForElementIndex(visualIndex);
-        const x = endCoord.x - startCoord.x;
-        const y = endCoord.y - startCoord.y;
-        // element.style.transform = `translate(${x}px,${y}px)`;
-        const activeAnimation =
-          gsap.to(element, {
-            duration: ANIMATION_DURATION_SEC,
-            //transform: `translate(${x}px,${y}px)`,
-            x: x, // just use x/y instead of transform because they're faster and more clear
-            y: y, // transform because they're faster and more clear
-            ease: Sine.easeInOut,
-            onComplete: function () {
-              activeAnimation.kill
-              return;
-            }
-          });
-      }
-    }
-
-    const cancelActiveAnimations = () => {
-      for (const animation of activeAnimations) {
-        animation.kill();
-      }
-      activeAnimations.clear();
     }
 
     const animateSupplyCardSort = () => {
       console.log ("animateSupplyCard supply ", supplyCards.value)
       const sortedCards = SupplyCardSorter.sort(supplyCards.value.concat(), sortOption.value, t);
       console.log ("animateSupplyCard Sort", sortedCards)
-      const descriptors = createMoveDescriptors(sortedCards);
-      console.log ("animateSupplyCard descriptors", descriptors)
-      const newMapping: Map<number, number> = new Map();
-
-      for (let descriptor of descriptors) {
-        const element = getSupplyCardElement(descriptor.elementIndex);
-        const startCoord = getPositionForElementIndex(descriptor.elementIndex);
-        const endCoord = getPositionForElementIndex(descriptor.newVisualIndex);
-        var x = endCoord.x - startCoord.x;
-        //if (x == 416) x=417
-        var y = endCoord.y - startCoord.y;
-        if (y == 429) y=430
-        console.log ("animateSupplyCard ", descriptor.elementIndex, supplyCards.value[descriptor.elementIndex]?.id,"move ",x, y)
-        let activeAnimation =
-          gsap.to(element, {
-            duration: ANIMATION_DURATION_SEC,
-            //transform: `translate(${x}px,${y}px)`,
-            x: x, // just use x/y instead of transform because they're faster and more clear
-            y: y, // transform because they're faster and more clear
-            force3D: true,
-            ease: Sine.easeInOut,
-            onComplete: function () {
-              activeAnimation.kill
-              return;
-            }
-          });
-
-        activeAnimations.add(activeAnimation);
-        newMapping.set(descriptor.newVisualIndex, descriptor.elementIndex);
-        
-      }
-      elementIndexMapping = newMapping;
+      animateCardSort(supplyCards.value, sortedCards, ".grid-layout_item", elementIndexMapping, activeAnimations, ANIMATION_DURATION_SEC);
     }
-
-    const createMoveDescriptors = (sortedSupplyCards: SupplyCard[]) => {
-      const cardIds = supplyCards.value.map((card) => card.id);
-      const descriptors: MoveDescriptor[] = [];
-      for (let newVisualIndex = 0; newVisualIndex < sortedSupplyCards.length; newVisualIndex++) {
-        descriptors.push({
-          newVisualIndex: newVisualIndex,
-          elementIndex: cardIds.indexOf(sortedSupplyCards[newVisualIndex]!.id),
-        });
-      }
-      return descriptors;
-    }
-
-    const getPositionForElementIndex = (index: number): Coordinate => {
-      const container = getSupplyCardContainers()[index];
-      return { x: container!.offsetLeft, y: container!.offsetTop };
-    }
-
-    const getSupplyCardElement = (index: number) => {
-      return getSupplyCardContainers()[index]!.firstElementChild! as HTMLElement;
-    }
-
-    const getSupplyCardContainers = () => {
-      return document.querySelectorAll(".grid-layout_item") as NodeListOf<HTMLElement>;
-    }
-
-    const getElementIndex = (visualIndex: number) => {
-      return elementIndexMapping.has(visualIndex)
-        ? elementIndexMapping.get(visualIndex)!
-        : visualIndex;
-    }
-
 
     return {
       supplyCardsWithBaneFerrymanMouseWay,

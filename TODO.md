@@ -45,9 +45,10 @@ ok tracer les requetes utilisateurs
 http://localhost:5173/index?lang=en&supply=bridgetroll,castles,cityquarter,kitsune,magpie,messenger,page,riverboat,rusticvillage,wildhunt&riverboat=distantlands&events=lostarts&landmarks=labyrinth&prophecy=approachingarmy(enchantress)
 
 [x] fix sort with added supplycards
-[ ] sort added cards
+[ ] feat add sort option added cards
+[x] sort added cards
 [ ] feat sort addons
-[ ] feat sort box non blink and back
+[x] feat sort box non blink and back
 [ ] fix replace guilds/cornucopia
 
 [ ] - Doc - custom settings constraint randomizer

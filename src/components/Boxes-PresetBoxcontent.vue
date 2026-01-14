@@ -9,7 +9,7 @@
       <GenericLayout :items="displayedCards" :title="$t('Kingdoms Cards')" 
         :shape="Shape.CARD" :showOverlay="OverlayCheck" :generic-nb-columns="numberOfColumnsForSupplyCards" :is-vertical="true">
         <template #card="{ item }">
-          <FlippingCard :card="item" :is-vertical="true" :show-overlay="shouldShowOverlay(item)" :disable-flip="true"
+          <FlippingCard :card="item" :is-vertical="true" :show-overlay="shouldShowOverlay(item)"
             @front-visible="handleSupplyCardFrontVisible" @flipping-to-back="handleSupplyCardFlippingToBack">
             <template #highlight-content>
               <!-- highlight actions for Boxes can be added here -->
@@ -19,7 +19,11 @@
       </GenericLayout>
       <!-- generic slot : Events -->
       <GenericLayout :items="getCards(set.events.concat(getOtherCards(set, 'Events') as any []))" :title="$t('Events')" 
-        :shape="Shape.CARD" :showOverlay="OverlayCheck" :generic-nb-columns="numberOfColumnsForAddons" :is-vertical="false" />
+        :shape="Shape.CARD" :showOverlay="OverlayCheck" :generic-nb-columns="numberOfColumnsForAddons" :is-vertical="false">
+        <template #card="{ item }">
+          <FlippingCard :card="item" :is-vertical="false" :show-overlay="shouldShowOverlay(item)" />
+        </template>
+      </GenericLayout>
       <!-- generic slot : Landmarks -->
       <GenericLayout :items="getCards(set.landmarks.concat(getOtherCards(set, 'Landmarks') as any []))" :title="$t('Landmarks')" 
         :shape="Shape.CARD" :showOverlay="OverlayCheck" :generic-nb-columns="numberOfColumnsForAddons" :is-vertical="false" />
@@ -84,6 +88,13 @@ import { OTHER_CARD_TYPES, OTHER_CARD_TYPES_HORIZONTAL,
 import { getOtherCards } from '../utils/cards-other'
 import gsap, { Sine } from 'gsap';
 
+/* import animation utils */
+import {
+  cancelActiveAnimations,
+  resetCardPositions,
+  animateCardSort
+} from '../utils/card-animation';
+
 /* import store  */
 import { useWindowStore } from '../pinia/window-store';
 import { useSetsStore } from '../pinia/sets-store';
@@ -126,29 +137,15 @@ export default defineComponent({
     let activeAnimations: Set<any> = new Set();
     let numberOfSupplyCardsLoading = 0;
 
-    const getSupplyCardContainers = () => {
-      return document.querySelectorAll('.grid-layout_item') as NodeListOf<HTMLElement>;
-    };
 
-    const getSupplyCardElement = (index: number) => {
-      return getSupplyCardContainers()[index]!.firstElementChild! as HTMLElement;
-    };
 
-    const getPositionForElementIndex = (index: number) => {
-      const container = getSupplyCardContainers()[index];
-      return { x: container!.offsetLeft, y: container!.offsetTop };
-    };
+
 
     const getElementIndex = (visualIndex: number) => {
       return elementIndexMapping.has(visualIndex) ? elementIndexMapping.get(visualIndex)! : visualIndex;
     };
 
-    const cancelActiveAnimations = () => {
-      for (const animation of activeAnimations) {
-        animation.kill();
-      }
-      activeAnimations.clear();
-    };
+
 
     const handleSupplyCardFlippingToBack = (supplyCard: SupplyCard) => {
       numberOfSupplyCardsLoading += 1;
@@ -159,74 +156,22 @@ export default defineComponent({
       attemptToAnimateSupplyCardSort();
     };
 
-    const resetCardPositions = () => {
-      for (let visualIndex = 0; visualIndex < displayedCards.value.length; visualIndex++) {
-        const elementIndex = getElementIndex(visualIndex);
-        const element = getSupplyCardElement(elementIndex);
-        const startCoord = getPositionForElementIndex(elementIndex);
-        const endCoord = getPositionForElementIndex(visualIndex);
-        const x = endCoord.x - startCoord.x;
-        const y = endCoord.y - startCoord.y;
-        const activeAnimation = gsap.to(element, {
-          duration: 0.6,
-          x: x,
-          y: y,
-          ease: Sine.easeInOut,
-          onComplete: function () {
-            activeAnimation.kill;
-            return;
-          }
-        });
-        activeAnimations.add(activeAnimation);
-      }
-    };
 
-    const createMoveDescriptors = (sortedCards: SupplyCard[]) => {
-      const cardIds = displayedCards.value.map((card) => (card ? card.id : ""));
-      const descriptors: { elementIndex: number; newVisualIndex: number }[] = [];
-      for (let newVisualIndex = 0; newVisualIndex < sortedCards.length; newVisualIndex++) {
-        descriptors.push({
-          newVisualIndex: newVisualIndex,
-          elementIndex: cardIds.indexOf(sortedCards[newVisualIndex]!.id),
-        });
-      }
-      return descriptors;
-    };
+
+
 
     const animateSupplyCardSort = () => {
       const setObj = sets.value[0];
       if (!setObj) return;
       const sourceCards = setObj.supplyCards.concat(getOtherCards(setObj, 'Normal Supply Cards') as any[]);
       const sortedCards = getCards(sourceCards);
-      const descriptors = createMoveDescriptors(sortedCards);
-      const newMapping: Map<number, number> = new Map();
-
-      for (let descriptor of descriptors) {
-        const element = getSupplyCardElement(descriptor.elementIndex);
-        const startCoord = getPositionForElementIndex(descriptor.elementIndex);
-        const endCoord = getPositionForElementIndex(descriptor.newVisualIndex);
-        const x = endCoord.x - startCoord.x;
-        const y = endCoord.y - startCoord.y;
-        let activeAnimation = gsap.to(element, {
-          duration: 0.6,
-          x: x,
-          y: y,
-          ease: Sine.easeInOut,
-          onComplete: function () {
-            activeAnimation.kill;
-            return;
-          }
-        });
-        activeAnimations.add(activeAnimation);
-        newMapping.set(descriptor.newVisualIndex, descriptor.elementIndex);
-      }
-      elementIndexMapping = newMapping;
+      animateCardSort(displayedCards.value, sortedCards, '.grid-layout_item', elementIndexMapping, activeAnimations, 0.6);
     };
 
     const attemptToAnimateSupplyCardSort = () => {
       if (!requiresSort) return;
       requiresSort = false;
-      cancelActiveAnimations();
+      cancelActiveAnimations(activeAnimations);
       animateSupplyCardSort();
     };
 
@@ -296,9 +241,10 @@ export default defineComponent({
     });
 
     watch(() => sets.value[0], () => {
-      cancelActiveAnimations();
+      cancelActiveAnimations(activeAnimations);
+      elementIndexMapping = new Map<number, number>();
       updateActiveCards();
-      nextTick(() => resetCardPositions());
+      nextTick(() => resetCardPositions(displayedCards.value, '.grid-layout_item', elementIndexMapping, activeAnimations));
     });
 
     watch(() => setsStore.sortBoxesSet, () => {

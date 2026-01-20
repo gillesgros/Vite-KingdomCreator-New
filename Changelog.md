@@ -12,6 +12,10 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/01/20 - 7.0.2** - Dev 7 Work in progress
+>***Fix*** - blakevanlan/KingdomCreator #207 - Underling cost 
+>***Fix*** - blakevanlan/KingdomCreator #214 - Bugged Guilds & Cornucopia (2nd edition) cards
+
 **2026/01/20 - 7.0.1** - Dev 7 Work in progress
 Dev deploy on github pages 
 >***Fix*** - add border for Approaching Army card

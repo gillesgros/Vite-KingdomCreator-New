@@ -18,6 +18,7 @@
           <BaneCardCover isType="Obelisk" v-if="isObeliskCard(slotProps.item)" />
           <BaneCardCover isType="MouseWay" v-if="isMouseWayCard(slotProps.item)" />
           <BaneCardCover isType="Riverboat" v-if="isRiverboatCard(slotProps.item)" />
+          <BaneCardCover isType="ApproachingArmy" v-if="isApproachingArmyCard(slotProps.item)" />
           <BaneCardCover :is-type="traitsTitle(slotProps.item)" v-if="isTraitsCard(slotProps.item)" />
         </FlippingCard>
       </template>

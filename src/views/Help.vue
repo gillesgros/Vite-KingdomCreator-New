@@ -7,9 +7,9 @@
 
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { VueMarkdownIt } from '@f3ve/vue-markdown-it'
+import { defineComponent, ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { VueMarkdownIt } from '@f3ve/vue-markdown-it';
 
 const HELP_BASE= 'help/'
 

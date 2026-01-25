@@ -11,26 +11,26 @@
 
 <script lang="ts">
 import { defineComponent, computed } from 'vue';
-import useBase from "./base";
-import Page, { MenuItemType } from "../components/Page.vue";
-import SearchFilters from "../components/SearchFilters.vue"; 
-import SearchResultsDisplay from "../components/SearchResultsDisplay.vue";
+import useBase from './base';
+import Page, { MenuItemType } from '../components/Page.vue';
+import SearchFilters from '../components/search/SearchFilters.vue'; 
+import SearchResultsDisplay from '../components/search/SearchResultsDisplay.vue';
 import { useI18n } from 'vue-i18n';
-import { useSettingsStore } from "../pinia/settings-store";
-import { useSearchStore } from "../pinia/search-store";
+import { useSettingsStore } from '../pinia/settings-store';
+import { useSearchStore } from '../pinia/search-store';
 
 // Dominion Objects and types
-import type { SetId } from "../dominion/set-id";
-import { DominionSets } from "../dominion/dominion-sets";
-import { CardType } from "../dominion/card-type";
-import { Cards } from "../utils/cards";
-import type { Card } from "../dominion/card";
-import { Randomizer } from "../randomizer/randomizer";
+import type { SetId } from '../dominion/set-id';
+import { DominionSets } from '../dominion/dominion-sets';
+import { CardType } from '../dominion/card-type';
+import { Cards } from '../utils/cards';
+import type { Card } from '../dominion/card';
+import { Randomizer } from '../randomizer/randomizer';
 import { OTHER_CARD_TYPES, OTHER_CARD_TYPES_HORIZONTAL } from '../utils/cards-other';
 import type { OtherCard } from '../dominion/other-card';
 import { SupplyCard } from '../dominion/supply-card';
 import { SortOption } from '../settings/settings';
-import type { Addon } from '../dominion/addon'
+import type { Addon } from '../dominion/addon';
 
 export default defineComponent({
   name: "SearchCards",

@@ -8,8 +8,8 @@
 
 <script lang="ts">
 /* import Vue, typescript */
-import { defineComponent, computed } from "vue";
-import type { PropType } from "vue";
+import { defineComponent, computed } from 'vue';
+import type { PropType } from 'vue';
 
 /* import Dominion Objects and type*/
 /* import store  */

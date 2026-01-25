@@ -7,10 +7,10 @@
 
 <script lang="ts">
 /* import Vue, typescript */
-import { defineComponent } from "vue";
+import { defineComponent } from 'vue';
 
 /* import Dominion Objects and type*/
-import { incaseofImgerror } from '../utils/resources';
+import { incaseofImgerror } from '@/utils/resources';
 
 /* import store  */
 /* import Components */

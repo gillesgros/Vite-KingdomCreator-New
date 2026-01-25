@@ -1,29 +1,29 @@
 // Pinia Store
 import { defineStore } from 'pinia';
 
-import type { SettingsParams } from "../settings/settings";
-import { loadSettings, saveSettings } from "../settings/settings-manager";
-import { Selection } from "./selection";
-import type { SelectionParams } from "./selection";
-import { CardType } from "../dominion/card-type";
-import { RandomizerOptionsBuilder } from "../randomizer/randomizer-options";
-import { Cards } from "../utils/cards";
-import { Kingdom } from "../randomizer/kingdom";
-import { DominionSets } from "../dominion/dominion-sets";
-import { SupplyCard } from "../dominion/supply-card";
-import type { Addon, Addons } from "../dominion/addon";
+import type { SettingsParams } from '@/settings/settings';
+import { loadSettings, saveSettings } from '@/settings/settings-manager';
+import { Selection } from './selection';
+import type { SelectionParams } from './selection';
+import { CardType } from '@/dominion/card-type';
+import { RandomizerOptionsBuilder } from '@/randomizer/randomizer-options';
+import { Cards } from '@/utils/cards';
+import { Kingdom } from '@/randomizer/kingdom';
+import { DominionSets } from '@/dominion/dominion-sets';
+import { SupplyCard } from '@/dominion/supply-card';
+import type { Addon, Addons } from '@/dominion/addon';
 
-import { SetId } from "../dominion/set-id";
-import { CostType } from "../dominion/cost-type";
-import { Boon } from "../dominion/boon";
-import { Ally } from "../dominion/ally";
-import { Randomizer } from "../randomizer/randomizer";
+import { SetId } from '@/dominion/set-id';
+import { CostType } from '@/dominion/cost-type';
+import { Boon } from '@/dominion/boon';
+import { Ally } from '@/dominion/ally';
+import { Randomizer } from '@/randomizer/randomizer';
 
-import { EventTracker } from "../analytics/follow-activity";
-import { EventType } from "../analytics/follow-activity";
-import type { randomizerStoreState } from './randomizer-actions'
+import { EventTracker } from '@/analytics/follow-activity';
+import { EventType } from '@/analytics/follow-activity';
+import type { randomizerStoreState } from './randomizer-actions';
 import * as rA from './randomizer-actions'; // rA for randomizerActions
-import { NUM_CARDS_IN_KINGDOM } from "../settings/Settings-value";
+import { NUM_CARDS_IN_KINGDOM } from '@/settings/Settings-value';
 
 
 const MIN_SETS_FOR_PRIORITIZE_OPTION = rA.MIN_SETS_FOR_PRIORITIZE_OPTION;

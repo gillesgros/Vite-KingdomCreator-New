@@ -41,7 +41,7 @@
     "@types/file-saver": "^2.0.7",
     "@types/js-cookie": "^3.0.6",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^25.0.9",
+    "@types/node": "^25.0.10",
     "@vitejs/plugin-legacy": "^7.2.1",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue/tsconfig": "^0.8.1",
@@ -56,8 +56,8 @@
     "terser": "^5.46.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "vite-plugin-static-copy": "^3.1.5",
-    "vue-tsc": "^3.2.2",
+    "vite-plugin-static-copy": "^3.1.6",
+    "vue-tsc": "^3.2.3",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   }
 }

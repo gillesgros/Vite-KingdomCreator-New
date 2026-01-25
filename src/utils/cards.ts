@@ -1,18 +1,18 @@
-import {Boon} from "../dominion/boon";
-import type {Card} from "../dominion/card";
-import type {CardType} from "../dominion/card-type";
-import type {CostType} from "../dominion/cost-type";
-import type {DominionSet} from "../dominion/dominion-set"
-import {Event} from "../dominion/event";
-import {Landmark} from "../dominion/landmark";
-import {Project} from "../dominion/project";
-import type {SetId} from "../dominion/set-id";
-import {SupplyCard} from "../dominion/supply-card";
-import {Way} from "../dominion/way";
-import {Ally} from "../dominion/ally";
-import {Trait} from "../dominion/trait";
-import {Prophecy} from "../dominion/prophecy";
-import type { OtherCard } from "@/dominion/other-card";
+import { Boon } from '@/dominion/boon';
+import type { Card } from '@/dominion/card';
+import type { CardType } from '@/dominion/card-type';
+import type { CostType } from '@/dominion/cost-type';
+import type { DominionSet } from '@/dominion/dominion-set';
+import { Event } from '@/dominion/event';
+import { Landmark } from '@/dominion/landmark';
+import { Project } from '@/dominion/project';
+import type { SetId } from '@/dominion/set-id';
+import { SupplyCard } from '@/dominion/supply-card';
+import { Way } from '@/dominion/way';
+import { Ally } from '@/dominion/ally';
+import { Trait } from '@/dominion/trait';
+import { Prophecy } from '@/dominion/prophecy';
+import type { OtherCard } from '@/dominion/other-card';
 
 export class Cards {
 

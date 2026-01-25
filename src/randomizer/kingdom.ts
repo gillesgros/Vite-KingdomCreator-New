@@ -1,15 +1,15 @@
-import type { Boon } from "../dominion/boon";
-import type { Event } from "../dominion/event";
-import type { Landmark } from "../dominion/landmark";
-import type { Project } from "../dominion/project";
-import type { Way } from "../dominion/way";
-import type { Ally } from "../dominion/ally";
-import type { Trait } from "../dominion/trait";
-import type { Prophecy } from "../dominion/prophecy";
-import { Supply } from "../randomizer/supply";
-import { YOUNG_WITCH_IDS, FERRYMAN_IDS, OBELISK_LANDMARK_ID, MOUSE_WAY_ID, RIVERBOAT_IDS, APPROACHINGARMY_ID } from "./special-need-cards";
-import { DominionSets } from "../dominion/dominion-sets";
-import { NUM_CARDS_IN_KINGDOM } from "../settings/Settings-value";
+import type { Boon } from '@/dominion/boon';
+import type { Event } from '@/dominion/event';
+import type { Landmark } from '@/dominion/landmark';
+import type { Project } from '@/dominion/project';
+import type { Way } from '@/dominion/way';
+import type { Ally } from '@/dominion/ally';
+import type { Trait } from '@/dominion/trait';
+import type { Prophecy } from '@/dominion/prophecy';
+import { Supply } from '@/randomizer/supply';
+import { YOUNG_WITCH_IDS, FERRYMAN_IDS, OBELISK_LANDMARK_ID, MOUSE_WAY_ID, RIVERBOAT_IDS, APPROACHINGARMY_ID } from './special-need-cards';
+import { DominionSets } from '@/dominion/dominion-sets';
+import { NUM_CARDS_IN_KINGDOM } from '@/settings/Settings-value';
 
 export class Kingdom {
   constructor(

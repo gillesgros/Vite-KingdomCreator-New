@@ -1,14 +1,15 @@
 import { defineConfig } from 'vite';
 import path from 'path';
+import { fileURLToPath, URL } from 'node:url'; // Importation nécessaire
 import fs from 'fs';
 import packageJson from './package.json';
 
-//import VueDevTools from 'vite-plugin-vue-devtools'
+//import VueDevTools from 'vite-plugin-vue-devtools';
 import vue from '@vitejs/plugin-vue';
-import legacy from '@vitejs/plugin-legacy'
+import legacy from '@vitejs/plugin-legacy';
 import vueI18n from '@intlify/unplugin-vue-i18n/vite';
 import del  from 'rollup-plugin-delete';
-import { viteStaticCopy } from 'vite-plugin-static-copy'
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 import { DominionContentGenerate, HandleLocaleGenerateAndMerge } from './plugins/vite-dominion-content';
 import { exit } from 'process';
@@ -123,7 +124,8 @@ export default defineConfig( ({ mode}) => {
       //extensions: ['.ts', '.vue'],
       alias: {
         // Alias pour les modules non-Esbuild compatibles avec Vite
-        //'@': fileURLToPath(new URL('./src', import.meta.url)),
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+        //'@': path.resolve(__dirname, './src'),
         //'vue-i18n': 'vue-i18n/dist/vue-i18n.esm-bundler.js',
         //'vue': 'vue/dist/vue.esm-bundler.js', 
       },
@@ -140,7 +142,7 @@ export default defineConfig( ({ mode}) => {
           chunkFileNames: 'assets/[name]-[hash].js',
           assetFileNames: 'assets/[name]-[hash][extname]'
         }
-      }, 
+      },
     },
     server: {
       open: '/',

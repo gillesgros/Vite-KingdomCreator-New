@@ -1,48 +1,48 @@
 import '../utils/console-utils';
 // to allow console.info to be control by Console.info' == 'true' in sessionStorage
 
-import type { Addon, Addons } from "../dominion/addon";
-import { Addons_TYPE } from "../dominion/addon";
-import { CardSupplyBan } from "./card-supply-ban";
-import { CostSupplyBan } from "./cost-supply-ban";
-import { CostSupplyDivider } from "./cost-supply-divider";
-import { CardType } from "../dominion/card-type";
-import { Cards } from "../utils/cards";
-import { DominionSet } from "../dominion/dominion-set";
-import { DominionSets } from "../dominion/dominion-sets";
-import { Event } from "../dominion/event"
-import { Kingdom } from "./kingdom";
-import { Landmark } from "../dominion/landmark"
-import { Metadata as KingdomMetadata } from "./kingdom";
-import { Project } from "../dominion/project"
-import type { RandomizerOptions } from "./randomizer-options";
-import { initializeExcludedCardIds } from './randomizer-options'
-import { SetId, SETS_WITH_DUPLICATES } from "../dominion/set-id";
-import { SetSupplyBan } from "./set-supply-ban";
-import { SetSupplyDivider } from "./set-supply-divider";
-import { Supply, Replacements } from "./supply";
-import { SupplyBuilder } from "./supply-builder";
-import type { SupplyCard } from "../dominion/supply-card";
-import { SupplyDivisions } from "./supply-divisions";
-import { TypeSupplyBan } from "./type-supply-ban";
-import { TypeSupplyRequirement } from "./type-supply-requirement";
-import { getRandomInt, getRandomInts, selectRandomN } from "../utils/rand";
-import type { Boon } from "../dominion/boon";
-import { Way } from "../dominion/way";
-import { Ally } from "../dominion/ally";
-import { Trait } from "../dominion/trait";
-import { Prophecy } from "../dominion/prophecy";
-import { DRUID_ID, BOONS_NB_FROM_DRUID } from "./special-need-cards";
-import { APPROACHINGARMY_ID, APPROACHINGARMY_CARDTYPE_REQUESTED } from "./special-need-cards";
-import { OBELISK_LANDMARK_ID, OBELISK_CARDTYPE_REQUESTED } from "./special-need-cards";
-import { MOUSE_WAY_ID, MOUSE_MIN_COST, MOUSE_MAX_COST } from "./special-need-cards";
-import { TRAITS_CARDTYPE_POSSIBILITY_1, TRAITS_CARDTYPE_POSSIBILITY_2 } from "./special-need-cards";
-import { NUM_CARDS_IN_KINGDOM, MAX_ADDONS_IN_KINGDOM, FORCE_ADDONS_USE, MAX_ADDONS_OF_TYPE } from "../settings/Settings-value";
+import type { Addon, Addons } from '@/dominion/addon';
+import { Addons_TYPE } from '@/dominion/addon';
+import { CardSupplyBan } from './card-supply-ban';
+import { CostSupplyBan } from './cost-supply-ban';
+import { CostSupplyDivider } from './cost-supply-divider';
+import { CardType } from '@/dominion/card-type';
+import { Cards } from '@/utils/cards';
+import { DominionSet } from '@/dominion/dominion-set';
+import { DominionSets } from '@/dominion/dominion-sets';
+import { Event } from '@/dominion/event';
+import { Kingdom } from './kingdom';
+import { Landmark } from '@/dominion/landmark';
+import { Metadata as KingdomMetadata } from './kingdom';
+import { Project } from '@/dominion/project';
+import type { RandomizerOptions } from './randomizer-options';
+import { initializeExcludedCardIds } from './randomizer-options';
+import { SetId, SETS_WITH_DUPLICATES } from '@/dominion/set-id';
+import { SetSupplyBan } from './set-supply-ban';
+import { SetSupplyDivider } from './set-supply-divider';
+import { Supply, Replacements } from './supply';
+import { SupplyBuilder } from './supply-builder';
+import type { SupplyCard } from '@/dominion/supply-card';
+import { SupplyDivisions } from './supply-divisions';
+import { TypeSupplyBan } from './type-supply-ban';
+import { TypeSupplyRequirement } from './type-supply-requirement';
+import { getRandomInt, getRandomInts, selectRandomN } from '@/utils/rand';
+import type { Boon } from '@/dominion/boon';
+import { Way } from '@/dominion/way';
+import { Ally } from '@/dominion/ally';
+import { Trait } from '@/dominion/trait';
+import { Prophecy } from '@/dominion/prophecy';
+import { DRUID_ID, BOONS_NB_FROM_DRUID } from './special-need-cards';
+import { APPROACHINGARMY_ID, APPROACHINGARMY_CARDTYPE_REQUESTED } from './special-need-cards';
+import { OBELISK_LANDMARK_ID, OBELISK_CARDTYPE_REQUESTED } from './special-need-cards';
+import { MOUSE_WAY_ID, MOUSE_MIN_COST, MOUSE_MAX_COST } from './special-need-cards';
+import { TRAITS_CARDTYPE_POSSIBILITY_1, TRAITS_CARDTYPE_POSSIBILITY_2 } from './special-need-cards';
+import { NUM_CARDS_IN_KINGDOM, MAX_ADDONS_IN_KINGDOM, FORCE_ADDONS_USE, MAX_ADDONS_OF_TYPE } from '@/settings/Settings-value';
 
-import { EventTracker, EventType } from "../analytics/follow-activity";
+import { EventTracker, EventType } from '@/analytics/follow-activity';
 
 import { getActivePinia } from 'pinia'; // Import Pinia
-import { useRandomizerStore } from '../pinia/randomizer-store';
+import { useRandomizerStore } from '@/pinia/randomizer-store';
 
 const MAX_RETRIES = 3;
 

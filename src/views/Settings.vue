@@ -14,10 +14,10 @@
 import { defineComponent } from 'vue';
 
 /* import Components */
-import Page, { MenuItemType } from '../components/Page.vue';
-import DeskSizeSettings from '../components/settings/Settings-DeskSizeSettings.vue';
-import RandomizeConstraintsSettings from '../components/settings/Settings-RandomizeConstraintsSettings.vue';
-import OwnedExpansionsSettings from '../components/settings/Settings-OwnedExpansionsSettings.vue';
+import Page, { MenuItemType } from '@/components/Page.vue';
+import DeskSizeSettings from '@/components/settings/Settings-DeskSizeSettings.vue';
+import RandomizeConstraintsSettings from '@/components/settings/Settings-RandomizeConstraintsSettings.vue';
+import OwnedExpansionsSettings from '@/components/settings/Settings-OwnedExpansionsSettings.vue';
 
 import useBase from './base';
 

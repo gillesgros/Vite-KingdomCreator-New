@@ -12,6 +12,11 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/02/18 - 7.0.3** - Dev 7 Work in progress
+>***Fix*** Split components by usage (boxes, cards, randomize, ...)
+>***Feat** Load Cards slowly on All Page - Lazy_loading
+>***Fix*** Add OtherCards in search. Fix sort.
+
 **2026/01/20 - 7.0.2** - Dev 7 Work in progress
 >***Fix*** - blakevanlan/KingdomCreator #207 - Underling cost 
 >***Fix*** - blakevanlan/KingdomCreator #214 - Bugged Guilds & Cornucopia (2nd edition) cards

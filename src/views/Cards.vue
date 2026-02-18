@@ -24,7 +24,7 @@ import type { DominionSet } from '@/dominion/dominion-set';
 import { useSetsStore } from '@/pinia/sets-store';
 
 /* import Components */
-import Page, { MenuItemType } from '../components/Page.vue';
+import Page, { MenuItemType } from '@/components/Page.vue';
 import CardOnlinePageComponent from '@/components/cards/CardOnlinePageComponent.vue';
 import CardOnlinePageLandscapeComponent from '@/components/cards/CardOnlinePageLandscapeComponent.vue';
 import CardOnlinePageOthercardComponent from '@/components/cards/CardOnlinePageOthercardComponent.vue';

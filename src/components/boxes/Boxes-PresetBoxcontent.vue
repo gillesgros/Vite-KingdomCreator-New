@@ -122,10 +122,6 @@ export default defineComponent({
         return SupplyCardSorter.sort(cardIds as SupplyCard[], origine, t);
     };
 
-
-    // const OtherCardTypes = (isVertical: boolean) => {
-    //   return isVertical ? OTHER_CARD_TYPES : OTHER_CARD_TYPES_HORIZONTAL;
-    // };
     const GetOtherCardTypes = (typeRequested: string) => {
       if (typeRequested == 'horizontal') return OTHER_CARD_TYPES_HORIZONTAL;
       if (typeRequested == 'vertical') return OTHER_CARD_TYPES;

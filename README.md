@@ -10,6 +10,9 @@ As I became a maintainer for Kingdom Creator, https://www.dominionrandomizer.com
 Feel free to propose any improvements you see fit and send me a pull request!
 
 ## Changelog
+**2026/02/18 - 7.0.3** - Dev 7.0 Work in progress
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
 **2026/01/20 - 7.0.2** - Dev 7.0 Work in progress
 >***Fix & Feat*** (see [Changelog.md](./Changelog.md))
 

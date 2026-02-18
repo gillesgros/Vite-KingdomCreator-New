@@ -1,6 +1,6 @@
 <template>
   <div class="static-card" :class="{isVertical: isVertical}">
-    <img class="static-card__img" :src="cardImageUrl" :key="cardImageUrl" @error="incaseoferror"/>
+    <img class="static-card__img" :src="cardImageUrl" :key="cardImageUrl" loading="lazy" @error="incaseoferror"/>
     <slot></slot>
   </div>
 </template>

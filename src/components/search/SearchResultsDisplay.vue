@@ -5,6 +5,7 @@
     <!-- Supply Cards -->
     <SearchLayout :items="searchGetCards('SupplyCard')" :title="$t('Kingdoms Cards')" :getCostName="getCostName" :getCardTypeNames="getCardTypeNames"
       :is-vertical="true" :generic-nb-columns="numberOfColumnsForSupplyCards" />
+      <div v-if="false">
     <!-- Events -->
     <SearchLayout :items="searchGetCards('Event')" :title="$t('Events')" :getCostName="getCostName" :getCardTypeNames="getCardTypeNames"
       :is-vertical="false" :generic-nb-columns="numberOfColumnsForAddons" />
@@ -29,9 +30,11 @@
     <!-- Prophecies -->
     <SearchLayout :items="searchGetCards('Prophecy')" :title="$t('Prophecies')" :getCostName="getCostName" :getCardTypeNames="getCardTypeNames"
       :is-vertical="false" :generic-nb-columns="numberOfColumnsForAddons" />
-      
+    
+    <SearchLayout :items="searchGetCards('OtherCard')" :title="$t('Other Cards')" :getCostName="getCostName" :getCardTypeNames="getCardTypeNames"
+      :is-vertical="true" :generic-nb-columns="numberOfColumnsForSupplyCards" />
 
-
+        </div>
 
 
   </div>
@@ -54,13 +57,26 @@ import { useSearchStore } from '@/pinia/search-store';
 
 import { CardType, VISIBLE_CARD_TYPES } from '@/dominion/card-type';
 import  { SupplyCard } from '@/dominion/supply-card';
+import { Event } from '@/dominion/event';
+import { Landmark } from '@/dominion/landmark';
+import { Way } from '@/dominion/way';
+import { Project } from '@/dominion/project';
+import { Boon } from '@/dominion/boon';
+import { Ally } from '@/dominion/ally';
+import { Trait } from '@/dominion/trait'; 
+import { Prophecy } from '@/dominion/prophecy';
+
+
 import type { Card } from '@/dominion/card';
 import type { Cost } from '@/dominion/cost';
 import { DominionSets } from '@/dominion/dominion-sets';
 import { Addons_TYPE } from '@/dominion/addon';
 import type { Addon } from '@/dominion/addon';
+import { SortOption } from '@/settings/settings';
 
 import SearchLayout from './SearchLayout.vue';
+
+
 
 
 export default defineComponent({
@@ -77,7 +93,7 @@ export default defineComponent({
     const TWO_COLUMN_ADDON_WIDTH = 550;
 
     const numberOfColumnsForSupplyCards = computed(() => {
-      return windowStore.isEnlarged ? 2 : windowStore.width <= FOUR_COLUMN_SUPPLY_CARD_WIDTH ? 4 : 5;
+      return windowStore.isEnlarged ? 2 : windowStore.width <= FOUR_COLUMN_SUPPLY_CARD_WIDTH ? 3 : 4;
     });
 
     const numberOfColumnsForAddons = computed(() => {
@@ -145,7 +161,7 @@ export default defineComponent({
         const xx = otherCards.filter((card) => ((card as OtherCard).type.includes(otherCardType.cardType)));
         cards.push(...xx as SupplyCard[]);
       }
-      cards = Randomizer.removeDuplicateCards(cards, []);
+      //cards = Randomizer.removeDuplicateCards(cards, []);
       cards = cards.filter((card, index, self) => {
         const x = card.id.replace('tohidesplitcard','')
         return index === self.findIndex((c) => c.id === x)
@@ -164,10 +180,10 @@ export default defineComponent({
     const getTypesFromCard = (card: any): CardType[] => {
       return Object.values(CardType).filter(type => card[type]);
     };
+
     const filteredCards = computed(() => {
       let cards = allCards();
-      console.log('filteredCards -start cards', cards);
-
+      console.log('Total cards before filtering:', cards);
       // Apply filters from SettingsStore.searchFilters
       if (SearchStore.selectedSetIds.length > 0) {
         cards = cards.filter(card => SearchStore.selectedSetIds.includes(card.setId));
@@ -192,18 +208,102 @@ export default defineComponent({
           return false;
         });
       }
-      return cards
+      //return cards
+      switch (SearchStore.selectedSortOption) {
+        case SortOption.SET:
+          return cards.sort((a, b) => (a.setId || '').localeCompare(b.setId || ''));
+        case SortOption.COST:
+          return cards.sort((a, b) => {
+            // On définit une petite fonction interne pour extraire le coût en toute sécurité
+            const getNumericCost = (card: any) => {
+              if (card.cost) {
+                return (card.cost.treasure || 0) + (card.cost.potion || 0) * 10 + (card.cost.debt || 0) * 100;
+              }
+              return 0; // Coût 0 pour ce qui n'a pas de propriété cost
+            };
+            const costA = getNumericCost(a);
+            const costB = getNumericCost(b);
+            return costA - costB !== 0 ? costA- costB : (a.name || '').localeCompare(b.name || '');
+          });
+        case SortOption.ALPHABETICAL:
+        default:
+          return cards.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      }
     });
 
     const searchGetCards = (typeRequested: string) => {
       let cards = filteredCards.value;
       if (typeRequested) {
+        /*
         cards = cards.filter(card => card.constructor.name === typeRequested);
+        */
+        console.log('Filtering cards for type:', typeRequested, ' - before filter:', cards.length, cards);
+        cards = cards.filter(card => {
+          if (card instanceof OtherCard) {
+            switch (typeRequested) {
+              case 'SupplyCard':
+                return (card as OtherCard).type.includes('Normal Supply Cards');
+              case 'Event':
+                return (card as OtherCard).type.includes('Events');
+              case 'Landmark':
+                return (card as OtherCard).type.includes('Landmarks');
+              case 'Way':
+                return (card as OtherCard).type.includes('Ways');
+              case 'Project':
+                return (card as OtherCard).type.includes('Projects');
+              case 'Boon':
+                return (card as OtherCard).type.includes('Boons');
+              case 'Ally':
+                return (card as OtherCard).type.includes('Allies');
+              case 'Trait':
+                return (card as OtherCard).type.includes('Traits');
+              case 'Prophecy':
+                return (card as OtherCard).type.includes('Prophecies');
+              case 'OtherCard':
+                for (const otherCardType of OTHER_CARD_TYPES) {
+                  if ((card as OtherCard).type.includes(otherCardType.cardType)) {
+                    return true;
+                  }
+                }
+                return false;
+              default:
+                console.log('Unknown card type requested for OtherCard:', typeRequested);
+                return false;
+            }
+
+          } else {
+            switch (typeRequested) {
+              case 'SupplyCard':
+                return card instanceof SupplyCard;
+              case 'Event':
+                return card instanceof Event;
+              case 'Landmark':
+                return card instanceof Landmark;
+              case 'Way':
+                return card instanceof Way;
+              case 'Project':
+                return card instanceof Project;
+              case 'Boon':
+                return card instanceof Boon;
+              case 'Ally':
+                return card instanceof Ally;
+              case 'Trait':
+                return card instanceof Trait;
+              case 'Prophecy':
+                return card instanceof Prophecy;
+              case 'OtherCard':
+                return false; // Les OtherCards sont gérés dans la condition précédente
+              default:
+                console.log('Unknown card type requested:', typeRequested);
+                return false;
+            }
+          }
+        });
       }
+      console.log('Filtering cards for type:', typeRequested, ' - after filter:', cards.length, cards);
+      cards = Randomizer.removeDuplicateCards(cards as any, []);
       return cards;
     };
-      //filter 
-
 
     return {
       getCostName,

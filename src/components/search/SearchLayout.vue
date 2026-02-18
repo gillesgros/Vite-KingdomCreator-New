@@ -1,8 +1,8 @@
 <template>
   <div v-if="items.length">
     <div class="Search-layout__title">{{title}}</div> 
-    <div class="search-layout-wrapper" :style="gridStyle">
-      <div v-for="item in items" :key="item.id" class="search-layout-item" :style="{ width: itemWidth }">
+    <div class="search-layout-wrapper" :class="{ 'horizontal': !isVertical }">
+      <div v-for="item in items" :key="item.id" class="search-layout-item">
         <div class="beforeStaticSet">
           <StaticCardWithSet 
             :card="item" 
@@ -21,63 +21,25 @@
 </template>
 
 <script lang="ts">
-/* import Vue, typescript */
-import { defineComponent } from 'vue';
+import { defineComponent, computed } from 'vue';
 import type { PropType } from 'vue';
-
-/* import Dominion Objects and type*/
 import { ShowOverlayOptions } from '@/utils/resources.ts';
-
-/* import Components */
 import StaticCardWithSet from '../StaticCardWithSet.vue';
 
 export default defineComponent({
   name: "SearchLayout",
-  components: {
-    StaticCardWithSet
-  },
+  components: { StaticCardWithSet },
   props: {
-    items: {
-      type: Array as PropType<any[]>,
-      required: true
-    },
-    genericNbColumns: {
-      type: Number,
-      required: true
-    },
-    isVertical: {
-      type: Boolean,
-      required: true
-    },
-    title: {
-      type: String,
-      required: true
-    },
-    getCostName: {
-      type: Function as PropType<(card: any) => string>,
-      required: true
-    },
-    getCardTypeNames: {
-      type: Function as PropType<(card: any) => string>,
-      required: true
-    }
+    items: { type: Array as PropType<any[]>, required: true },
+    title: { type: String, required: true },
+    getCostName: { type: Function as PropType<(card: any) => string>, required: true },
+    getCardTypeNames: { type: Function as PropType<(card: any) => string>, required: true },
+    // On garde isVertical pour savoir si on affiche des cartes Portrait ou Paysage
+    isVertical: { type: Boolean, default: true }
   },
   setup(props) {
-    // Calcul du width en fonction du nombre de colonnes
-    // Formule: 900 / genericNbColumns
-    // 5 colonnes → 180px, 3 colonnes → 300px, 2 colonnes → 450px, 1 colonne → 900px (max 600px)
-    const itemWidth = Math.min(1000 / props.genericNbColumns, 600);
-    const OverlayCheck = ShowOverlayOptions.CHECK;
-    const gridStyle = {
-      gridTemplateColumns: `repeat(${props.genericNbColumns}, minmax(180px, 1fr))`
-    };
-    
     return {
-      getCostName: props.getCostName,
-      getCardTypeNames: props.getCardTypeNames,
-      showOverlay: OverlayCheck,
-      gridStyle,
-      itemWidth: `${itemWidth}px`
+      showOverlay: ShowOverlayOptions.CHECK,
     };
   }
 });
@@ -85,7 +47,7 @@ export default defineComponent({
 
 <style scoped>
 .Search-layout__title {
-  margin-bottom: 15px;
+  margin: 20px 0 15px 0;
   color: #333;
   font-weight: bold;
   font-size: 24px;
@@ -93,57 +55,38 @@ export default defineComponent({
 
 .search-layout-wrapper {
   display: grid;
+  /* Utilisation de minmax : 
+     - 160px minimum pour que ça loge sur mobile
+     - 1fr pour que les cartes s'étirent et remplissent l'espace
+  */
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 18px;
-  margin-bottom: 20px;
-  align-items: start;
-  border-bottom: 1px solid #ccc;
+  gap: 16px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Pour les éléments horizontaux (Events, Landmarks), on peut élargir le minimum */
+.search-layout-wrapper.horizontal {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
 .search-layout-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  background: #f9f9f9;
-  border: 1px solid #eee;
+  background: #fff;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 10px 6px 12px 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  width: 180px;
-  max-width: 100%;
-}
-
-.beforeStaticSet{
-  display: flex;
-  flex-direction: column;
-  position : relative;
-}
-
-.beforeStaticSet img {
-  width: 100%;
-  height: auto;
-  display: block;
+  padding: 8px;
+  transition: transform 0.2s;
 }
 
 .card-details {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.85em;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  font-size: 0.85em;
-  color: #555;
-  width: 100%;
-  align-items: center;
-  margin-top: 6px;
-  overflow: hidden;
-}
-
-.card-details span {
-  width: 100%;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
 }
 
 .card-name {
@@ -159,18 +102,6 @@ export default defineComponent({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-@media (max-width: 450px) {
-  .preset-kingdom_title_name {
-    font-size: 30px;
-    margin-right: 8px;
-  }
-    
-  .preset-kingdom_set-name {
-    font-size: 14px;
-    padding: 4px 6px;
-  }
 }
 
 </style>

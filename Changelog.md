@@ -12,10 +12,18 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/02/19 - 7.0.4** - Dev 7 Work in progress
+Dev deploy on github pages 
+>***Fix*** - Fix blinking on sort for Sets and Boxes
+>***Feat*** - Rename display tab for rulebooks
+>***Fix*** - blakevanlan/KingdomCreator #193 - Issues Randomizing Events, Landmarks, Projects, Ways & Traits After the Initial Set Creation   
+           Force redraw if FORCE_ADDON_USAGE is true
+>***Fix*** - complemenatry fix for initial Kingdom load - Addon constraint verified and corrected
+
 **2026/02/18 - 7.0.3** - Dev 7 Work in progress
->***Fix*** Split components by usage (boxes, cards, randomize, ...)
->***Feat** Load Cards slowly on All Page - Lazy_loading
->***Fix*** Add OtherCards in search. Fix sort.
+>***Fix*** - Split components by usage (boxes, cards, randomize, ...)
+>***Feat*** - Load Cards slowly on All Page - Lazy_loading
+>***Fix*** - Add OtherCards in search. Fix sort.
 
 **2026/01/20 - 7.0.2** - Dev 7 Work in progress
 >***Fix*** - blakevanlan/KingdomCreator #207 - Underling cost 

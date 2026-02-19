@@ -52,7 +52,6 @@ export default defineComponent({
     })
 
     const numberOfColumns = computed(() =>{
-      // console.log("numberOfColumns",numberOfColumns)
       return isEnlarged.value ? 1 : windowWidth.value > 525 ? 3 : 2;
     });
 

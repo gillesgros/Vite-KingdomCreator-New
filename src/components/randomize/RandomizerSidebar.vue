@@ -319,7 +319,6 @@ export default defineComponent({
 
     // Fonction pour sélectionner/désélectionner tous les sets
     const toggleAllSets = () => {
-      //console.log('click')
       const checkbox = document.getElementById('selectAllSets') as HTMLInputElement;
       if (!checkbox) return;
       // Cycle à 3 états

@@ -113,7 +113,6 @@ export default defineComponent({
     };
     
     const handleSortChange = (value: SortOption) => {
-      //console.log(value);
       setsStore.updateSortBoxesSet(value);
     };
 

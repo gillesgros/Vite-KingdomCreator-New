@@ -1,6 +1,6 @@
 <template>
   <div class="grid-layout" :class="columnClasses">
-      <div class="grid-layout_item" :class="shape" v-for="item in items">
+      <div class="grid-layout_item" :class="shape" v-for="item in items" :key="item.id">
         <slot :item="item"></slot>
       </div>
   </div>

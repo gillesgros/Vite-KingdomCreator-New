@@ -131,11 +131,9 @@ export default defineComponent({
       return ''
     };
     const getCostNameFromCard =(card: Card) => {
-      console.log( card.constructor.name)
       switch (card.constructor.name) {
         case Addons_TYPE.EVENT:
         case Addons_TYPE.LANDMARK:
-          console.log(getCostName(card as Card))
           return getCostName(card as Card);
       default:
         throw new Error(`Unknown card type: `);
@@ -183,7 +181,6 @@ export default defineComponent({
 
     const filteredCards = computed(() => {
       let cards = allCards();
-      console.log('Total cards before filtering:', cards);
       // Apply filters from SettingsStore.searchFilters
       if (SearchStore.selectedSetIds.length > 0) {
         cards = cards.filter(card => SearchStore.selectedSetIds.includes(card.setId));
@@ -234,10 +231,6 @@ export default defineComponent({
     const searchGetCards = (typeRequested: string) => {
       let cards = filteredCards.value;
       if (typeRequested) {
-        /*
-        cards = cards.filter(card => card.constructor.name === typeRequested);
-        */
-        console.log('Filtering cards for type:', typeRequested, ' - before filter:', cards.length, cards);
         cards = cards.filter(card => {
           if (card instanceof OtherCard) {
             switch (typeRequested) {
@@ -300,7 +293,6 @@ export default defineComponent({
           }
         });
       }
-      console.log('Filtering cards for type:', typeRequested, ' - after filter:', cards.length, cards);
       cards = Randomizer.removeDuplicateCards(cards as any, []);
       return cards;
     };

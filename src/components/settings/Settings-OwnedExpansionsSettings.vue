@@ -120,8 +120,8 @@ export default defineComponent({
           // Détection fine des changements de SetId
           const added = newOwnedSetIds.filter((x) => !oldOwnedSetIds.includes(x));
           const removed = oldOwnedSetIds.filter((x) => !newOwnedSetIds.includes(x));
-          if (added.length) console.log('Ajouté(s) :', added);
-          if (removed.length) console.log('Retiré(s) :', removed)
+          //if (added.length) console.log('Ajouté(s) :', added);
+          //if (removed.length) console.log('Retiré(s) :', removed)
 
           if (newOwnedSetIds.length == 0) newOwnedRestricted = false;
           SettingsStore.updateSettings({

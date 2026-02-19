@@ -1,4 +1,4 @@
-import type { DominionSet } from "../dominion/dominion-set";
+import type { DominionSet } from '@/dominion/dominion-set';
 
 
 interface genericCardTypes {

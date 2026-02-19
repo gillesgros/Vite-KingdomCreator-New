@@ -137,13 +137,13 @@ export function randomizeSelectedAddons(context: randomizerStoreState) {
             selectedTraits.push(card)
         } 
         if (selectedEvents.length + selectedLandmarks.length + selectedProjects.length
-          + selectedWays.length + selectedTraits.length == newAddonsCount) {
-             break; 
-          }
+              + selectedWays.length + selectedTraits.length == newAddonsCount) {
+          break; 
+        }
       }
       if (FORCE_ADDONS_USE()) {
         if (selectedEvents.length + selectedLandmarks.length + selectedProjects.length 
-                        + selectedWays.length + selectedTraits.length == newAddonsCount)   {
+              + selectedWays.length + selectedTraits.length == newAddonsCount)   {
           console.log("randomizeSelectedAddons: forced addons use & addons number satisfied");
           break
         } else {

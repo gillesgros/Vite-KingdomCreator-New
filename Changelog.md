@@ -12,6 +12,10 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/02/20 - 7.0.5** - Dev 7 Work in progress
+Dev deploy on github pages 
+>***Fix*** - Constraint FORCE_ADDON_USE at first load
+
 **2026/02/19 - 7.0.4** - Dev 7 Work in progress
 Dev deploy on github pages 
 >***Fix*** - Fix blinking on sort for Sets and Boxes

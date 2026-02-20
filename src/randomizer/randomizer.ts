@@ -299,17 +299,6 @@ export class Randomizer {
     const excludedCardIds = initializeExcludedCardIds(setIds, []);
     const cards = this.removeDuplicateCards(Cards.getAllCardsFromSets(setsToUse)
         .filter(card => !excludedCardIds.includes(card.id)) as SupplyCard[],[]);
-    if (FORCE_ADDONS_USE()) {
-        console.info('[Randomizer - getAddons] Cards candidate - FORCE_ADDONS_USE:', (cards.filter(card => (card instanceof Event)||(card instanceof Landmark)||
-            (card instanceof Project)||(card instanceof Way)||(card instanceof Trait))).map(c => c.id));
-    } else {
-        console.info('[Randomizer - getAddons] Cards candidate:', (cards).map(c => c.id));
-    }
-    const selectedCards = FORCE_ADDONS_USE() ? 
-        this.selectRandomCards(cards.filter(card => (card instanceof Event)||(card instanceof Landmark)||
-        (card instanceof Project)||(card instanceof Way)||(card instanceof Trait)), 2*MAX_ADDONS_IN_KINGDOM())
-        : this.selectRandomCards(cards, 2*NUM_CARDS_IN_KINGDOM());
-    console.info('[Randomizer - getAddons] Selected cards:', selectedCards.map(c => c.id));
     const selectedEvents: Event[] = [];
     const selectedLandmarks: Landmark[] = [];
     const selectedProjects: Project[] = [];
@@ -318,28 +307,52 @@ export class Randomizer {
     const selectedTraits: Trait[] = [];
     const selectedProphecies: Prophecy[] = [];
 
-    for (const card of selectedCards) {
-      if (card instanceof Event) {
-        if (selectedEvents.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.EVENT)) selectedEvents.push(card);
-      } else if (card instanceof Landmark) {
-        if (selectedLandmarks.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.LANDMARK)) selectedLandmarks.push(card);
-      } else if (card instanceof Project) {
-        if (selectedProjects.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.PROJECT)) selectedProjects.push(card);
-      } else if (card instanceof Way) {
-        if (selectedWays.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.WAY)) selectedWays.push(card);
-      } else if (card instanceof Trait) {
-        if (selectedTraits.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.TRAIT)) selectedTraits.push(card)
-      } 
-      // Stop once the maximum number of addons has been reached.
-      const addonCount = selectedEvents.length
-        + selectedLandmarks.length
-        + selectedProjects.length
-        + selectedWays.length
-        //  + selectedAllies.length
-        + selectedTraits.length;
-      if (addonCount >= MAX_ADDONS_IN_KINGDOM()) {
-        console.info('[Randomizer - getAddons] Reached maximum number of addons:', addonCount);
-        break;
+    let safetyNet = 0;
+    if (!FORCE_ADDONS_USE()) safetyNet = 49;
+    let previousComplementarySelectedIds: string[] = [];
+    while(safetyNet<50)
+    {
+      safetyNet++;
+      const availableCards = cards.filter(card => !previousComplementarySelectedIds.includes(card.id));
+      const selectedCards = FORCE_ADDONS_USE() ? 
+        this.selectRandomCards(availableCards.filter(card => (card instanceof Event)||(card instanceof Landmark)||
+        (card instanceof Project)||(card instanceof Way)||(card instanceof Trait)), 2*MAX_ADDONS_IN_KINGDOM())
+        : this.selectRandomCards(availableCards, 2*NUM_CARDS_IN_KINGDOM());
+      console.info('[Randomizer - getAddons] Selected cards:', selectedCards.map(c => c.id));
+      for (const card of selectedCards) {
+        if (card instanceof Event) {
+          if (selectedEvents.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.EVENT)) 
+            selectedEvents.push(card);
+        } else if (card instanceof Landmark) {
+          if (selectedLandmarks.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.LANDMARK)) 
+            selectedLandmarks.push(card);
+        } else if (card instanceof Project) {
+          if (selectedProjects.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.PROJECT)) 
+            selectedProjects.push(card);
+        } else if (card instanceof Way) {
+          if (selectedWays.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.WAY)) 
+            selectedWays.push(card);
+        } else if (card instanceof Trait) {
+          if (selectedTraits.length < MAX_ADDONS_OF_TYPE(Addons_TYPE.TRAIT)) 
+            selectedTraits.push(card)
+        }
+        if (selectedEvents.length + selectedLandmarks.length + selectedProjects.length
+              + selectedWays.length + selectedTraits.length == MAX_ADDONS_IN_KINGDOM()) {
+          break; 
+        }
+      }
+      if (FORCE_ADDONS_USE()) {
+        if (selectedEvents.length + selectedLandmarks.length + selectedProjects.length 
+              + selectedWays.length + selectedTraits.length == MAX_ADDONS_IN_KINGDOM())   {
+          console.log("getAddons: forced addons use & addons number satisfied");
+          break
+        } else {
+          console.log("getAddons: forced addons use & addons number not satisfied, retrying with new selectedCards");
+          previousComplementarySelectedIds = [
+            ...previousComplementarySelectedIds,
+            ...selectedCards.map(card => card.id)
+          ];
+        } 
       }
     }
 

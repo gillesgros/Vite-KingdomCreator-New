@@ -29,9 +29,8 @@
         // pour utiliser node sur la clé.
         //"PATH": "${env:PATH};${execPath}\\..\\..\\node-v20-win-x64;D:\\Carte 32 Go\\# Portable App\\node-v22-win-x64"
     },
-    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "js/ts.tsdk.path": "node_modules\\typescript\\lib",
     "editor.multiCursorModifier": "ctrlCmd",
-    "workbench.colorTheme": "Default Dark+",
+    "workbench.colorTheme": "Dark+",
     "files.eol": "\n"
-
 }

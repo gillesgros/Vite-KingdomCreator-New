@@ -80,7 +80,7 @@ console.log("Current state:", {
     async signInAndInit() {
       this.isLoading = true;
       try {
-        const token = await requestDriveAccessToken(this.profile?.email, false /* silent prompt ? */);
+        const token = await requestDriveAccessToken('', false /* silent prompt ? */);
         this.accessToken = token;
         this.tokenExpirationTime = Date.now() + 3600000;
 
@@ -97,7 +97,7 @@ console.log("Current state:", {
             name: profileData.name,
             picture: profileData.picture
           };
-          this.lastMessage = `Connected as ${this.profile.name || this.profile.email}`;
+          this.lastMessage = `Connected as ${this.profile.name} (${this.profile.email})`;
         } else {
           this.profile = { sub: 'unknown', email: 'Connected' };
           this.lastMessage = 'Connected to Google Drive.';
@@ -128,7 +128,6 @@ console.log("Current state:", {
 
     async signOut() {
       this.isSignedIn = false;
-      this.profile = null;
       this.accessToken = null;
       this.lastMessage = 'Signed out from Google.';
     },

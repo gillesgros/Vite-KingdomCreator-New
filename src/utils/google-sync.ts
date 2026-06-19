@@ -89,6 +89,13 @@ export async function requestDriveAccessToken(hintEmail?: string, silent: boolea
           reject(new Error('No access token returned by Google'));
         }
       },
+      error_callback: (err: any) => {
+        if (err && err.type === 'popup_closed') {
+          reject(new Error('Authentication window was closed.'));
+        } else {
+          reject(err);
+        }
+      }
     });
 
     client.requestAccessToken({

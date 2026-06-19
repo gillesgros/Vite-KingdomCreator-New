@@ -12,7 +12,10 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
-**2026/07/11 - 7.1.1** - Firebase & Oauth
+**2026/06/19 - 7.1.2** - Oauth google OK
+>***Fix*** - login to google drive working with nice UI
+
+**2026/06/19 - 7.1.1** - Oauth google start
 >***Feat*** - add save and restore settings config from goggle Drive
 >***Fix*** - modify settings pages to allow easy restore form google
 >***Feat*** - add login to google drive (manual option)

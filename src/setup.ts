@@ -4,23 +4,24 @@ import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 
 import { useWindowStore } from '@/pinia/window-store';
+import { useGoogleSyncStore } from '@/pinia/google-sync-store';
 import { i18n } from '@/i18n/i18n';
 
 import App from './views/App.vue';
 
+
 export function initialize<S>(router: Router) {
-  /*const app = createApp({
-    template: `
-      <div id="app">
-        <router-view></router-view>
-      </div>
-    `
-  });*/
   const app = createApp(App)
+  const pinia = createPinia().use(piniaPluginPersistedstate);
+
   app.use(i18n);
   app.use(router);
-  app.use(createPinia().use(piniaPluginPersistedstate));
+  app.use(pinia);
+
   initializeWindowListener();
+  const googleSyncStore = useGoogleSyncStore();
+  googleSyncStore.initialize();
+
   app.mount('#app');
 };
 
@@ -33,7 +34,6 @@ function initializeWindowListener () {
     window.location.href = window.location.href.replace(/\/$/, '');
   }
 };
-
 
 function updateWindowSize () {
   const WindowStore = useWindowStore();

@@ -10,6 +10,8 @@ As I became a maintainer for Kingdom Creator, https://www.dominionrandomizer.com
 Feel free to propose any improvements you see fit and send me a pull request!
 
 ## Changelog
+**2026/07/11 - 7.1.1** - Firebase & Oauth
+
 **2026/06/11 - 7.0.7** - Fix for 7.0
 >***Fix & Feat*** (see [Changelog.md](./Changelog.md))
 

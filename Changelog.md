@@ -12,6 +12,11 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/07/11 - 7.1.1** - Firebase & Oauth
+>***Feat*** - add save and restore settings config from goggle Drive
+>***Fix*** - modify settings pages to allow easy restore form google
+>***Feat*** - add login to google drive (manual option)
+
 **2026/06/11 - 7.0.7** - Fix for 7.0
 Dev deploy on github pages 
 >***Fix*** - blakevanlan/KingdomCreator #220 - When you Use Custom Configuration for Set Display and only choose second editon the set isn't selectable 

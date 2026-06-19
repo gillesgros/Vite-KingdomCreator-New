@@ -17,8 +17,8 @@
                 <QuestionMarkCircleIcon class="QuestionMark" />
               </RouterLink>
             </div>
-          <Switch as="button" v-model="constraintRandomizer" v-slot="{ checked }"
-            :class="constraintRandomizer ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'" class="relative-switchcss">
+          <Switch as="button" v-model="useConstraintOnRandomization" v-slot="{ checked }"
+            :class="useConstraintOnRandomization ? 'switch-bg-indigo-600' : 'switch-bg-gray-200'" class="relative-switchcss">
             <span class="SwitchSpan" :class="{ 'translate-x-5': checked, 'translate-x-0': !checked }" />
           </Switch>
         </SwitchGroup>
@@ -92,6 +92,8 @@
 /* import Vue, typescript */
 import { defineComponent, ref, computed, watch } from 'vue';
 import { RouterLink } from 'vue-router';
+import { storeToRefs } from 'pinia';
+
 import { SwitchGroup, Switch, SwitchLabel } from '@headlessui/vue';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption, ListboxLabel } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid';
@@ -127,8 +129,11 @@ export default defineComponent({
     const SettingsStore = useSettingsStore()
     const { t } = useI18n();
 
-    const ownedRestricted = ref(SettingsStore.isUsingOnlyOwnedsets);
-    const constraintRandomizer = ref(SettingsStore.useConstraintOnRandomization);
+   const {
+      useConstraintOnRandomization,
+      setConstraints
+    } = storeToRefs(SettingsStore);
+
     const setsOrderType = ref("alpha");
 
     const listedSetids = computed(() => {
@@ -207,11 +212,18 @@ export default defineComponent({
     initializeSelectedCards();
     initializeSetConstraints();
 
-    watch([constraintRandomizer], () => {
+    watch([useConstraintOnRandomization], () => {
         SettingsStore.updateSettings({
-          useConstraintOnRandomization: constraintRandomizer.value
+          useConstraintOnRandomization: useConstraintOnRandomization.value
         })
       }
+    );
+    watch( setConstraints, 
+      () => {
+        initializeSelectedCards();
+        initializeSetConstraints();
+      }, 
+      { deep: true }
     );
 
     // Watch for changes in selectedCards and update SettingsStore
@@ -273,8 +285,7 @@ export default defineComponent({
     };
 
     return {
-      ownedRestricted,
-      constraintRandomizer,
+      useConstraintOnRandomization,
       listedSetids,
       setsOrderType,
       FindMultipleVersionSets,

@@ -12,84 +12,92 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/06/20 - 7.0.9** - Fix for 7.0
+Dev deploy on github pages 
+>***Fix*** - Fix - render Changelog correctly on github - feature in vite.config.ts  
+
+**2026/06/19 - 7.0.8** - Fix for 7.0
+Dev deploy on github pages 
+>***Fix*** - Fix - modify settings pages to allow easy restore form google and keep value reactive  
+
 **2026/06/11 - 7.0.7** - Fix for 7.0
 Dev deploy on github pages 
->***Fix*** - blakevanlan/KingdomCreator #220 - When you Use Custom Configuration for Set Display and only choose second editon the set isn't selectable 
->***Fix*** - Fix copy of help without directory structure
->***Feat*** - blakevanlan/KingdomCreator PR #221 - Added missing Dutch translations 
+>***Fix*** - blakevanlan/KingdomCreator #220 - When you Use Custom Configuration for Set Display and only choose second editon the set isn't selectable  
+>***Fix*** - Fix copy of help without directory structure  
+>***Feat*** - blakevanlan/KingdomCreator PR #221 - Added missing Dutch translations  
 
 **2026/02/21 - 7.0.6** - Dev 7 Work in progress
 Dev deploy on github pages 
->***Fix*** - avoid build images path with cards.en
->***Fix*** - fix access to font path alegreya-...
->***Fix*** - make help pages works when loaded on Github Pages
+>***Fix*** - avoid build images path with cards.en  
+>***Fix*** - fix access to font path alegreya-...  
+>***Fix*** - make help pages works when loaded on Github Pages  
 
 **2026/02/20 - 7.0.5** - Dev 7 Work in progress
 Dev deploy on github pages 
->***Fix*** - Constraint FORCE_ADDON_USE at first load
+>***Fix*** - Constraint FORCE_ADDON_USE at first load  
 
 **2026/02/19 - 7.0.4** - Dev 7 Work in progress
 Dev deploy on github pages 
->***Fix*** - Fix blinking on sort for Sets and Boxes
->***Feat*** - Rename display tab for rulebooks
->***Fix*** - blakevanlan/KingdomCreator #193 - Issues Randomizing Events, Landmarks, Projects, Ways & Traits After the Initial Set Creation   
+>***Fix*** - Fix blinking on sort for Sets and Boxes  
+>***Feat*** - Rename display tab for rulebooks  
+>***Fix*** - blakevanlan/KingdomCreator #193 - Issues Randomizing Events, Landmarks, Projects, Ways & Traits After the Initial Set Creation  
            Force redraw if FORCE_ADDON_USAGE is true
->***Fix*** - complemenatry fix for initial Kingdom load - Addon constraint verified and corrected
+>***Fix*** - complemenatry fix for initial Kingdom load - Addon constraint verified and corrected  
 
 **2026/02/18 - 7.0.3** - Dev 7 Work in progress
->***Fix*** - Split components by usage (boxes, cards, randomize, ...)
->***Feat*** - Load Cards slowly on All Page - Lazy_loading
->***Fix*** - Add OtherCards in search. Fix sort.
+>***Fix*** - Split components by usage (boxes, cards, randomize, ...)  
+>***Feat*** - Load Cards slowly on All Page - Lazy_loading  
+>***Fix*** - Add OtherCards in search. Fix sort.  
 
 **2026/01/20 - 7.0.2** - Dev 7 Work in progress
->***Fix*** - blakevanlan/KingdomCreator #207 - Underling cost 
->***Fix*** - blakevanlan/KingdomCreator #214 - Bugged Guilds & Cornucopia (2nd edition) cards
+>***Fix*** - blakevanlan/KingdomCreator #207 - Underling cost  
+>***Fix*** - blakevanlan/KingdomCreator #214 - Bugged Guilds & Cornucopia (2nd edition) cards  
 
 **2026/01/20 - 7.0.1** - Dev 7 Work in progress
 Dev deploy on github pages 
->***Fix*** - add border for Approaching Army card
+>***Fix*** - add border for Approaching Army card  
 
 **2025/09/30 - 6.6.3** - Dev 6.7 Work in progress
 Dev deploy on github pages 
->***Fix*** - sort on search page
->***Feat*** - Add Othercards on search page
+>***Fix*** - sort on search page  
+>***Feat*** - Add Othercards on search page  
 
 **2025/09/28 - 6.6.2** - Dev 6.7 Work in progress
 Dev deploy on github pages 
->***Fix*** - sort for Box content
+>***Fix*** - sort for Box content  
 
 **2025/09/27 - 6.6.2** - Dev 6.7 Work in progress
 Dev deploy on github pages 
->***Feat*** - add tooltip on main page
->***Fix*** - selection ownedset impacting Randomizer selection and Box content
->***Feat*** - Add select/unselect all Randomizer sidebas /Settings owned set 
->***Feat*** - custom settings owned set
+>***Feat*** - add tooltip on main page  
+>***Fix*** - selection ownedset impacting Randomizer selection and Box content  
+>***Feat*** - Add select/unselect all Randomizer sidebas /Settings owned set  
+>***Feat*** - custom settings owned set  
 
 **2025/09/15 - 6.6.1** - Dev 6.7 Work in progress
 Dev deploy on github pages 
->***Feat*** - add help markdown file display in settings page 
+>***Feat*** - add help markdown file display in settings page  
 
 **2025/09/12 - 6.6.0**
 Dev deploy on github pages 
 >***Fix*** - blakevanlan/KingdomCreator #207 - Underling cost  
 >***Feat*** - blakevanlan/KingdomCreator PR #209 - Added missing Dutch Seaside translations  
 >***Feat*** - blakevanlan/KingdomCreator PR #206 - Polish translations  
->***Feat*** - add and update ToDo
+>***Feat*** - add and update ToDo  
 
-**2025/07/24 - 6.5.0**
+**2025/07/24 - 6.5.0**  
 Dev deploy on github pages 
->***Fix*** - deduplication of candaidate cards for Addons generation
->***Fix*** - Add Prosperity Update Pack SetId for Colony/Platine usage
->***Feat*** - Start adding generation process documentation.
->***Fix*** - proper menu display on 1st load (on occasion)
->***Fix*** - Proper alchemy divider usage based on '3+ Alchemy cards' or randomly
->***Fix*** - Rendering menu dynamicaly
+>***Fix*** - deduplication of candaidate cards for Addons generation  
+>***Fix*** - Add Prosperity Update Pack SetId for Colony/Platine usage  
+>***Feat*** - Start adding generation process documentation.  
+>***Fix*** - proper menu display on 1st load (on occasion)  
+>***Fix*** - Proper alchemy divider usage based on '3+ Alchemy cards' or randomly  
+>***Fix*** - Rendering menu dynamicaly  
 
 **2025/07/23 - 6.4.9**  
-Dev deploy on github pages  
->***Fix*** - Proper alchemy divider usage based on '3+ Alchemy cards' or randomly **Broken**
->***Feat*** - Show console.info if sessionStorage variable 'console.info' is set to true
->***Feat*** - Startin adding generation process documentation.
+Dev deploy on github pages   
+>***Fix*** - Proper alchemy divider usage based on '3+ Alchemy cards' or randomly **Broken**  
+>***Feat*** - Show console.info if sessionStorage variable 'console.info' is set to true  
+>***Feat*** - Startin adding generation process documentation.  
 
 **2025/07/10 - 6.4.8**  
 Dev deploy on github pages  
@@ -98,13 +106,13 @@ Dev deploy on github pages
 >***Feat*** - blakevanlan/KingdomCreator #93 - Request cost deselect all button  
 >***Fix*** - Correct display of menu on smartphone (small screen)  
 >***Feat*** - Extend list of supply card type for SupplyCard replacement windows  
->***Feat*** - Search SupplyCard with criteria Set, Type, Cost 
->***Feat*** - Rendering menu dynamicaly
->***Fix*** - Fix windows resize for Custom setting page
+>***Feat*** - Search SupplyCard with criteria Set, Type, Cost  
+>***Feat*** - Rendering menu dynamicaly  
+>***Fix*** - Fix windows resize for Custom setting page  
 >***Fix*** - blakevanlan/KingdomCreator #192 - Randomization Issues  
            Add trace for candidate card selection and for candidate cards for addons  
            To do : description of selection process    
->***Fix*** - blakevanlan/KingdomCreator #193 - Issues Randomizing Events, Landmarks, Projects, Ways & Traits After the Initial Set Creation   
+>***Fix*** - blakevanlan/KingdomCreator #193 - Issues Randomizing Events, Landmarks, Projects, Ways & Traits After the Initial Set Creation  
            Adjust number of cards selectd   
            To do : add modal windows for addons selection process   
 
@@ -115,22 +123,22 @@ Dev deploy on 71yeti.fr
 >***Fix*** - blakevanlan/KingdomCreator #191 - Issue: Reaction cards (set Patron reaction:true)  
 >***Fix*** - blakevanlan/KingdomCreator PR # 189 - fix: Fix string key  
 >***Fix*** - blakevanlan/KingdomCreator PR # 188 - fix(build): Fix build on Linux systems  
->***Feat*** - blakevanlan/KingdomCreator PR # 187 - feat: Add Italian translation
+>***Feat*** - blakevanlan/KingdomCreator PR # 187 - feat: Add Italian translation  
 
 **2025/01/31 - 6.4.6**  
 >Work in progress
 
 **2025/01/12 - 6.4.5**  
->***Fix*** - Regression - blakevanlan/KingdomCreator # 169 - Bug: Copy does not work anymore like it used to
+>***Fix*** - Regression - blakevanlan/KingdomCreator # 169 - Bug: Copy does not work anymore like it used to  
 
 **2025/01/02 - 6.4.4**  
 Dev deploy on github pages  
 Dev deploy on 71yeti.fr
->***Fix*** - improper order for accentuated characters (French)
+>***Fix*** - improper order for accentuated characters (French)  
 >***Fix*** - add rising sun no French images  
 >***Feat*** - add translation for no card image translated  
 >***Fix*** - blakevanlan/KingdomCreator #181 - Bug: Riverboat pile selects cards that don't cost $5  
->***Feat*** - rework of Card generation 
+>***Feat*** - rework of Card generation  
 
 **2024/12/28 - 6.4.3**  
 Dev deploy on github pages  
@@ -151,8 +159,8 @@ Dev deploy on 71yeti.fr
 **2024/12/01 - 6.4.1**  
 Dev deploy on github pages  
 Dev deploy on 71yeti.fr
->***Feat*** - RisingSun: handle riverboat Action card Request
->***Feat*** - Add kingdom for Rising Sun
+>***Feat*** - RisingSun: handle riverboat Action card Request  
+>***Feat*** - Add kingdom for Rising Sun  
 
 **2024/10/21 - 6.4.0**  
 Dev deploy on github pages  
@@ -162,7 +170,7 @@ Dev deploy on 71yeti.fr
            To do : handle minCards and maxCards in supplies selection  
 >***Feat*** - allow not valid kingdoms and add information about coherence issues  
 >***Feat*** - Clarify message when not able to randomize  
->***Fix*** - order for boxes display of special cards   
+>***Fix*** - order for boxes display of special cards  
            Travellers, Split Cards, Castle  
 >***Fix*** - rename othercard jpg with (set)_other_(name)  
            and cleanup for old and used cards jpg  

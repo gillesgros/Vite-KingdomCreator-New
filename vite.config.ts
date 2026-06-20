@@ -12,6 +12,8 @@ import del  from 'rollup-plugin-delete';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 import { DominionContentGenerate, HandleLocaleGenerateAndMerge } from './plugins/vite-dominion-content';
+import { CheckVersions_Package_Readme_Changelog } from './plugins/Check-Version-Package-Readme-Changelog';
+import { fixChangelogSpaces } from './plugins/Fix-Changelog';
 import { exit } from 'process';
 
 // On-demand components auto importing for Vue.
@@ -21,24 +23,8 @@ const devServerPort = 5173;
 const publicationDir = 'docs';
 const publicationHelpDir = 'helpFiles';
 
-const changelogPath = path.join(__dirname, 'Changelog.md');
-const readmePath = path.join(__dirname, 'README.md');
-const packageVersion = packageJson.version;
-console.log('packageVersion: ', packageJson.version);  
-const regex = /^##{1,2} Changelog\s*\n\s*\*\*\d{4}\/\d{2}\/\d{2} - (\d+\.\d+\.\d+)/m;
-const changelogText = fs.readFileSync(changelogPath, 'utf-8');
-const changelogVersionMatch = changelogText.match(regex);
-const changelogVersion = changelogVersionMatch ? changelogVersionMatch[1] : null;
-console.log('changelogVersion: ', changelogVersion);  
-const readmeText = fs.readFileSync(readmePath, 'utf-8');
-const readmeVersionMatch = readmeText.match(regex);
-const readmeVersion = readmeVersionMatch ? readmeVersionMatch[1] : null;
-console.log('readmeVersion: ', readmeVersion);  
-
-if (packageVersion != changelogVersion || packageVersion != readmeVersion || changelogVersion != readmeVersion) {
-  console.log("inconsistency in version number. Please Check")
-  exit(0);
-}
+CheckVersions_Package_Readme_Changelog();
+fixChangelogSpaces();
 
 export default defineConfig( ({ mode}) => {
 

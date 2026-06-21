@@ -1,10 +1,10 @@
 <template>
   <div class="setting-panel">
-    <div class="SettingTitle">Google Sync</div>
-    <div class="sets-description">Save and restore your settings across browsers using Google Drive.</div>
+    <div class="SettingTitle">{{ $t('Google Sync') }}</div>
+    <div class="sets-description">{{ $t('Save and restore your settings')}}</div>
 
     <div v-if="!isGoogleConfigured" class="google-sync-message google-sync-warning">
-      Google Drive sync is not configured yet. Set <code>VITE_GOOGLE_CLIENT_ID</code> in your environment to enable it.
+      {{ $t('Google Drive sync is not configured yet') }}
     </div>
 
     <div v-else class="google-sync-actions">
@@ -22,7 +22,7 @@
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
         </div>
-        <span class="google-btn-text">Se connecter avec Google</span>
+        <span class="google-btn-text">{{ $t('Sign in with Google') }}</span>
       </button>
 
 <button 
@@ -41,7 +41,7 @@
         </div>
 
         <div class="google-btn-text-container">
-          <span class="google-btn-title">Se connecter en tant que {{ googleSyncStore.profile.name }}</span>
+          <span class="google-btn-title">{{ $t('Sign in as', { name: googleSyncStore.profile.name }) }}</span>
           <span class="google-btn-email">
             {{ googleSyncStore.profile.email }}
             <svg class="dropdown-arrow-icon" viewBox="0 0 24 24"><path fill="#70757a" d="M7 10l5 5 5-5z"/></svg>
@@ -67,21 +67,21 @@
             </span>
           </div>
           <div class="google-badge-text-container">
-            <span class="google-badge-title">Connecté en tant que {{ googleSyncStore.profile.name || 'Gilles' }}</span>
+            <span class="google-badge-title">{{ $t('Signed in as', { name: googleSyncStore.profile.name }) }}</span>
             <span class="google-badge-email">{{ googleSyncStore.profile.email }}</span>
           </div>
         </div>
 
         <button class="settingsButton disconnectButton" @click="googleSyncStore.signOut()">
-          Disconnect Google
+          {{ $t('Sign Out Google') }}
         </button>
       </template>
 
       <button class="settingsButton" @click="googleSyncStore.saveToGoogle()" :disabled="googleSyncStore.isLoading || !googleSyncStore.isSignedIn">
-        Save to Drive
+        {{ $t('Save to Drive') }}
       </button>
       <button class="settingsButton" @click="googleSyncStore.restoreFromGoogle()" :disabled="googleSyncStore.isLoading || !googleSyncStore.isSignedIn">
-        Restore from Drive
+        {{ $t('Restore from Drive') }}
       </button>
     </div>
 

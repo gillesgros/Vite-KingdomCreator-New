@@ -1,6 +1,6 @@
 <template>
   <div class="content">
-    <RandomizerSidebar @randomize="handleRandomize" @played="handlePlayed"/>
+    <RandomizerSidebar :playedButtonText="playedButtonText" @randomize="handleRandomize" @played="handlePlayed"/>
     <div class="main">
       <KingdomNotValid />
       <SortableSupplyCards />
@@ -72,15 +72,19 @@ export default defineComponent({
     const settings = ref(randomizerStore.settings);
 
     const isCondensed = computed(() =>{ return windowStore.isCondensed});
+    const isSaving = ref(false);
 
-    /*// Variable interne pour éviter d'enregistrer le royaume lors du tout premier chargement de l'URL
-    let isInitialLoad = true;
-    // Traque de manière réactive si le royaume affiché a déjà été joué par le passé
-    const isAlreadyPlayed = computed(() => {
-      if (!kingdom.value) return false;
-      return historyStore.isKingdomAlreadyPlayed(kingdom.value);
-    });*/
-
+    // 2. Propriété calculée dynamique prenant en compte l'état actuel complet du royaume
+    const playedButtonText = computed(() => {
+      if (!kingdom.value) return t('Play_It');
+      if (isSaving.value) return t('Saving');
+      
+      // historyStore gère déjà la vérification complète par hash unique
+      const alreadyPlayed = historyStore.isKingdomAlreadyPlayed(kingdom.value);
+      console.log('kingdom:', kingdom.value);
+      console.log('alreadyPlayed', alreadyPlayed);
+      return alreadyPlayed ? t('Played') : t('Play_It');
+    });
 
     const onKingdomChanged= (newKingdom: Kingdom) => {
       if (!newKingdom) return;
@@ -90,15 +94,7 @@ export default defineComponent({
       if (!isEqual(route.query, query)) {
         router.replace({ query })
       }
-      /*
-      if (isInitialLoad) {
-        // Au premier chargement (ex: l'utilisateur arrive via un lien partagé), 
-        // on n'enregistre pas le jeu d'office, on passe juste le flag à false.
-        isInitialLoad = false;
-      } else {
-        // C'est un nouveau clic sur "Randomize", on l'ajoute à l'historique
-        historyStore.addKingdomToHistory(newKingdom);
-      }*/
+
     }
     watch(kingdom, onKingdomChanged)
 
@@ -122,7 +118,15 @@ export default defineComponent({
     }
 
     const handlePlayed = async () => {
-      await historyStore.addKingdomToHistory(kingdom.value);
+      if (historyStore.isKingdomAlreadyPlayed(kingdom.value)) return;
+      isSaving.value = true;
+      try {
+        await historyStore.addKingdomToHistory(kingdom.value);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        isSaving.value = false;
+      }
     }
 
     const isEqual = (a: any, b: any) => {
@@ -148,6 +152,7 @@ export default defineComponent({
       supplyCardsCopyText,
       handleRandomize,
       handlePlayed,
+      playedButtonText,
       kingdom,
       settings,
       isCondensed

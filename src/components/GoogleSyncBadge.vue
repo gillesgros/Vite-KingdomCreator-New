@@ -10,8 +10,8 @@
     <template v-else>
       <div class="mobile-avatar-placeholder">G</div>
       <div class="profile-info">
-        <span class="profile-name">Google Drive Sync</span>
-        <span class="profile-status status-disconnected">Se connecter</span>
+        <span class="profile-name">{{ $t('Google Drive Sync') }}</span>
+        <span class="profile-status status-disconnected">{{ $t('Sign in') }}</span>
       </div>
     </template>
   </li>
@@ -41,6 +41,8 @@
 
 <script lang="ts">
 import { defineComponent, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
 import { useGoogleSyncStore } from '@/pinia/google-sync-store';
 
 export default defineComponent({
@@ -52,6 +54,7 @@ export default defineComponent({
     }
   },
   setup() {
+    const { t } = useI18n();
     const googleSyncStore = useGoogleSyncStore();
 
     // Raccourci pour valider la connexion
@@ -68,9 +71,9 @@ export default defineComponent({
     // Infobulle dynamique au survol
     const badgeTooltip = computed(() => {
       if (isConnected.value) {
-        return `Connecté : ${googleSyncStore.profile?.name} (Sync active). Cliquer pour se déconnecter ?`;
+        return t(`Signed as`, { name: googleSyncStore.profile?.name });
       }
-      return "Sauvegarde cloud désactivée. Cliquer pour lier votre Google Drive.";
+      return t('Cloud backup disabled.');
     });
 
     // Gestion du clic
@@ -80,12 +83,12 @@ export default defineComponent({
           // Déclenche l'authentification Google
           await googleSyncStore.signInAndInit();
         } catch (err) {
-          console.error("Échec de l'authentification au clic sur le badge :", err);
+          console.error("Authentification failure from badge :", err);
         }
       } else {
         // Optionnel : Si déjà connecté, on peut proposer de se déconnecter au clic, 
         // ou simplement ne rien faire / ouvrir un menu. Par défaut ici, on laisse connecté.
-        if (confirm("Voulez-vous vous déconnecter de Google Drive ?")) {
+        if (confirm(t('Do you want to sign out'))) {
           googleSyncStore.signOut();
         }
       }

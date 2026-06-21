@@ -10,7 +10,7 @@
       <a v-if="googleSyncStore.isSignedIn" 
          class="standard-button standard-button--is-primary played-button"
          @click="handlePlayed">
-        {{ $t("Played") }}
+        {{ $t(playedButtonText) }}
       </a>
     </div>
     <div class="sidebar-content filters">
@@ -134,7 +134,7 @@
         <a v-if="googleSyncStore.isSignedIn" 
            class="standard-button standard-button--is-primary standard-button--large played-button"
            @click="handlePlayed">
-          {{ $t("Played") }}
+          {{ $t(playedButtonText) }}
         </a>
       </div>
   </div>
@@ -169,6 +169,12 @@ export default defineComponent({
   components: {
   },
   emits: ['randomize', 'played'], 
+  props: {
+    playedButtonText: {
+      type: String,
+      default: 'Play_It'
+    }
+  },
   setup(props, { emit }) {
     const { t } = useI18n();
     const randomizerStore = useRandomizerStore();

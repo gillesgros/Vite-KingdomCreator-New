@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { useSettingsStore } from '@/pinia/settings-store';
 import { usei18nStore } from '@/pinia/i18n-store';
 import { useRandomizerStore } from '@/pinia/randomizer-store';
+import { useHistoryStore } from '@/pinia/history-store';
 
 import { getLanguage } from '@/i18n/language';
 import {
@@ -55,6 +56,7 @@ console.log("Current state:", {
       // Si le jeton en cache est encore valide (avec une marge de sécurité de 2 minutes)
       if (now < this.tokenExpirationTime - 120000) {
         this.lastMessage = `Connected (loaded from session cache).`;
+        useHistoryStore().loadHistory();
         return; // 🚀 On s'arrête là ! Aucune fenêtre Google ne s'ouvrira.
       }
     }
@@ -65,6 +67,7 @@ console.log("Current state:", {
           // (Google s'en souvient si la session globale de son navigateur est active)
           this.accessToken = await requestDriveAccessToken(this.profile?.email, true /* silent prompt */);
           this.tokenExpirationTime = Date.now() + 3600000
+          useHistoryStore().loadHistory();
           this.lastMessage = `Welcome back! Connected to Google Drive.`;
         } catch (error) {
           // Si le rafraîchissement échoue (ex: hors ligne), on ne déconnecte pas brutalement, 
@@ -102,8 +105,8 @@ console.log("Current state:", {
           this.profile = { sub: 'unknown', email: 'Connected' };
           this.lastMessage = 'Connected to Google Drive.';
         }
-
         this.isSignedIn = true;
+        useHistoryStore().loadHistory();
       } catch (error) {
         this.accessToken = null;
         this.isSignedIn = false;
@@ -129,6 +132,7 @@ console.log("Current state:", {
     async signOut() {
       this.isSignedIn = false;
       this.accessToken = null;
+      useHistoryStore().clearLocalHistory();
       this.lastMessage = 'Signed out from Google.';
     },
 

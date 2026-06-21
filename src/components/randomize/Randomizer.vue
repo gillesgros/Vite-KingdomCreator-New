@@ -1,6 +1,6 @@
 <template>
   <div class="content">
-    <RandomizerSidebar @randomize="handleRandomize" />
+    <RandomizerSidebar @randomize="handleRandomize" @played="handlePlayed"/>
     <div class="main">
       <KingdomNotValid />
       <SortableSupplyCards />
@@ -31,6 +31,7 @@ import type { Card } from '@/dominion/card';
 import { useRandomizerStore } from '@/pinia/randomizer-store';
 import { useWindowStore } from '@/pinia/window-store';
 import { usei18nStore } from '@/pinia/i18n-store';
+import { useHistoryStore } from '@/pinia/history-store';
 import { deserializeKingdom, serializeKingdom } from '@/randomizer/serializer';
 
 /* import Components */
@@ -44,6 +45,7 @@ import KingdomNotValid from './KingdomNotValid.vue';
 
 import CopyButton from '../CopyButton.vue';
 import FullScreenButton from './FullScreenButton.vue';
+import type { Kingdom } from '@/randomizer/kingdom.ts';
 
 export default defineComponent({
   name: "Randomizer",
@@ -62,6 +64,7 @@ export default defineComponent({
     const randomizerStore = useRandomizerStore();
     const windowStore = useWindowStore();
     const i18nStore = usei18nStore();
+    const historyStore = useHistoryStore(); 
     const { t } = useI18n();
     const route = useRoute();
     const router = useRouter();
@@ -69,15 +72,33 @@ export default defineComponent({
     const settings = ref(randomizerStore.settings);
 
     const isCondensed = computed(() =>{ return windowStore.isCondensed});
-    // const randomizerSettings = randomizerStore.settings.randomizerSettings;
 
-    const onKingdomChanged= () => {
+    /*// Variable interne pour éviter d'enregistrer le royaume lors du tout premier chargement de l'URL
+    let isInitialLoad = true;
+    // Traque de manière réactive si le royaume affiché a déjà été joué par le passé
+    const isAlreadyPlayed = computed(() => {
+      if (!kingdom.value) return false;
+      return historyStore.isKingdomAlreadyPlayed(kingdom.value);
+    });*/
+
+
+    const onKingdomChanged= (newKingdom: Kingdom) => {
+      if (!newKingdom) return;
       const query = {  lang: i18nStore.language,
           ...serializeKingdom(kingdom.value)
         }
       if (!isEqual(route.query, query)) {
         router.replace({ query })
       }
+      /*
+      if (isInitialLoad) {
+        // Au premier chargement (ex: l'utilisateur arrive via un lien partagé), 
+        // on n'enregistre pas le jeu d'office, on passe juste le flag à false.
+        isInitialLoad = false;
+      } else {
+        // C'est un nouveau clic sur "Randomize", on l'ajoute à l'historique
+        historyStore.addKingdomToHistory(newKingdom);
+      }*/
     }
     watch(kingdom, onKingdomChanged)
 
@@ -98,6 +119,10 @@ export default defineComponent({
 
     const handleRandomize = () => {
       randomizerStore.RANDOMIZE()
+    }
+
+    const handlePlayed = async () => {
+      await historyStore.addKingdomToHistory(kingdom.value);
     }
 
     const isEqual = (a: any, b: any) => {
@@ -122,6 +147,7 @@ export default defineComponent({
     return {
       supplyCardsCopyText,
       handleRandomize,
+      handlePlayed,
       kingdom,
       settings,
       isCondensed

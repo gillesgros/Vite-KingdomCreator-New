@@ -16,6 +16,7 @@
        <div class="title-container">
           <h1 class="title">
             <router-link class="title_link" :to="getCurrentMenuItemUrl">Dominion Randomizer</router-link>
+            <GoogleSyncBadge :isCondensed="false" />
           </h1>
           <h2 class="tagline">{{ subtitle }}</h2>
         </div> 
@@ -102,6 +103,7 @@ import { usei18nStore } from '@/pinia/i18n-store';
 import { Language } from '@/i18n/language';
 
 /* import Components */
+import GoogleSyncBadge from '@/components/GoogleSyncBadge.vue';
 
 export enum MenuItemType {
   RANDOMIZER,
@@ -140,8 +142,8 @@ export default defineComponent({
     selectedType: Number
   },
   components: {
-  //  Popover, PopoverButton, PopoverPanel,
-    Menu, MenuButton, MenuItems, MenuItem
+    Menu, MenuButton, MenuItems, MenuItem,
+    GoogleSyncBadge 
   },
   setup(props) {
     const PackageVersion = Pkgejson_Version;

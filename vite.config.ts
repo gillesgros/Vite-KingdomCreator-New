@@ -14,7 +14,6 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { DominionContentGenerate, HandleLocaleGenerateAndMerge } from './plugins/vite-dominion-content';
 import { CheckVersions_Package_Readme_Changelog } from './plugins/Check-Version-Package-Readme-Changelog';
 import { fixChangelogSpaces } from './plugins/Fix-Changelog';
-import { exit } from 'process';
 
 // On-demand components auto importing for Vue.
 //import UnPluginVueComponents from 'unplugin-vue-components/vite'; 
@@ -170,7 +169,7 @@ export default defineConfig( ({ mode}) => {
           // rewrite: (path) => path.replace(/^\/?/, '/docs/index.html?'),
           rewrite: (path) => path.replace(/^\/?/, '/index.html?'),
         },
-      },
+      }
     },
     preview: {
      proxy: { }

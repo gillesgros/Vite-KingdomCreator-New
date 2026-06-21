@@ -10,12 +10,17 @@ As I became a maintainer for Kingdom Creator, https://www.dominionrandomizer.com
 Feel free to propose any improvements you see fit and send me a pull request!
 
 ## Changelog
+**2026/06/20 - 7.1.4** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
 **2026/06/20 - 7.1.3** - Fix from 7.0
->***Fix *** (see [Changelog.md](./Changelog.md))
+>***Fix*** (see [Changelog.md](./Changelog.md))
 
 **2026/06/19 - 7.1.2** - Oauth google OK
+>***Feat*** (see [Changelog.md](./Changelog.md))
 
 **2026/06/19 - 7.1.1** - Oauth google start
+>***Feat*** (see [Changelog.md](./Changelog.md))
 
 **2026/06/11 - 7.0.7** - Fix for 7.0
 >***Fix & Feat*** (see [Changelog.md](./Changelog.md))

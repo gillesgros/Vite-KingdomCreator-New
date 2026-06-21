@@ -197,20 +197,22 @@ export const useRandomizerStore = defineStore(
         //console.log(supply)
         
         let addonsForAdjustement ={ 
-          events: initialKingdom.events, landmarks: initialKingdom.landmarks, 
-          projects: initialKingdom.projects, ways: initialKingdom.ways, 
-          allies: [], prophecies: [], traits: initialKingdom.traits
+          events: initialKingdom.events ?? [], landmarks: initialKingdom.landmarks ?? [], 
+          projects: initialKingdom.projects ?? [], ways: initialKingdom.ways ?? [], 
+          allies: [], prophecies: [], traits: initialKingdom.traits ?? []
         } as unknown as Addons;
-
+console.log("addonsForAdjustement", addonsForAdjustement)
         const enforceAndFillAddons = (actualAddons: Addons) : Addons => {
-
           // enforce per-type caps
-          actualAddons.events = actualAddons.events.slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.EVENT));
-          actualAddons.landmarks = actualAddons.landmarks.slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.LANDMARK));
-          actualAddons.projects = actualAddons.projects.slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.PROJECT));
-          actualAddons.ways = actualAddons.ways.slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.WAY));
-          actualAddons.traits = actualAddons.traits.slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.TRAIT));
-
+          console.log("enforceAndFillAddons", actualAddons)
+          actualAddons.events = (actualAddons.events ?? []).slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.EVENT));
+          actualAddons.landmarks = (actualAddons.landmarks ?? []).slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.LANDMARK));
+          actualAddons.projects = (actualAddons.projects ?? []).slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.PROJECT));
+          actualAddons.ways = (actualAddons.ways ?? []).slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.WAY));
+          actualAddons.traits = (actualAddons.traits ?? []).slice(0, MAX_ADDONS_OF_TYPE(Addons_TYPE.TRAIT));
+          actualAddons.allies = actualAddons.allies ?? [];
+          actualAddons.prophecies = actualAddons.prophecies ?? [];
+          
           // enforce total max
           let maxAddonsInKingdom = MAX_ADDONS_IN_KINGDOM();
           let total = actualAddons.events.length + actualAddons.landmarks.length + actualAddons.projects.length + actualAddons.ways.length + actualAddons.traits.length + actualAddons.allies.length + actualAddons.prophecies.length;

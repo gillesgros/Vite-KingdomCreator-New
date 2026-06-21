@@ -2,7 +2,7 @@ const CONFIG_FILE_NAME = 'dominion-randomizer-config.json';
 const APPDATA_FOLDER = 'appDataFolder';
 
 const __GOOGLE_CLIENT_ID__ = '276051005715-j2t62qpoigs6chknqjk13adplej9cdgb.apps.googleusercontent.com';
-
+const HISTORY_FILE_NAME = 'dominion-kingdom-history.json';
 
 
 interface GoogleTokenResponse {
@@ -219,6 +219,113 @@ export async function restoreConfigFromGoogle(token: string): Promise<GoogleBack
 
   const text = await response.text();
   return JSON.parse(text) as GoogleBackupPayload;
+}
+
+/**
+ * 🔍 Recherche le fichier d'historique dans le appDataFolder
+ */
+async function findHistoryFile(token: string): Promise<GoogleDriveFile | null> {
+  const searchParams = new URLSearchParams({
+    spaces: APPDATA_FOLDER,
+    fields: 'files(id,name,mimeType,modifiedTime)',
+  });
+
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files?${searchParams.toString()}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Google Drive history search failed (${response.status}): ${errorText}`);
+  }
+
+  const data = (await response.json()) as GoogleDriveFilesResponse;
+  return data.files?.find(file => file.name === HISTORY_FILE_NAME && file.mimeType === 'application/json') || null;
+}
+
+/**
+ * 📥 Télécharge l'historique des jeux (dictionnaire hash -> timestamp) depuis Google Drive
+ */
+export async function fetchHistoryFromGoogle(token: string): Promise<Record<string, number>> {
+  const file = await findHistoryFile(token);
+  if (!file) {
+    return {}; // Premier lancement : aucun fichier créé, on renvoie un historique vide
+  }
+
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to read Google Drive history (${response.status})`);
+  }
+
+  const text = await response.text();
+  try {
+    return JSON.parse(text) as Record<string, number>;
+  } catch {
+    return {}; // En cas de fichier corrompu ou vide
+  }
+}
+
+/**
+ * 📤 Sauvegarde ou met à jour l'historique complet sur Google Drive
+ */
+export async function saveHistoryToGoogle(token: string, historyData: Record<string, number>): Promise<void> {
+  const file = await findHistoryFile(token);
+  const json = JSON.stringify(historyData);
+
+  // Cas 1 : Le fichier existe déjà, on fait une mise à jour rapide (PATCH)
+  if (file) {
+    const response = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=media`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: json,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to update Google Drive history (${response.status})`);
+    }
+    return;
+  }
+
+  // Cas 2 : Le fichier n'existe pas, création en mode Multipart (POST)
+  const metadata = JSON.stringify({
+    name: HISTORY_FILE_NAME,
+    mimeType: 'application/json',
+    parents: [APPDATA_FOLDER],
+  });
+
+  const boundary = 'foo_bar_baz_history';
+  const multipartBody = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${boundary}--\r\n`;
+
+  const response = await fetch(
+    `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': `multipart/related; boundary=${boundary}`,
+      },
+      body: multipartBody,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to create Google Drive history (${response.status})`);
+  }
 }
 
 declare global {

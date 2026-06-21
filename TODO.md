@@ -55,3 +55,6 @@ ok tracer les requetes utilisateurs
 [ ] - Feat - finalize cards French
 
 [ ] - Feat - full setup
+
+passeg js-yaml 5
+save personnal to ggogle

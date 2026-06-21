@@ -12,8 +12,13 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/06/21 - 7.1.4** - played games
+>***Feat*** - store on Gdrive randomized games  
+>***Fix*** - fix crash when less supply
+>***Feat*** - add badge for Google login status
+
 **2026/06/20 - 7.1.3** - Fix from 7.0
->***Fix *** - add function to force 2 space char at line end of Changelog
+>***Fix*** - add function to force 2 space char at line end of Changelog  
 
 **2026/06/19 - 7.1.2** - Oauth google OK
 >***Fix*** - login to google drive working with nice UI  

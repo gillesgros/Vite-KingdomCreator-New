@@ -119,14 +119,27 @@ console.log("Current state:", {
 
     // Permet aux boutons Save/Restore d'utiliser le token existant ou de le recréer si expiré
     async getValidToken(): Promise<string> {
-      if (this.accessToken) {
-        return this.accessToken;
+      const now = Date.now();
+      if (this.accessToken && this.tokenExpirationTime && now < this.tokenExpirationTime - 120000) {
+          return this.accessToken;
       }
       console.log("No valid token found. Requesting a new one from Google Drive...");
       // Si perdu ou expiré, ouvre la pop-up
-      const token = await requestDriveAccessToken(this.profile?.email, false /* silent prompt ? */);
-      this.accessToken = token;
-      return token;
+try {
+    // Tentative de récupération transparente sans pop-up
+    const token = await requestDriveAccessToken(this.profile?.email, true /* silent prompt */);
+    this.accessToken = token;
+    this.tokenExpirationTime = Date.now() + 3600000;
+    return token;
+  } catch (silentError) {
+    console.warn("Échec du rafraîchissement silencieux, ouverture de la pop-up Google...");
+    
+    // Si le mode silencieux échoue, on ouvre la pop-up habituelle
+    const token = await requestDriveAccessToken(this.profile?.email, false /* interactive prompt */);
+    this.accessToken = token;
+    this.tokenExpirationTime = Date.now() + 3600000;
+    return token;
+  }
     },
 
     async signOut() {
@@ -159,7 +172,6 @@ console.log("Current state:", {
             language: i18nStore.language,
           },
         };
-console.log("Saving payload to Google Drive:", payload);
         // 2. On passe le token à la fonction utilitaire
         await saveConfigToGoogle(token, payload);
         this.lastMessage = 'Configuration saved to Google Drive.';

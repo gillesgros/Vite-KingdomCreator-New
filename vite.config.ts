@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig,loadEnv } from 'vite';
 import path from 'path';
 import { fileURLToPath, URL } from 'node:url'; // Importation nécessaire
 import fs from 'fs';
@@ -26,6 +26,8 @@ CheckVersions_Package_Readme_Changelog();
 fixChangelogSpaces();
 
 export default defineConfig( ({ mode}) => {
+  //const env = loadEnv(mode, process.cwd(), '');
+  //console.log('🔍 env.VITE_GOOGLE_CLIENT_ID:', env.VITE_GOOGLE_CLIENT_ID);
 
   if (mode === 'production' || mode === 'development') {
    // mergeJSONLanguageFiles();

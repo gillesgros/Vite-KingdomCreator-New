@@ -112,7 +112,8 @@ export enum MenuItemType {
   CARDS,
   SEARCHCARDS,
   BOXES,
-  SETTINGS
+  SETTINGS,
+  HISTORY
 }
 
 class LocalMenuItem {
@@ -126,7 +127,8 @@ let MENU_ITEMS = [
   new LocalMenuItem(MenuItemType.RULES, "Rules", "/rulebooks"),
   new LocalMenuItem(MenuItemType.BOXES, "Box content", "/boxes"),
   new LocalMenuItem(MenuItemType.SEARCHCARDS, "Search Cards", "/searchcards"),
-  new LocalMenuItem(MenuItemType.SETTINGS, "Settings", "/settings")
+  new LocalMenuItem(MenuItemType.SETTINGS, "Settings", "/settings"),
+  new LocalMenuItem(MenuItemType.HISTORY, "History", "/history")
 ];
 
 

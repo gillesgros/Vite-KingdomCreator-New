@@ -1,4 +1,8 @@
-import type { Kingdom } from '@/randomizer/kingdom';
+
+import { Kingdom, Metadata } from '@/randomizer/kingdom';
+import { Replacements, Supply } from '@/randomizer/supply';
+import { DominionSets } from '@/dominion/dominion-sets';
+import { SupplyCard } from '@/dominion/supply-card';
 
 /**
  * Génère un identifiant unique stable (Hash) à partir d'un objet Kingdom.
@@ -76,4 +80,101 @@ export function decodeKingdomHash(hash: string): string {
 
   // 5. Lecture des octets en UTF-8 pour retrouver le texte d'origine
   return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Reconstruit une instance réelle et complète de Kingdom à partir d'un Hash Base64
+ */
+export function deserializeKingdomFromHash(hash: string): Kingdom {
+  // 1. Décodage du Base64 URL-Safe vers la chaîne brute normalisée
+  const decodedText = decodeKingdomHash(hash);
+  
+  // 2. Découpage en sections (main, special, addons, unique, meta...)
+  const sections = decodedText.split('|').reduce((acc, section) => {
+    const [key, value] = section.split(':');
+    acc[key] = value || '';
+    return acc;
+  }, {} as Record<string, string>);
+
+  // --- Parse de la section META ---
+  const metaParts = (sections['meta'] || '').split(',');
+  const useColonies = metaParts.includes('c:1');
+  const useShelters = metaParts.includes('s:1');
+  const metadata = new Metadata(useColonies, useShelters);
+
+  // --- Parse de la section MAIN (SupplyCards) ---
+  const mainIds = sections['main'] ? sections['main'].split(',') : [];
+  // 🟢 On filtre et on indique explicitement à TypeScript qu'il s'agit de SupplyCard
+  console.log('Main IDs:', mainIds.join(', '));
+  const supplyCards = mainIds
+    .map(id => DominionSets.getCardById(id) as SupplyCard)
+    .filter((card): card is SupplyCard => card != null);
+console.log('Supply Cards:', supplyCards.map(c => c.id).join(', '));
+  // --- Parse de la section ADDONS (Events, Landmarks, Projects, Ways, Traits) ---
+  const addonsParts = (sections['addons'] || '').split(';');
+  
+  const eventIds = addonsParts[0] ? addonsParts[0].split(',').filter(Boolean) : [];
+  const landmarkIds = addonsParts[1] ? addonsParts[1].split(',').filter(Boolean) : [];
+  const projectIds = addonsParts[2] ? addonsParts[2].split(',').filter(Boolean) : [];
+  const wayIds = addonsParts[3] ? addonsParts[3].split(',').filter(Boolean) : [];
+  const traitIds = addonsParts[4] ? addonsParts[4].split(',').filter(Boolean) : [];
+
+  const events = eventIds.map(id => DominionSets.getEventById(id)).filter(Boolean);
+  const landmarks = landmarkIds.map(id => DominionSets.getLandmarkById(id)).filter(Boolean);
+  const projects = projectIds.map(id => DominionSets.getProjectById(id)).filter(Boolean);
+  const ways = wayIds.map(id => DominionSets.getWayById(id)).filter(Boolean);
+  const traits = traitIds.map(id => DominionSets.getTraitById(id)).filter(Boolean);
+
+  // --- Parse de la section UNIQUE (Ally, Prophecy) ---
+  const uniqueParts = (sections['unique'] || '').split(',');
+  const allyId = uniqueParts[0] || '';
+  const prophecyId = uniqueParts[1] || '';
+  
+  const ally = allyId ? DominionSets.getAllyById(allyId) : null;
+  const prophecy = prophecyId ? DominionSets.getProphecyById(prophecyId) : null;
+
+  // --- Parse de la section SPECIAL (Cartes liées typées SupplyCard) ---
+  const specialParts = (sections['special'] || '').split(',');
+  // 🟢 Ajout du cast "as SupplyCard" pour satisfaire le constructeur de Supply
+  const baneCard = specialParts[0] ? DominionSets.getCardById(specialParts[0]) as SupplyCard : null;
+  const ferrymanCard = specialParts[1] ? DominionSets.getCardById(specialParts[1]) as SupplyCard : null;
+  const obeliskCard = specialParts[2] ? DominionSets.getCardById(specialParts[2]) as SupplyCard : null;
+  const mouseWay = specialParts[3] ? DominionSets.getWayById(specialParts[3]) as SupplyCard : null;
+  const riverboatCard = specialParts[4] ? DominionSets.getCardById(specialParts[4]) as SupplyCard : null;
+  const approachingArmyCard = specialParts[5] ? DominionSets.getCardById(specialParts[5]) as SupplyCard : null;
+
+  // --- Parse de la section TRAIT SUPPLY ---
+  const traitSupplyIds = sections['traitSupply'] ? sections['traitSupply'].split(',').filter(Boolean) : [];
+  // 🟢 Ajout du cast "as SupplyCard" ici aussi
+  const traitsSupply = traitSupplyIds
+    .map(id => DominionSets.getCardById(id) as SupplyCard)
+    .filter((card): card is SupplyCard => card != null);
+
+  // 3. Construction du sous-objet Supply
+  const supply = new Supply(
+    supplyCards,
+    baneCard,
+    ferrymanCard,
+    obeliskCard,
+    mouseWay,
+    riverboatCard,
+    approachingArmyCard,
+    traitsSupply,
+    Replacements.empty() 
+  );
+
+  // 4. Renvoi du Kingdom tout neuf
+  return new Kingdom(
+    Date.now(), 
+    supply,
+    events,
+    landmarks,
+    projects,
+    ways,
+    [], 
+    ally,
+    prophecy,
+    traits,
+    metadata
+  );
 }

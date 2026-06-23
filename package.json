@@ -2,7 +2,7 @@
   "author": "Gilles GROS",
   "name": "vite-kigndomcreator-new",
   "license": "MIT",
-  "version": "7.1.5",
+  "version": "7.1.6",
   "private": true,
   "type": "module",
   "repository": {
@@ -30,8 +30,7 @@
     "pinia-plugin-persistedstate": "^4.7.1",
     "vue": "^3.5.38",
     "vue-i18n": "^11.4.6",
-    "vue-router": "^5.1.0",
-    "vue3-google-login": "^2.1.4"
+    "vue-router": "^5.1.0"
   },
   "devDependencies": {
     "csv-parse": "^7.0.0",

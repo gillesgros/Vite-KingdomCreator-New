@@ -66,18 +66,9 @@ export const useHistoryStore = defineStore('historyStore', {
       this.playedKingdoms[hash] = Date.now();
 
       // Sauvegarde distante si connecté
+      this.syncHistoryToCloud();  
       const googleSyncStore = useGoogleSyncStore();
-      if (googleSyncStore.isSignedIn) {
-        try {
-          const token = await googleSyncStore.getValidToken();
-          await saveHistoryToGoogle(token, this.playedKingdoms);
-          console.log('History saved to Google Drive successfully.');
-        } catch (err) {
-          console.error('Failed to sync added kingdom to Google Drive:', err);
-          alert('Failed to sync added kingdom to Google Drive');
-          // On peut choisir de lever une erreur ou de gérer un mode hors-ligne ici
-        }
-      }
+
     },
 
     /**
@@ -93,6 +84,44 @@ export const useHistoryStore = defineStore('historyStore', {
      */
     clearLocalHistory() {
       this.playedKingdoms = {};
+    },
+
+    // À ajouter dans les actions de votre history-store.ts
+    async deleteKingdomFromHistory(hash: string) {
+      console.log(`Suppression du royaume avec le hash: ${hash}`);
+      
+      // 1. Suppression locale
+      if (this.playedKingdoms[hash]) {
+        delete this.playedKingdoms[hash];
+      }
+
+      // 2. Sauvegarde distante immédiate si connecté
+      await this.syncHistoryToCloud();
+    },
+
+    async clearAllHistory() {
+      if (!confirm("Voulez-vous vraiment supprimer tout votre historique ? Cette action est irréversible.")) {
+        return;
+      }
+      this.playedKingdoms = {};
+      // 2. Sauvegarde distante (écrase le fichier Drive par un objet vide)
+      await this.syncHistoryToCloud();
+    },
+
+    // Note : centralisez votre logique de sauvegarde existante dans une petite fonction d'aide interne au store :
+    async syncHistoryToCloud() {
+      const googleSyncStore = useGoogleSyncStore();
+      if (googleSyncStore.isSignedIn) {
+        try {
+          const token = await googleSyncStore.getValidToken();
+          await saveHistoryToGoogle(token, this.playedKingdoms);
+          console.log('History saved to Google Drive successfully.');
+        } catch (err) {
+          console.error('Failed to sync added kingdom to Google Drive:', err);
+          alert('Failed to sync added kingdom to Google Drive');
+          // On peut choisir de lever une erreur ou de gérer un mode hors-ligne ici
+        }
+      }
     }
   },
 });

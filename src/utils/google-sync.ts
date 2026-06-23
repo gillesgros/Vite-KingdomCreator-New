@@ -1,7 +1,6 @@
 const CONFIG_FILE_NAME = 'dominion-randomizer-config.json';
 const APPDATA_FOLDER = 'appDataFolder';
 
-const __GOOGLE_CLIENT_ID__ = '276051005715-j2t62qpoigs6chknqjk13adplej9cdgb.apps.googleusercontent.com';
 const HISTORY_FILE_NAME = 'dominion-kingdom-history.json';
 
 
@@ -50,7 +49,7 @@ export interface GoogleBackupPayload {
 }
 
 export function getGoogleClientId(): string | undefined {
-  const clientId = (__GOOGLE_CLIENT_ID__ || import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+  const clientId = ( import.meta.env?.VITE_GOOGLE_CLIENT_ID || '').trim();
   return clientId || undefined;
 }
 
@@ -99,7 +98,7 @@ export async function requestDriveAccessToken(hintEmail?: string, silent: boolea
     });
 
     client.requestAccessToken({
-      prompt: false ? '' : 'select_account',
+      prompt: silent ? '' : 'select_account',
       hint: hintEmail || ''
     });
   });

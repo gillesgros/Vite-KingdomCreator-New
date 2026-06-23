@@ -33,6 +33,7 @@ import { useWindowStore } from '@/pinia/window-store';
 import { usei18nStore } from '@/pinia/i18n-store';
 import { useHistoryStore } from '@/pinia/history-store';
 import { deserializeKingdom, serializeKingdom } from '@/randomizer/serializer';
+import { generateKingdomHash } from '@/randomizer/kingdom-hash';
 
 /* import Components */
 import Addons from './Addons.vue';
@@ -74,16 +75,20 @@ export default defineComponent({
     const isCondensed = computed(() =>{ return windowStore.isCondensed});
     const isSaving = ref(false);
 
-    // 2. Propriété calculée dynamique prenant en compte l'état actuel complet du royaume
+    const currentKingdomHash = computed(() => {
+      return kingdom.value ? generateKingdomHash(kingdom.value) : null;
+    });
+
+    const isKingdomPlayed = computed(() => {
+      const hash = currentKingdomHash.value;
+      return !!(hash && historyStore.playedKingdoms[hash]);
+    });
+
     const playedButtonText = computed(() => {
       if (!kingdom.value) return t('Play_It');
       if (isSaving.value) return t('Saving');
-      
-      // historyStore gère déjà la vérification complète par hash unique
-      const alreadyPlayed = historyStore.isKingdomAlreadyPlayed(kingdom.value);
-      console.log('kingdom:', kingdom.value);
-      console.log('alreadyPlayed', alreadyPlayed);
-      return alreadyPlayed ? t('Played') : t('Play_It');
+
+      return isKingdomPlayed.value ? t('Played') : t('Play_It');
     });
 
     const onKingdomChanged= (newKingdom: Kingdom) => {

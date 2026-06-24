@@ -12,8 +12,13 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/06/24 - 7.1.7** - played games
+>***Fix*** - Add loot_supplier for replace cad type  
+
 **2026/06/23 - 7.1.6** - played games
 >***Fix*** - set .env for VITE_GOOGLE_CLIENT_ID  
+>***Feat*** - Create played games history and detail  
+>***Feat*** - Add card showup on hover in history detail  
 
 **2026/06/21 - 7.1.5** - played games
 >***Feat*** - allow saving randomized games to history, with button text change  

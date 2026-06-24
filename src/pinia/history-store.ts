@@ -19,8 +19,8 @@ export const useHistoryStore = defineStore('historyStore', {
     async loadHistory() {
       const googleSyncStore = useGoogleSyncStore();
       if (!googleSyncStore.isSignedIn) return;
-
       this.isLoading = true;
+      console.log('Loading history from Google Drive...', this.isLoading);
       this.error = null;
       try {
         const token = await googleSyncStore.getValidToken();
@@ -49,6 +49,7 @@ export const useHistoryStore = defineStore('historyStore', {
       } finally {
         this.isLoading = false;
       }
+            console.log('Loading history from Google Drive...finalized', this.isLoading);
     },
 
     /**

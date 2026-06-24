@@ -3,7 +3,7 @@
     <div class="history-header">
       <h1>{{ $t('Historique des parties') }}</h1>
       <button 
-        v-if="hasHistory" 
+        v-if="historyLength > 0" 
         class="btn-danger" 
         @click="historyStore.clearAllHistory"
       >
@@ -11,13 +11,15 @@
       </button>
     </div>
 
+    <div v-if="!isSignedIn" class="history-message message--disconnected">
+      <p>Vous devez être connecté à Google Drive pour afficher et synchroniser votre historique.</p>
+      </div>
     <!-- Chargement de l'historique -->
-    <div v-if="historyStore.isLoading && !hasHistory" class="empty-history">
+    <div v-else-if="historyIsLoading" class="empty-history">
       <p>History loading...</p>
     </div>
-
     <!-- Si l'historique est vide -->
-    <div v-else-if="!hasHistory" class="empty-history">
+    <div v-else-if="historyLength === 0" class="empty-history">
       <p>{{ $t('Aucun royaume dans l\'historique pour le moment.') }}</p>
       <router-link to="/" class="btn-primary">{{ $t('Générer un royaume') }}</router-link>
     </div>
@@ -32,16 +34,9 @@
         <div class="item-meta">
           <span class="item-date">{{ formatDate(item.timestamp) }}</span>
         </div>
-        
         <div class="item-details">
-          <!-- Ici on liste les cartes du royaume. On affiche l'ID traduit -->
-<!--           <span class="cards-list">
-            {{ getKingdomCardsText(item.hash) }}
-          </span> -->
           <HistoryKingdomDetails :kingdom="getKingdom(item.hash)" />
         </div>
-
-
         <div class="item-actions">
           <!-- Bouton pour charger/rejouer ce royaume -->
           <button class="btn-secondary" @click="PlayAgainKingdom(item.hash)">
@@ -59,11 +54,13 @@
 
 <script lang="ts">
 import { defineComponent, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+
 import { useHistoryStore } from '@/pinia/history-store';
 import { useRandomizerStore } from '@/pinia/randomizer-store';
-import { useRoute, useRouter } from 'vue-router';
+import { useGoogleSyncStore } from '@/pinia/google-sync-store';
 
-import { useI18n } from 'vue-i18n';
 import { deserializeKingdomFromHash } from '@/randomizer/kingdom-hash';
 import { serializeKingdom } from '@/randomizer/serializer';
 import { Language } from '@/i18n/language';
@@ -78,13 +75,17 @@ export default defineComponent({
   },
   setup() {
     const historyStore = useHistoryStore();
+    const googleSyncStore = useGoogleSyncStore();
     const randomizerStore = useRandomizerStore();
     const route = useRoute();
     const router = useRouter();
     const { t } = useI18n();
 
-    const hasHistory = computed(() => Object.keys(historyStore.playedKingdoms).length > 0);
-
+    const isSignedIn = computed(() => googleSyncStore.isSignedIn);
+    const historyLength = computed(() => Object.keys(historyStore.playedKingdoms).length);
+    const historyIsLoading = computed(() => {console.log('Checking if history is loading...', historyStore.isLoading); 
+    console.log('History length:', historyLength.value);
+    return historyStore.isLoading; });
     // Trier l'historique du plus récent au plus ancien
     const sortedHistory = computed(() => {
       return Object.entries(historyStore.playedKingdoms)
@@ -145,14 +146,16 @@ const PlayAgainKingdom = async (hash: string) => {
 
     const formatDate = (timestamp: number) => {
       return new Date(timestamp).toLocaleDateString(undefined, {
-        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'
+        day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute:'2-digit'
       });
     };
 
     return {
       historyStore,
-      hasHistory,
+      historyLength,
       sortedHistory,
+      historyIsLoading,
+      isSignedIn,
       getKingdom,
       getKingdomCardsText,
       PlayAgainKingdom,
@@ -170,7 +173,7 @@ const PlayAgainKingdom = async (hash: string) => {
   display: flex; justify-content: space-between; align-items: center;
   padding: 12px; border: 1px solid #ccc; border-radius: 6px; background: #fff;
 }
-.item-meta { font-size: 0.85em; color: #666; min-width: 120px; }
+.item-meta { font-size: 0.85em; color: #666; min-width: 50px; }
 .item-details { flex: 1; padding: 0 15px; color: #333; font-weight: 500; }
 .item-actions { display: flex; gap: 8px; }
 .btn-danger { background: #d32f2f; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }

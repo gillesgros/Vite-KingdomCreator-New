@@ -50,7 +50,7 @@ export default defineComponent({
     const handleClick = () => {
       //const target = "lang=fr&supply=daimyo,familiar,fishmonger,goldmine,golem,herbalist,litter,rice,riverboat,vineyard&riverboat=scryingpool&events=credit,practice"
       //"lang=en&supply=crypt,devilsworkshop,figurine,flagship,fool,longship,pooka,shepherd,tools,tormentor&events=journey&traits=patient(flagship)"
-      console.log("RandomizeLinkButton: handleClick called with kingdom:", props.kingdom);
+      //console.log("RandomizeLinkButton: handleClick called with kingdom:", props.kingdom);
       const redirectedKingdom = new Kingdom(0,
           new Supply(props.kingdom.supplyIds.map(Id => DominionSets.getSupplyCardById(Id)), 
               props.kingdom.baneCardId ? DominionSets.getSupplyCardById(props.kingdom.baneCardId) : null,

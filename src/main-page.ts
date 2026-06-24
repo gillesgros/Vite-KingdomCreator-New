@@ -6,7 +6,7 @@ import Cards from './views/Cards.vue';
 import Settings from './views/Settings.vue';
 import SearchCards from './views/SearchCards.vue';
 import Help from './views/Help.vue';
-import HistoryView from './views/HistoryView.vue';
+import History from './views/History.vue';
 
 import { initialize } from './setup';
 import { AppCreateRouterMultiple } from './router';
@@ -22,6 +22,6 @@ initialize(AppCreateRouterMultiple([
                 { paths: ["/cards"], component : Cards },
                 { paths: ["/settings"], component : Settings },
                 { paths: ["/help"], component : Help }, 
-                { paths: ["/history"], component : HistoryView }, 
+                { paths: ["/history"], component : History }, 
                 { paths: ["/:pathMatch(.*)*"], component : Index } // catch all 404
             ]))

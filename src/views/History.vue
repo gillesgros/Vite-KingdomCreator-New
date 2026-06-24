@@ -1,7 +1,7 @@
 <template>
   <Page :subtitle="$t('history_page_subtitle')" :selectedType="selectedType">
     <div class="contentRules main">
-      <History />
+      <HistoryView />
     </div>
   </Page>
 </template>
@@ -11,15 +11,15 @@
 import { defineComponent } from 'vue';
 /* import Components */
 import Page, { MenuItemType } from '@/components/Page.vue';
-import History from '@/components/history/History.vue';
+import HistoryView from '@/components/history/HistoryView.vue';
 
 import useBase from './base';
 
 export default defineComponent({
-  name: "HistoryView", 
+  name: "History", 
   components: {
     Page,
-    History
+    HistoryView
   },
   setup() {
     useBase();

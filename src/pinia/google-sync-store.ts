@@ -44,20 +44,25 @@ export const useGoogleSyncStore = defineStore('googleSyncStore', {
         this.lastMessage = 'Google sync is not configured.';
         return;
       }
-console.log("Google sync is available. Checking for existing session...");
-console.log("Current state:", {
+      console.log("Google sync is available. Checking for existing session...");
+      console.log("Current state:", {
         isSignedIn: this.isSignedIn,
         accessToken: this.accessToken,
-        tokenExpirationTime: this.tokenExpirationTime
+        tokenExpirationTime: new Date(this.tokenExpirationTime || Date.now()).toLocaleTimeString(),
       });
       // 2. Si l'utilisateur s'était déjà connecté lors d'une session précédente
       if (this.isSignedIn && this.accessToken && this.tokenExpirationTime) {
       const now = Date.now();
       // Si le jeton en cache est encore valide (avec une marge de sécurité de 2 minutes)
       if (now < this.tokenExpirationTime - 120000) {
-        this.lastMessage = `Connected (loaded from session cache).`;
-        useHistoryStore().loadHistory();
-        return; // 🚀 On s'arrête là ! Aucune fenêtre Google ne s'ouvrira.
+        try {
+          this.lastMessage = `Connected (loaded from session cache).`;
+          console.log(" ==> from initialize")
+          useHistoryStore().loadHistory();
+          return;
+        } catch (error) { 
+          this.accessToken = null;
+        }
       }
     }
       if (this.isSignedIn) {
@@ -67,6 +72,7 @@ console.log("Current state:", {
           // (Google s'en souvient si la session globale de son navigateur est active)
           this.accessToken = await requestDriveAccessToken(this.profile?.email, true /* silent prompt */);
           this.tokenExpirationTime = Date.now() + 3600000
+          console.log(" ==> from initialize after reconnect")
           useHistoryStore().loadHistory();
           this.lastMessage = `Welcome back! Connected to Google Drive.`;
         } catch (error) {
@@ -106,6 +112,7 @@ console.log("Current state:", {
           this.lastMessage = 'Connected to Google Drive.';
         }
         this.isSignedIn = true;
+        console.log(" ==> from signInAndInit")
         useHistoryStore().loadHistory();
       } catch (error) {
         this.accessToken = null;

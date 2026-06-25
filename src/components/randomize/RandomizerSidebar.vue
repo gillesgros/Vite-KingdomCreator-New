@@ -6,7 +6,6 @@
          @click="handleRandomize">
         {{ $t(randomizeButtonText) }}
       </a>
-      
       <a v-if="googleSyncStore.isSignedIn" 
          class="standard-button standard-button--is-primary played-button"
          @click="handlePlayed">
@@ -196,6 +195,16 @@ export default defineComponent({
     let PreviousSelectAllState: 'checked' | 'unchecked' | 'indeterminate' = 'unchecked';
     let previousSelectedSetIds: SetId[] = [];
 
+    const SetIdsWithDuplicates = computed(() => {
+      return DominionSets.getAllSetsIds()
+        .filter(setId => {
+          if (settingsStore.isUsingOnlyOwnedsets)
+            return settingsStore.ownedSets.indexOf(setId as never) != -1
+          return true;
+        })
+      }
+    );
+
     const setIds = computed(() => {
       const AllSetIdsToConsiderWithDuplicates = DominionSets.getAllSetsIds()
         .filter(setId => {
@@ -233,7 +242,7 @@ export default defineComponent({
       nextTick(() => {
         const checkbox = document.getElementById('selectAllSets') as HTMLInputElement;
         if (!checkbox) return;
-        if (values.length === setIds.value.length) {
+        if (values.length === SetIdsWithDuplicates.value.length) {
           selectAllState = 'checked';
           checkbox.checked = true;
           checkbox.indeterminate = false;
@@ -364,7 +373,7 @@ export default defineComponent({
       // Cycle à 3 états
       if (selectAllState === 'unchecked') {
         //    previousSelectedSetIds = [...selectedSetIds.value];
-        selectedSetIds.value = [...setIds.value];
+        selectedSetIds.value = [...SetIdsWithDuplicates.value];
         selectAllState = 'checked';
       } else if (selectAllState === 'checked') {
         selectedSetIds.value = previousSelectedSetIds.length > 0 ? [...previousSelectedSetIds] : [];

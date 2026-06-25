@@ -20,6 +20,7 @@ import { defineComponent, computed, ref, onMounted, watch } from 'vue';
 
 /* import Dominion Objects and type*/
 import type { Addon } from '@/dominion/addon';
+import { Addons_TYPE } from '@/dominion/addon';
 import { MAX_ADDONS_IN_KINGDOM } from '@/settings/Settings-value';
 
 /* import store  */
@@ -66,11 +67,10 @@ export default defineComponent({
       updateAddonContainers();
     });
 
-
     const handleAddonsChanged = () => {
       updateAddonContainers();
     };
-    watch(addons, handleAddonsChanged)
+    watch(addons, handleAddonsChanged);
 
     const handleClick = (addonContainer: AddonContainer) => {
       if (!addonContainer.addon) {
@@ -95,16 +95,17 @@ export default defineComponent({
         } else {
           newContainers.push({
             addon: newAddons.length > newAddonsIndex ? newAddons[newAddonsIndex++] ?? null : null
+
           });
         }
       }
       activeContainers.value = fillWithEmptyAddonContainers(newContainers);
-    }
+    };
 
     const findNewAddons = (containers: AddonContainer[], addons: Addon[]) => {
       let existingIds = containers
-        .filter(container => container.addon != null)
-        .map(container => container.addon!.id);
+        .filter((container) => container.addon != null)
+        .map((container) => container.addon!.id);
       let newAddons: Addon[] = [];
       for (let addon of addons) {
         if (existingIds.indexOf(addon.id) == -1) {
@@ -112,18 +113,18 @@ export default defineComponent({
         }
       }
       return newAddons;
-    }
+    };
 
-    const containsAddon = (list: Addon[], addon: Addon) =>{
+    const containsAddon = (list: Addon[], addon: Addon) => {
       return list.some((listAddon) => listAddon.id == addon.id);
-    }
+    };
 
     const fillWithEmptyAddonContainers = (list: AddonContainer[]) => {
       for (let i = list.length; i < MAX_ADDONS_IN_KINGDOM(); i++) {
         list.push({ addon: null });
       }
       return list;
-    }
+    };
     return {
       numberOfColumns,
       hasAddons,
@@ -135,8 +136,8 @@ export default defineComponent({
       isEnlarged,
       activeContainers,
       handleClick,
-    }
-  }
+    };
+  },
 });
 </script>
 

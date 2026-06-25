@@ -105,11 +105,9 @@ export function deserializeKingdomFromHash(hash: string): Kingdom {
   // --- Parse de la section MAIN (SupplyCards) ---
   const mainIds = sections['main'] ? sections['main'].split(',') : [];
   // 🟢 On filtre et on indique explicitement à TypeScript qu'il s'agit de SupplyCard
-  console.log('Main IDs:', mainIds.join(', '));
   const supplyCards = mainIds
     .map(id => DominionSets.getCardById(id) as SupplyCard)
     .filter((card): card is SupplyCard => card != null);
-console.log('Supply Cards:', supplyCards.map(c => c.id).join(', '));
   // --- Parse de la section ADDONS (Events, Landmarks, Projects, Ways, Traits) ---
   const addonsParts = (sections['addons'] || '').split(';');
   

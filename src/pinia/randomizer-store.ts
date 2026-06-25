@@ -9,6 +9,7 @@ import { CardType } from '@/dominion/card-type';
 import { RandomizerOptionsBuilder } from '@/randomizer/randomizer-options';
 import { Cards } from '@/utils/cards';
 import { Kingdom } from '@/randomizer/kingdom';
+import { Supply } from '@/randomizer/supply';
 import { DominionSets } from '@/dominion/dominion-sets';
 import { SupplyCard } from '@/dominion/supply-card';
 import type { Addon, Addons } from '@/dominion/addon';
@@ -522,6 +523,45 @@ console.log("adjustedSupplyCards", addonsForAdjustement)
       } else {
         EventTracker.trackError(EventType.RANDOMIZE_SINGLE);
       }
+    },
+    REPLACE_SPECIFYING_CARD(selectedCard: SupplyCard) {
+      console.log(new Date().toLocaleTimeString(), 'REPLACE_SPECIFYING_CARD')
+      if (!this.specifyingReplacementSupplyCard) return;
+      const oldKingdom = this.kingdom;
+      const oldSupply = oldKingdom.supply;
+      const newSupplyCards = oldSupply.supplyCards.map(c => 
+        c.id === this.specifyingReplacementSupplyCard.id ? selectedCard : c
+      );
+      const newSupply = new Supply(
+        newSupplyCards,
+        oldSupply.baneCard,
+        oldSupply.ferrymanCard,
+        oldSupply.obeliskCard,
+        oldSupply.mouseWay,
+        oldSupply.riverboatCard,
+        oldSupply.approachingArmyCard,
+        oldSupply.traitsSupply,
+        oldSupply.replacements
+      );
+      const newAlly = rA.randomizeSelectedAlly(this, newSupply);
+      const newProphecy = rA.randomizeSelectedProphecy(this, newSupply);
+      const addonsForAdjustement = { 
+        events: oldKingdom.events, landmarks: oldKingdom.landmarks, 
+        projects: oldKingdom.projects, ways: oldKingdom.ways, 
+        allies: newAlly ? [newAlly] : [], 
+        prophecies: newProphecy ? [newProphecy] : [], 
+        traits:  oldKingdom.traits 
+      } as unknown as Addons;
+      const adjustedSupplyCards = Randomizer.adjustSupplyBasedOnAddons(newSupply, 
+        addonsForAdjustement, oldKingdom); 
+      const kingdom = new Kingdom(
+        oldKingdom.id, adjustedSupplyCards, oldKingdom.events, oldKingdom.landmarks, oldKingdom.projects,
+        oldKingdom.ways, rA.randomizeSelectedBoons(this, newSupply),
+        newAlly, rA.randomizeSelectedProphecy(this, newSupply), 
+        oldKingdom.traits, oldKingdom.metadata);
+      this.CLEAR_SELECTION();
+      this.UPDATE_KINGDOM(kingdom);
+      EventTracker.trackEvent(EventType.RANDOMIZE_SINGLE);
     },
     RANDOMIZE_UNDEFINED_ADDON() {
       console.log(new Date().toLocaleTimeString(), 'RANDOMIZE_UNDEFINED_ADDON')

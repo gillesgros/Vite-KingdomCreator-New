@@ -285,7 +285,6 @@ export class Randomizer {
         console.info('[Randomizer - createSupply] Correction: supplyBuilder adjusted for required reaction if attacks.');
         supplyBuilder = correctedSupplyBuilder;
         console.info('[Randomizer - createSupply] Correct Supply for Reaction, Cards to keep:', existingCards.map(c => c.id).sort());
-        console.log(supplyBuilder)
         supply = this.buildSupplyWithRetries(supplyBuilder, existingCards);
         console.info('[Randomizer - createSupply] Correct Supply for Reaction, Cards selected:', supply.supplyCards.map(c => c.id).sort());
       }

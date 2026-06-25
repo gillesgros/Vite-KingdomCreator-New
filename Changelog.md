@@ -12,6 +12,12 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/06/25 - 7.1.8** - Features
+>***Feat*** - Add lpossibility to define replacement card when 1 supply is selected.  
+>***Fix*** - move to js-yaml 5  
+>***Fix*** - make loading personnal sets work again  
+>***Fix*** - fix select/deselect all set on randomize page.  
+
 **2026/06/24 - 7.1.7** - played games
 >***Fix*** - Add loot_supplier for replace cad type  
 

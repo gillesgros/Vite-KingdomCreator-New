@@ -194,7 +194,6 @@ export default defineComponent({
       }
       if (SearchStore.selectedCostTypes.length > 0) {
         cards = cards.filter(card => {
-          console.log('Filtering cost for card', card.id, card.constructor.name);
           if (card instanceof SupplyCard || card instanceof OtherCard || isAddon(card)) {
             const cost = (card as SupplyCard | Addon).cost;
             if (!cost) return false;

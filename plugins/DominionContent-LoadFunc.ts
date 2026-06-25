@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import yaml from 'js-yaml';
+//import yaml from 'js-yaml';
+import { load as yaml_load} from 'js-yaml';
 
 
 function loadFilesFromDirectory(directory : string) {
@@ -18,7 +19,7 @@ function loadFilesFromDirectory(directory : string) {
       continue;
     }
     const id = tokenize(path.basename(filename, '.yaml'));
-    values[id] = yaml.load(fs.readFileSync(filePath, 'utf8'));
+    values[id] = yaml_load(fs.readFileSync(filePath, 'utf8'));
   }
   return values;
 }

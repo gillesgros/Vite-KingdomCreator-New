@@ -39,22 +39,20 @@ ok tracer les requetes utilisateurs
 [x] - Feat - Add select/unselect all Randomizer/Settings
 [x] - Doc - custom settings owned set
 [x] - Feat - search non supply
+[x] - Feat - allow suply replacement choix final 
+[x] - Feat - allow save deck
+[x] - Feat - online save of played deck
+[x] - Feat - avoid all ready played deck génération
 
 [ ] - Doc - custom settings constraint randomizer
-
 [ ] - Feat - specify addon replacement
-[ ] - Feat - allow replacement choix final 
 [ ] - Feat - nb card par extension (en créant de division)
-
-[ ] - Feat - allow save deck
-[ ] - Feat - online save of played deck
-[ ] - Feat - avoid all ready played deck génération
 [ ] - Feat - custom settings colony / shelter 
 [ ] - Feat - require attack
+[ ] - Feat - full setup
+
 
 [ ] - Feat - finalize cards French
 
-[ ] - Feat - full setup
+passage à js-yaml 5
 
-passeg js-yaml 5
-save personnal to ggogle

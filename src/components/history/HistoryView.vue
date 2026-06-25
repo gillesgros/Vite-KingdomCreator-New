@@ -83,9 +83,7 @@ export default defineComponent({
 
     const isSignedIn = computed(() => googleSyncStore.isSignedIn);
     const historyLength = computed(() => Object.keys(historyStore.playedKingdoms).length);
-    const historyIsLoading = computed(() => {console.log('Checking if history is loading...', historyStore.isLoading); 
-    console.log('History length:', historyLength.value);
-    return historyStore.isLoading; });
+    const historyIsLoading = computed(() => historyStore.isLoading);
     // Trier l'historique du plus récent au plus ancien
     const sortedHistory = computed(() => {
       return Object.entries(historyStore.playedKingdoms)

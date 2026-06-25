@@ -4,7 +4,6 @@ import { fileURLToPath, URL } from 'node:url'; // Importation nécessaire
 import fs from 'fs';
 import packageJson from './package.json';
 
-//import VueDevTools from 'vite-plugin-vue-devtools';
 import vue from '@vitejs/plugin-vue';
 import legacy from '@vitejs/plugin-legacy';
 import vueI18n from '@intlify/unplugin-vue-i18n/vite';
@@ -26,9 +25,6 @@ CheckVersions_Package_Readme_Changelog();
 fixChangelogSpaces();
 
 export default defineConfig( ({ mode}) => {
-  //const env = loadEnv(mode, process.cwd(), '');
-  //console.log('🔍 env.VITE_GOOGLE_CLIENT_ID:', env.VITE_GOOGLE_CLIENT_ID);
-
   if (mode === 'production' || mode === 'development') {
    // mergeJSONLanguageFiles();
     DominionContentGenerate('docs');
@@ -56,7 +52,10 @@ export default defineConfig( ({ mode}) => {
         https://vitejs.dev/guide/api-plugin#universal-hooks */
         transformIndexHtml(html) {
           const datetime = new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'medium' });
-          return html.replace(/id="datetime">/g, `id="datetime">${datetime}`);
+          const jsYamlVersion = packageJson.dependencies['js-yaml'].replace(/[\^~]/, '');
+
+          return html.replace(/id="datetime">/g, `id="datetime">${datetime}`)
+                      .replace(/@VITE_JS_YAML_VERSION/g, `@${jsYamlVersion}`)
         }
       },
       {
@@ -68,14 +67,15 @@ export default defineConfig( ({ mode}) => {
           fs.copyFileSync(
             path.resolve(__dirname, './'+ publicationDir +'/index.html'), 
             path.resolve(__dirname, './'+ publicationDir +'/404.html'))
+            console.log('index.html copied successfully');
+
           } catch (err) {
             if (err) throw err;
-            console.log('index.html copied successfully');
-          }
+            console.error('index.html copied failure!');
+          } 
         }
       },
       vue(),
-      //mode == 'development' ? VueDevTools() : [],
       legacy({ targets: ['defaults'] }),
       vueI18n({
         include: path.resolve(__dirname, './'+ publicationDir +'/locales/*.json'),

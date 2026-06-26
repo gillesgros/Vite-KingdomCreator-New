@@ -42,7 +42,7 @@ kingdoms:
     ways:
       - menagerie_way_wayofthemouse
     traits:
-      - plunder_trait_hasty->baseset_market
+      - plunder_trait_hasty->baseset2_market
     allies:
       - allies_ally_orderofastrologers
     prophecies:

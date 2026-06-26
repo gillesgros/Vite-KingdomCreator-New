@@ -1,6 +1,7 @@
 <template>
   <Page :subtitle="$t('history_page_subtitle')" :selectedType="selectedType">
-    <div class="contentRules main">
+    <div class="content main">
+      <div class="sets-description">{{$t("history_page_description")}}</div>
       <HistoryView />
     </div>
   </Page>

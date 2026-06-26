@@ -51,7 +51,7 @@
                 v-model.number="selectedSetMinCounts[setId]" @input="updateSetConstraints(setId)" />   
               /
               <input class="settingsInput" style="width:10%;" type="number" id="nbMax"
-                v-model="selectedSetMaxCounts[setId]" @input="updateSetConstraints(setId)" />
+                v-model.number="selectedSetMaxCounts[setId]" @input="updateSetConstraints(setId)" />
             </div>
             <div class="listbox-container  top-16 w-72">
               <Listbox v-model="selectedCards[setId]" multiple>
@@ -247,28 +247,65 @@ export default defineComponent({
 
     const updateSetConstraints = (setId: SetId) => {
       if (!selectedSets.value[setId]) selectedSets.value[setId] = false;
-      // Assurons-nous que minCards n'est pas négatif
-      if (selectedSetMinCounts.value[setId] !== undefined && 
-          selectedSetMinCounts.value[setId] < 0) 
-        selectedSetMinCounts.value[setId] = 0;
-      // Assurons-nous que minCards n'est pas plus grand que le nombre total de cartes
-      if (selectedSetMinCounts.value[setId] !== undefined && 
-          selectedSetMinCounts.value[setId] > NUM_CARDS_IN_KINGDOM()) 
-        selectedSetMinCounts.value[setId] = NUM_CARDS_IN_KINGDOM();
-      // Assurons-nous que maxCards n'est pas négatif
-      if (selectedSetMaxCounts.value[setId] !== undefined && 
-          selectedSetMaxCounts.value[setId] < 0) 
-        selectedSetMaxCounts.value[setId] = 0;
-      // Assurons-nous que maxCards n'est pas plus grand que le nombre total de cartes
-      if (selectedSetMaxCounts.value[setId] !== undefined && 
-          selectedSetMaxCounts.value[setId] > NUM_CARDS_IN_KINGDOM()) 
-        selectedSetMaxCounts.value[setId] = NUM_CARDS_IN_KINGDOM();
-      // Assurons-nous que minCards est toujours plus petit ou égal à maxCards
-      if (selectedSetMinCounts.value[setId] !== undefined && 
-          selectedSetMaxCounts.value[setId] !== undefined && 
-          selectedSetMinCounts.value[setId] > selectedSetMaxCounts.value[setId]) 
-        selectedSetMinCounts.value[setId] = selectedSetMaxCounts.value[setId];
-      
+
+      // Default values when the set is added/selected
+      if (selectedSets.value[setId]) {
+        if (selectedSetMinCounts.value[setId] === undefined || selectedSetMinCounts.value[setId] === null) {
+          selectedSetMinCounts.value[setId] = 0;
+        }
+        if (selectedSetMaxCounts.value[setId] === undefined || selectedSetMaxCounts.value[setId] === null) {
+          selectedSetMaxCounts.value[setId] = NUM_CARDS_IN_KINGDOM();
+        }
+      }
+
+      // Enforce number type
+      let minVal = typeof selectedSetMinCounts.value[setId] === 'number' ? selectedSetMinCounts.value[setId]! : 0;
+      let maxVal = typeof selectedSetMaxCounts.value[setId] === 'number' ? selectedSetMaxCounts.value[setId]! : NUM_CARDS_IN_KINGDOM();
+
+      if (selectedSets.value[setId]) {
+        // 1. Validate minVal such that sum of all mins <= NUM_CARDS_IN_KINGDOM()
+        let sumOtherMins = 0;
+        Object.keys(selectedSets.value).forEach(k => {
+          if (k !== setId && selectedSets.value[k]) {
+            sumOtherMins += selectedSetMinCounts.value[k] || 0;
+          }
+        });
+        const maxAllowedMin = Math.max(0, NUM_CARDS_IN_KINGDOM() - sumOtherMins);
+        if (minVal > maxAllowedMin) {
+          minVal = maxAllowedMin;
+        }
+        if (minVal < 0) minVal = 0;
+
+        // 2. Validate maxVal such that:
+        //    a) maxVal >= minVal
+        //    b) sum of all maxes >= NUM_CARDS_IN_KINGDOM()
+        let sumOtherMaxes = 0;
+        Object.keys(selectedSets.value).forEach(k => {
+          if (k !== setId && selectedSets.value[k]) {
+            sumOtherMaxes += selectedSetMaxCounts.value[k] !== undefined ? selectedSetMaxCounts.value[k]! : NUM_CARDS_IN_KINGDOM();
+          }
+        });
+        const minAllowedMax = Math.max(minVal, NUM_CARDS_IN_KINGDOM() - sumOtherMaxes);
+        if (maxVal < minAllowedMax) {
+          maxVal = minAllowedMax;
+        }
+        if (maxVal > NUM_CARDS_IN_KINGDOM()) {
+          maxVal = NUM_CARDS_IN_KINGDOM();
+        }
+
+        // Just in case minVal > maxVal, align them
+        if (minVal > maxVal) {
+          minVal = maxVal;
+        }
+
+        selectedSetMinCounts.value[setId] = minVal;
+        selectedSetMaxCounts.value[setId] = maxVal;
+      } else {
+        // If not selected, clear min/max
+        selectedSetMinCounts.value[setId] = undefined;
+        selectedSetMaxCounts.value[setId] = undefined;
+      }
+
       SettingsStore.setSetConstraints(setId, {
         isSelected: selectedSets.value[setId],
         minCards: selectedSetMinCounts.value[setId],
@@ -338,7 +375,7 @@ export default defineComponent({
 
 .nb-min-max {
   margin-right: 2%;
-  ;
+  justify-content: space-evenly;
 }
 
 
@@ -441,6 +478,37 @@ export default defineComponent({
   top: 0;
   bottom: 0;
   padding-left: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .sets-column {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .constraintsettingscheckbox {
+    width: 100%;
+  }
+  .nb-min-max {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    margin-right: 0;
+  }
+  .nb-min-max input.settingsInput {
+    width: 60px !important;
+    padding: 4px;
+    text-align: center;
+  }
+  .listbox-container {
+    width: 100%;
+  }
+  .listbox-container .settingsInput {
+    width: 100% !important;
+  }
 }
 </style>
 

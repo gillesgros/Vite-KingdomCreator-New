@@ -6,8 +6,8 @@ import { decodeKingdomHash, generateKingdomHash } from '@/randomizer/kingdom-has
 
 export const useHistoryStore = defineStore('historyStore', {
   state: () => ({
-    // Le dictionnaire : { "hash": timestamp }
-    playedKingdoms: {} as Record<string, number>,
+    // Le dictionnaire : { "hash": timestamp | { timestamp, rating } }
+    playedKingdoms: {} as Record<string, number | { timestamp: number; rating?: number }>,
     isLoading: false,
     error: null as string | null,
   }),
@@ -25,23 +25,22 @@ export const useHistoryStore = defineStore('historyStore', {
       try {
         const token = await googleSyncStore.getValidToken();
         this.playedKingdoms = await fetchHistoryFromGoogle(token);
-        console.log('History loaded from Google Drive:', this.playedKingdoms);
-// 2. 🔍 ZONE DE TEST VIA CONSOLE.LOG
-    console.log("--- 📂 HISTORIQUE TÉLÉCHARGÉ ET DÉCODÉ ---");
-    
-    // On boucle sur toutes les clés (les hashs) du fichier récupéré
-    Object.keys(this.playedKingdoms).forEach((hash) => {
-      try {
-        const originalText = decodeKingdomHash(hash);
-        const dateJouee = new Date(this.playedKingdoms[hash]).toLocaleString();
-        
-        console.log(`[Joué le ${dateJouee}] -> ${originalText}`);
-      } catch (decodeError) {
-        console.error(`Impossible de décoder le hash ${hash}:`, decodeError);
-      }
-    });
-    
-    console.log("-----------------------------------------");
+        //console.log('History loaded from Google Drive:', this.playedKingdoms)
+        /*
+        console.log("--- 📂 HISTORIQUE TÉLÉCHARGÉ ET DÉCODÉ ---");
+        // On boucle sur toutes les clés (les hashs) du fichier récupéré
+        Object.keys(this.playedKingdoms).forEach((hash) => {
+          try {
+            const originalText = decodeKingdomHash(hash);
+            const dateJouee = new Date(this.playedKingdoms[hash]).toLocaleString();
+            
+            console.log(`[Joué le ${dateJouee}] -> ${originalText}`);
+          } catch (decodeError) {
+            console.error(`Impossible de décoder le hash ${hash}:`, decodeError);
+          }
+        });
+        console.log("-----------------------------------------");
+        */
 
        } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to load history';
@@ -57,7 +56,7 @@ export const useHistoryStore = defineStore('historyStore', {
      */
     async addKingdomToHistory(kingdom: Kingdom) {
       const hash = generateKingdomHash(kingdom);
-      console.log (`Adding kingdom to history with hash: ${hash}`);
+      //console.log (`Adding kingdom to history with hash: ${hash}`);
       // S'il est déjà présent, inutile de fatiguer le réseau ou de réécrire
       if (this.playedKingdoms[hash]) {
         console.log(`Kingdom is already in history.`);
@@ -99,13 +98,23 @@ export const useHistoryStore = defineStore('historyStore', {
       // 2. Sauvegarde distante immédiate si connecté
       await this.syncHistoryToCloud();
     },
-
     async clearAllHistory() {
       if (!confirm("Voulez-vous vraiment supprimer tout votre historique ? Cette action est irréversible.")) {
         return;
       }
       this.playedKingdoms = {};
-      // 2. Sauvegarde distante (écrase le fichier Drive par un objet vide)
+      await this.syncHistoryToCloud();
+    },
+
+    async setKingdomRating(hash: string, rating: number) {
+      const entry = this.playedKingdoms[hash];
+      let timestamp = Date.now();
+      if (typeof entry === 'object' && entry !== null) {
+        timestamp = entry.timestamp;
+      } else if (typeof entry === 'number') {
+        timestamp = entry;
+      }
+      this.playedKingdoms[hash] = { timestamp, rating };
       await this.syncHistoryToCloud();
     },
 

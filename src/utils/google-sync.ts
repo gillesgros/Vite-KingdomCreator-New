@@ -67,7 +67,18 @@ export async function requestDriveAccessToken(hintEmail?: string, silent: boolea
   }
 
   if (!window.google?.accounts?.oauth2) {
-    throw new Error('Google Drive API is not available');
+    await new Promise<void>((resolve, reject) => {
+      const startTime = Date.now();
+      const interval = setInterval(() => {
+        if (window.google?.accounts?.oauth2) {
+          clearInterval(interval);
+          resolve();
+        } else if (Date.now() - startTime > 10000) {
+          clearInterval(interval);
+          reject(new Error('Google Drive API is not available (timeout waiting for script to load)'));
+        }
+      }, 100);
+    });
   }
 
   return new Promise((resolve, reject) => {
@@ -248,7 +259,7 @@ async function findHistoryFile(token: string): Promise<GoogleDriveFile | null> {
 /**
  * 📥 Télécharge l'historique des jeux (dictionnaire hash -> timestamp) depuis Google Drive
  */
-export async function fetchHistoryFromGoogle(token: string): Promise<Record<string, number>> {
+export async function fetchHistoryFromGoogle(token: string): Promise<Record<string, number | { timestamp: number; rating?: number }>> {
   const file = await findHistoryFile(token);
   if (!file) {
     return {}; // Premier lancement : aucun fichier créé, on renvoie un historique vide
@@ -267,7 +278,7 @@ export async function fetchHistoryFromGoogle(token: string): Promise<Record<stri
 
   const text = await response.text();
   try {
-    return JSON.parse(text) as Record<string, number>;
+    return JSON.parse(text) as Record<string, number | { timestamp: number; rating?: number }>;
   } catch {
     return {}; // En cas de fichier corrompu ou vide
   }
@@ -276,7 +287,7 @@ export async function fetchHistoryFromGoogle(token: string): Promise<Record<stri
 /**
  * 📤 Sauvegarde ou met à jour l'historique complet sur Google Drive
  */
-export async function saveHistoryToGoogle(token: string, historyData: Record<string, number>): Promise<void> {
+export async function saveHistoryToGoogle(token: string, historyData: Record<string, number | { timestamp: number; rating?: number }>): Promise<void> {
   const file = await findHistoryFile(token);
   const json = JSON.stringify(historyData);
 

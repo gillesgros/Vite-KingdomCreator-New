@@ -81,6 +81,12 @@
             <span>{{ $t("Require Reaction") }}</span>
           </label>
         </div>
+        <div class="suboption">
+          <label class="checkbox" :class="{ disable: !allowAttacks }" :title="$t('requireAttack')">
+            <input id="requireAttack" type="checkbox" v-model="requireAttack" :disabled="!allowAttacks">
+            <span>{{ $t("Require Attack") }}</span>
+          </label>
+        </div>
       </div>
       <div class="option">
         <label class="checkbox" :title="$t('requireTrashing')">
@@ -311,8 +317,19 @@ export default defineComponent({
     const requireActionProvider = createComputedSettingsObject('requireActionProvider');
     const requireCardProvider = createComputedSettingsObject('requireCardProvider');
     const requireBuyProvider = createComputedSettingsObject('requireBuyProvider');
-    const allowAttacks = createComputedSettingsObject('allowAttacks');
+    const allowAttacks = computed<boolean>({
+      get: (): boolean => randomizerSettings.value.allowAttacks,
+      set: (value: boolean) => {
+        const updateObject: SettingsObject = { allowAttacks: value };
+        if (!value) {
+          updateObject.requireReaction = false;
+          updateObject.requireAttack = false;
+        }
+        updateRandomizerSettings(updateObject);
+      }
+    });
     const requireReaction = createComputedSettingsObject('requireReaction');
+    const requireAttack = createComputedSettingsObject('requireAttack');
     const requireTrashing = createComputedSettingsObject('requireTrashing');
     const distributeCost = createComputedSettingsObject('distributeCost');
 
@@ -419,6 +436,7 @@ export default defineComponent({
       requireBuyProvider,
       requireCardProvider,
       requireReaction,
+      requireAttack,
       requireTrashing,
       allowAttacks,
       prioritizeSet,

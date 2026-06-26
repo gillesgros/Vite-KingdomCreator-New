@@ -257,6 +257,7 @@ export function createRandomizerOptionsBuilder(context: randomizerStoreState) {
       .setRequireCardProvider(randomizerSettings.requireCardProvider)
       .setRequireBuyProvider(randomizerSettings.requireBuyProvider)
       .setRequireTrashing(randomizerSettings.requireTrashing)
+      .setRequireAttack(!!randomizerSettings.requireAttack)
       .setRequireReactionIfAttacks(randomizerSettings.requireReaction)
       .setUseAlchemyRecommendation(randomizerSettings.isAlchemyRecommendationEnabled)
       .setDistributeCost(

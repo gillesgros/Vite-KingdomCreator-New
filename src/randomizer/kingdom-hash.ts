@@ -37,6 +37,9 @@ export function generateKingdomHash(kingdom: Kingdom): string {
   const allyId = kingdom.ally?.id || '';
   const prophecyId = kingdom.prophecy?.id || '';
 
+  // 5b. Extraction et tri des Boons
+  const boonIds = kingdom.boons.map(b => b.id).sort().join(',');
+
   // 6. Options de jeu (Metadata)
   const meta = `c:${kingdom.metadata.useColonies ? 1 : 0},s:${kingdom.metadata.useShelters ? 1 : 0}`;
 
@@ -47,6 +50,7 @@ export function generateKingdomHash(kingdom: Kingdom): string {
     `addons:${eventIds};${landmarkIds};${projectIds};${wayIds};${traitIds}|` +
     `traitSupply:${traitSupplyIds}|` +
     `unique:${allyId},${prophecyId}|` +
+    `boons:${boonIds}|` +
     `meta:${meta}`;
 
   // 8. Encodage moderne en Base64 URL-Safe (Remplace unescape de manière sûre)
@@ -131,13 +135,17 @@ export function deserializeKingdomFromHash(hash: string): Kingdom {
   const ally = allyId ? DominionSets.getAllyById(allyId) : null;
   const prophecy = prophecyId ? DominionSets.getProphecyById(prophecyId) : null;
 
+  // --- Parse de la section BOONS ---
+  const boonIds = sections['boons'] ? sections['boons'].split(',').filter(Boolean) : [];
+  const boons = boonIds.map(id => DominionSets.getBoonById(id)).filter(Boolean);
+
   // --- Parse de la section SPECIAL (Cartes liées typées SupplyCard) ---
   const specialParts = (sections['special'] || '').split(',');
   // 🟢 Ajout du cast "as SupplyCard" pour satisfaire le constructeur de Supply
   const baneCard = specialParts[0] ? DominionSets.getCardById(specialParts[0]) as SupplyCard : null;
   const ferrymanCard = specialParts[1] ? DominionSets.getCardById(specialParts[1]) as SupplyCard : null;
   const obeliskCard = specialParts[2] ? DominionSets.getCardById(specialParts[2]) as SupplyCard : null;
-  const mouseWay = specialParts[3] ? DominionSets.getWayById(specialParts[3]) as SupplyCard : null;
+  const mouseWay = specialParts[3] ? DominionSets.getCardById(specialParts[3]) as SupplyCard : null;
   const riverboatCard = specialParts[4] ? DominionSets.getCardById(specialParts[4]) as SupplyCard : null;
   const approachingArmyCard = specialParts[5] ? DominionSets.getCardById(specialParts[5]) as SupplyCard : null;
 
@@ -169,7 +177,7 @@ export function deserializeKingdomFromHash(hash: string): Kingdom {
     landmarks,
     projects,
     ways,
-    [], 
+    boons, 
     ally,
     prophecy,
     traits,

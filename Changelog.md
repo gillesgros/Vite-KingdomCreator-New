@@ -12,6 +12,16 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/06/26 - 7.1.9** - Features & Fixes
+>***Feat*** - allow flitering on history games  
+>***Fix*** - enanble boon in hash and restitution on history page  
+>***Feat*** - modify rendering of history page on computer  
+>***Feat*** - modify rendering of history page on smartphone  
+>***Fix*** - fix rendering of settings on smartphone - owned set and constraints  
+>***Fix*** - translate en & fr fo history page  
+>***Feat*** - blakevanlan/KingdomCreator #220 - Feature: Rule: Require Attacks  
+>***Feat*** - add rating possibiliy of games  
+
 **2026/06/25 - 7.1.8** - Features
 >***Feat*** - Add lpossibility to define replacement card when 1 supply is selected.  
 >***Fix*** - move to js-yaml 5  

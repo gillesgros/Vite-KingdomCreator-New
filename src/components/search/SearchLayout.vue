@@ -126,5 +126,9 @@ export default defineComponent({
   text-overflow: ellipsis;
 }
 
+.card-types {
+    white-space: unset;
+}
+
 
 </style>

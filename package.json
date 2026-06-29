@@ -2,7 +2,7 @@
   "author": "Gilles GROS",
   "name": "vite-kigndomcreator-new",
   "license": "MIT",
-  "version": "7.1.10",
+  "version": "7.1.11",
   "private": true,
   "type": "module",
   "repository": {
@@ -20,8 +20,7 @@
     "type-check": "vue-tsc --noEmit",
     "get-tsconfig": "tsc --showConfig"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "gsap": "^3.15.0",
     "js-cookie": "^3.0.8",

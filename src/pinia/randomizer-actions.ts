@@ -13,6 +13,9 @@ import type { Addon } from "../dominion/addon";
 import type { Selection } from "./selection";
 import { NUM_CARDS_IN_KINGDOM, MAX_ADDONS_IN_KINGDOM, FORCE_ADDONS_USE, MAX_ADDONS_OF_TYPE, USING_CUTOM_DESKSIZE } from "../settings/Settings-value";
 import { Addons_TYPE } from "../dominion/addon";
+import type { Boon } from "../dominion/boon";
+import type { Ally } from "../dominion/ally";
+import type { Prophecy } from "../dominion/prophecy";
 
 export const MIN_SETS_FOR_PRIORITIZE_OPTION = 3;
 export const MIN_CARDS_FOR_DISTRIBUTE_COST = 24;
@@ -22,6 +25,10 @@ export interface randomizerStoreState {
   selection: Selection;
   settings: Settings;
   specifyingReplacementSupplyCard: SupplyCard | null ;
+  specifyingReplacementAddon: Addon | null;
+  specifyingReplacementBoon: Boon | null;
+  specifyingReplacementAlly: Ally | null;
+  specifyingReplacementProphecy: Prophecy | null;
   isFullScreen: boolean;
 }
 

@@ -18,6 +18,7 @@ import { SetId } from '@/dominion/set-id';
 import { CostType } from '@/dominion/cost-type';
 import { Boon } from '@/dominion/boon';
 import { Ally } from '@/dominion/ally';
+import { Prophecy } from '@/dominion/prophecy';
 import { Randomizer } from '@/randomizer/randomizer';
 
 import { EventTracker } from '@/analytics/follow-activity';
@@ -45,6 +46,10 @@ export const useRandomizerStore = defineStore(
     selection: Selection.empty(),
     settings: loadSettings(),
     specifyingReplacementSupplyCard: (null as any) as SupplyCard,
+    specifyingReplacementAddon: (null as any) as Addon,
+    specifyingReplacementBoon: (null as any) as Boon,
+    specifyingReplacementAlly: (null as any) as Ally,
+    specifyingReplacementProphecy: (null as any) as Prophecy,
     isFullScreen: false,
   }),
   persist: [{
@@ -145,6 +150,10 @@ export const useRandomizerStore = defineStore(
     CLEAR_SELECTION() {
       this.selection = Selection.empty();
       this.specifyingReplacementSupplyCard = (null as any) as SupplyCard;
+      this.specifyingReplacementAddon = (null as any) as Addon;
+      this.specifyingReplacementBoon = (null as any) as Boon;
+      this.specifyingReplacementAlly = (null as any) as Ally;
+      this.specifyingReplacementProphecy = (null as any) as Prophecy;
     },
     UPDATE_SELECTION(selection: SelectionParams) {
       this.selection = this.selection.withParams(selection);
@@ -158,6 +167,30 @@ export const useRandomizerStore = defineStore(
     },
     CLEAR_SPECIFYING_REPLACEMENT_SUPPLY_CARD() {
       this.specifyingReplacementSupplyCard = (null as any) as SupplyCard;
+    },
+    UPDATE_SPECIFYING_REPLACEMENT_ADDON(addon: Addon) {
+      this.specifyingReplacementAddon = addon;
+    },
+    CLEAR_SPECIFYING_REPLACEMENT_ADDON() {
+      this.specifyingReplacementAddon = (null as any) as Addon;
+    },
+    UPDATE_SPECIFYING_REPLACEMENT_BOON(boon: Boon) {
+      this.specifyingReplacementBoon = boon;
+    },
+    CLEAR_SPECIFYING_REPLACEMENT_BOON() {
+      this.specifyingReplacementBoon = (null as any) as Boon;
+    },
+    UPDATE_SPECIFYING_REPLACEMENT_ALLY(ally: Ally) {
+      this.specifyingReplacementAlly = ally;
+    },
+    CLEAR_SPECIFYING_REPLACEMENT_ALLY() {
+      this.specifyingReplacementAlly = (null as any) as Ally;
+    },
+    UPDATE_SPECIFYING_REPLACEMENT_PROPHECY(prophecy: Prophecy) {
+      this.specifyingReplacementProphecy = prophecy;
+    },
+    CLEAR_SPECIFYING_REPLACEMENT_PROPHECY() {
+      this.specifyingReplacementProphecy = (null as any) as Prophecy;
     },
     UPDATE_FULLSCREEN_RANDOMIZER(isFullScreenState: boolean) {
       this.isFullScreen = isFullScreenState;
@@ -559,6 +592,87 @@ console.log("adjustedSupplyCards", addonsForAdjustement)
         oldKingdom.ways, rA.randomizeSelectedBoons(this, newSupply),
         newAlly, rA.randomizeSelectedProphecy(this, newSupply), 
         oldKingdom.traits, oldKingdom.metadata);
+      this.CLEAR_SELECTION();
+      this.UPDATE_KINGDOM(kingdom);
+      EventTracker.trackEvent(EventType.RANDOMIZE_SINGLE);
+    },
+    REPLACE_SPECIFYING_ADDON(selectedAddon: Addon) {
+      console.log(new Date().toLocaleTimeString(), 'REPLACE_SPECIFYING_ADDON')
+      if (!this.specifyingReplacementAddon) return;
+      const oldKingdom = this.kingdom;
+      const newEvents = oldKingdom.events.map(x => x.id === this.specifyingReplacementAddon.id ? selectedAddon : x) as any[];
+      const newLandmarks = oldKingdom.landmarks.map(x => x.id === this.specifyingReplacementAddon.id ? selectedAddon : x) as any[];
+      const newProjects = oldKingdom.projects.map(x => x.id === this.specifyingReplacementAddon.id ? selectedAddon : x) as any[];
+      const newWays = oldKingdom.ways.map(x => x.id === this.specifyingReplacementAddon.id ? selectedAddon : x) as any[];
+      const newTraits = oldKingdom.traits.map(x => x.id === this.specifyingReplacementAddon.id ? selectedAddon : x) as any[];
+
+      const addonsForAdjustement = { 
+        events: newEvents, landmarks: newLandmarks, 
+        projects: newProjects, ways: newWays, 
+        allies: oldKingdom.ally ? [oldKingdom.ally] : [], 
+        prophecies: oldKingdom.prophecy ? [oldKingdom.prophecy] : [], 
+        traits: newTraits 
+      } as unknown as Addons;
+      const adjustedSupplyCards = Randomizer.adjustSupplyBasedOnAddons(oldKingdom.supply, 
+        addonsForAdjustement, oldKingdom); 
+
+      const kingdom = new Kingdom(
+        oldKingdom.id, adjustedSupplyCards, newEvents, newLandmarks, newProjects,
+        newWays, oldKingdom.boons, oldKingdom.ally, oldKingdom.prophecy, newTraits, oldKingdom.metadata);
+      this.CLEAR_SELECTION();
+      this.UPDATE_KINGDOM(kingdom);
+      EventTracker.trackEvent(EventType.RANDOMIZE_SINGLE);
+    },
+    REPLACE_SPECIFYING_BOON(selectedBoon: Boon) {
+      console.log(new Date().toLocaleTimeString(), 'REPLACE_SPECIFYING_BOON')
+      if (!this.specifyingReplacementBoon) return;
+      const oldKingdom = this.kingdom;
+      const newBoons = oldKingdom.boons.map(x => x.id === this.specifyingReplacementBoon.id ? selectedBoon : x);
+      const kingdom = new Kingdom(
+        oldKingdom.id, oldKingdom.supply, oldKingdom.events, oldKingdom.landmarks, oldKingdom.projects,
+        oldKingdom.ways, newBoons, oldKingdom.ally, oldKingdom.prophecy, oldKingdom.traits, oldKingdom.metadata);
+      this.CLEAR_SELECTION();
+      this.UPDATE_KINGDOM(kingdom);
+      EventTracker.trackEvent(EventType.RANDOMIZE_SINGLE);
+    },
+    REPLACE_SPECIFYING_ALLY(selectedAlly: Ally) {
+      console.log(new Date().toLocaleTimeString(), 'REPLACE_SPECIFYING_ALLY')
+      if (!this.specifyingReplacementAlly) return;
+      const oldKingdom = this.kingdom;
+      const addonsForAdjustement = { 
+        events: oldKingdom.events, landmarks: oldKingdom.landmarks, 
+        projects: oldKingdom.projects, ways: oldKingdom.ways, 
+        allies: [selectedAlly], 
+        prophecies: oldKingdom.prophecy ? [oldKingdom.prophecy] : [], 
+        traits: oldKingdom.traits 
+      } as unknown as Addons;
+      const adjustedSupplyCards = Randomizer.adjustSupplyBasedOnAddons(oldKingdom.supply, 
+        addonsForAdjustement, oldKingdom); 
+
+      const kingdom = new Kingdom(
+        oldKingdom.id, adjustedSupplyCards, oldKingdom.events, oldKingdom.landmarks, oldKingdom.projects,
+        oldKingdom.ways, oldKingdom.boons, selectedAlly, oldKingdom.prophecy, oldKingdom.traits, oldKingdom.metadata);
+      this.CLEAR_SELECTION();
+      this.UPDATE_KINGDOM(kingdom);
+      EventTracker.trackEvent(EventType.RANDOMIZE_SINGLE);
+    },
+    REPLACE_SPECIFYING_PROPHECY(selectedProphecy: Prophecy) {
+      console.log(new Date().toLocaleTimeString(), 'REPLACE_SPECIFYING_PROPHECY')
+      if (!this.specifyingReplacementProphecy) return;
+      const oldKingdom = this.kingdom;
+      const addonsForAdjustement = { 
+        events: oldKingdom.events, landmarks: oldKingdom.landmarks, 
+        projects: oldKingdom.projects, ways: oldKingdom.ways, 
+        allies: oldKingdom.ally ? [oldKingdom.ally] : [], 
+        prophecies: [selectedProphecy], 
+        traits: oldKingdom.traits 
+      } as unknown as Addons;
+      const adjustedSupplyCards = Randomizer.adjustSupplyBasedOnAddons(oldKingdom.supply, 
+        addonsForAdjustement, oldKingdom); 
+
+      const kingdom = new Kingdom(
+        oldKingdom.id, adjustedSupplyCards, oldKingdom.events, oldKingdom.landmarks, oldKingdom.projects,
+        oldKingdom.ways, oldKingdom.boons, oldKingdom.ally, selectedProphecy, oldKingdom.traits, oldKingdom.metadata);
       this.CLEAR_SELECTION();
       this.UPDATE_KINGDOM(kingdom);
       EventTracker.trackEvent(EventType.RANDOMIZE_SINGLE);

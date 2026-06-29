@@ -8,7 +8,15 @@
       :number-of-columns="numberOfColumns" :is-vertical="false">
       <template v-slot:default="slotProps">
         <FlippingCard @card-back-click="handleClick(slotProps.item)" :card="slotProps.item.addon"
-          :is-vertical="false" />
+          :is-vertical="false">
+          <template v-slot:highlight-content>
+            <div v-if="slotProps.item.addon"
+              class="standard-button standard-button--is-primary standard-button--light-border"
+              @click.stop="handleSpecify(slotProps.item.addon)">
+              Specify
+            </div>
+          </template>
+        </FlippingCard>
       </template>
     </GridLayout>
   </div>
@@ -125,6 +133,11 @@ export default defineComponent({
       }
       return list;
     };
+
+    const handleSpecify = (addon: Addon) => {
+      randomizerStore.UPDATE_SPECIFYING_REPLACEMENT_ADDON(addon);
+    };
+
     return {
       numberOfColumns,
       hasAddons,
@@ -136,6 +149,7 @@ export default defineComponent({
       isEnlarged,
       activeContainers,
       handleClick,
+      handleSpecify,
     };
   },
 });

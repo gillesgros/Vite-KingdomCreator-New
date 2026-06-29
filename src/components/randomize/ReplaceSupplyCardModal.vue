@@ -473,6 +473,8 @@ export default defineComponent({
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    max-height: 400px;
+    overflow-y: auto;
   }
   
   .modal__body__filters {

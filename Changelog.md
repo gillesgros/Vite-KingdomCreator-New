@@ -12,7 +12,10 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
-**2026/06/26 - 7.1.9** - Features & Fixes
+**2026/06/27 - 7.1.10** - Features & Fixes
+>***Fix*** - allow rating reset  
+>***Fix*** - Clean vite config for production  
+
 >***Feat*** - allow flitering on history games  
 >***Fix*** - enanble boon in hash and restitution on history page  
 >***Feat*** - modify rendering of history page on computer  

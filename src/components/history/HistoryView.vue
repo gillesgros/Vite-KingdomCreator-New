@@ -362,7 +362,12 @@ export default defineComponent({
     };
 
     const setRating = (hash: string, rating: number) => {
-      historyStore.setKingdomRating(hash, rating);
+      const currentRating = getRating(hash);
+      if (currentRating === rating) {
+        historyStore.setKingdomRating(hash, rating -1);
+      } else {
+        historyStore.setKingdomRating(hash, rating);
+      }
     };
 
     return {
@@ -484,8 +489,13 @@ export default defineComponent({
 }
 .history-list { display: flex; flex-direction: column; gap: 12px; }
 .history-item { 
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px; border: 1px solid #ccc; border-radius: 6px; background: #fff;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  padding: 5px 12px 12px 12px; 
+  border: 1px solid #ccc; 
+  border-radius: 6px; 
+  background: #fff;
 }
 .item-meta { font-size: 0.85em; color: #666; min-width: 80px; }
 .item-details { flex: 1; padding: 0 15px; color: #333; font-weight: 500; }

@@ -11,11 +11,9 @@ import del  from 'rollup-plugin-delete';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 import { DominionContentGenerate, HandleLocaleGenerateAndMerge } from './plugins/vite-dominion-content';
-import { CheckVersions_Package_Readme_Changelog } from './plugins/Check-Version-Package-Readme-Changelog';
-import { fixChangelogSpaces } from './plugins/Fix-Changelog';
 
-// On-demand components auto importing for Vue.
-//import UnPluginVueComponents from 'unplugin-vue-components/vite'; 
+import { CheckVersions_Package_Readme_Changelog } from './plugins/Check-Version-Package-Readme-Changelog';
+import { fixChangelogSpaces } from './plugins/Fix-Changelog'; 
 
 const devServerPort = 5173;
 const publicationDir = 'docs';
@@ -24,17 +22,25 @@ const publicationHelpDir = 'helpFiles';
 CheckVersions_Package_Readme_Changelog();
 fixChangelogSpaces();
 
-export default defineConfig( ({ mode}) => {
-  if (mode === 'production' || mode === 'development') {
-   // mergeJSONLanguageFiles();
+export default defineConfig( ({ command, mode }) => {
+  console.log(`\nVite config loaded with command: '${command}', mode: '${mode}'`);
+
+  // Détecte si nous sommes en mode 'preview'.
+  const isPreview = command === 'serve' && mode === 'production';
+  const isBuild = command === 'build' && mode === 'production';
+  const isDev = command === 'serve' && mode === 'development';
+  console.log(`\nisPreview: ${isPreview}, isBuild: ${isBuild}, isDev: ${isDev}\n`);
+
+  let baseDir = './'
+  // N'exécuter la génération de contenu que pour la commande 'build'
+  if (isBuild || isDev) {
     DominionContentGenerate('docs');
     let ArgGenLocale = 'Merge';
-    if (process.argv.slice(3)[0] == 'Gen') {
+    if (process.argv.includes('Gen')) {
       ArgGenLocale = 'Gen&Merge';
     }
     HandleLocaleGenerateAndMerge(ArgGenLocale, 'docs')
   }
-  let baseDir = './'
 
   return {
     appType: 'spa',
@@ -47,44 +53,50 @@ export default defineConfig( ({ mode}) => {
       Pkgejson_Date: JSON.stringify(new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'numeric' }))
     },
     plugins: [
-      { name: 'add-datetime',
-        /* vite hook the plugin should use: transformIndexHtml()
-        https://vitejs.dev/guide/api-plugin#universal-hooks */
-        transformIndexHtml(html) {
-          const datetime = new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'medium' });
-          const jsYamlVersion = packageJson.dependencies['js-yaml'].replace(/[\^~]/, '');
+      !isBuild ? undefined  :  // si build alors ==>
+        { name: 'add-datetime',
+          /* vite hook the plugin should use: transformIndexHtml()
+          https://vitejs.dev/guide/api-plugin#universal-hooks */
+          transformIndexHtml(html: string ) {
+            const datetime = new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'medium' });
+            const jsYamlVersion = packageJson.devDependencies['js-yaml'].replace(/[\^~]/, '');
 
-          return html.replace(/id="datetime">/g, `id="datetime">${datetime}`)
-                      .replace(/@VITE_JS_YAML_VERSION/g, `@${jsYamlVersion}`)
-        }
-      },
-      {
-        name: 'copy-index',
-        /* vite hook the plugin should use: closeBundle()
-        https://vitejs.dev/guide/api-plugin#universal-hooks */
-        closeBundle() {
-          try {
-          fs.copyFileSync(
-            path.resolve(__dirname, './'+ publicationDir +'/index.html'), 
-            path.resolve(__dirname, './'+ publicationDir +'/404.html'))
-            console.log('index.html copied successfully');
+            return html.replace(/id="datetime">/g, `id="datetime">${datetime}`)
+          }
+        },
+      !isBuild ? undefined  :  // si build alors ==>
+        {
+          name: 'copy-index',
+          /* vite hook the plugin should use: closeBundle()
+          https://vitejs.dev/guide/api-plugin#universal-hooks */
+          closeBundle() {
+            try {
+            fs.copyFileSync(
+              path.resolve(__dirname, './'+ publicationDir +'/index.html'), 
+              path.resolve(__dirname, './'+ publicationDir +'/404.html'))
+              console.log('index.html copied successfully');
 
-          } catch (err) {
-            if (err) throw err;
-            console.error('index.html copied failure!');
-          } 
-        }
-      },
-      vue(),
-      legacy({ targets: ['defaults'] }),
-      vueI18n({
-        include: path.resolve(__dirname, './'+ publicationDir +'/locales/*.json'),
-        compositionOnly: true,
-        fullInstall: true,
-        allowDynamic: true,
-        runtimeOnly: false
-      }),
-      del({
+            } catch (err) {
+              if (err) throw err;
+              console.error('index.html copied failure!');
+            } 
+          }
+        },
+      isPreview ? undefined  : 
+        vue(),
+      isPreview ? undefined  :  // si preview alors ==>
+        legacy({ targets: ['defaults'] }),
+      isPreview ? undefined  :  // si preview alors ==>
+        vueI18n({
+          // Appliquer ce plugin uniquement si ce n'est pas un 'preview'
+          include: path.resolve(__dirname, './'+ publicationDir +'/locales/*.json'),
+          compositionOnly: true,
+          fullInstall: true,
+          allowDynamic: true,
+          runtimeOnly: false,
+        }),
+      isPreview ? undefined  :
+        del({
         targets: [publicationDir +'/*',
           '!'+ publicationDir +'/rules',
           '!'+ publicationDir +'/rules.fr',
@@ -97,13 +109,14 @@ export default defineConfig( ({ mode}) => {
           '!'+ publicationDir +'/CNAME',
           '!'+ publicationDir +'/ads.txt'],
         verbose: false
-      }),
-       viteStaticCopy({
-        targets: [ { src: 'styles/normalize-v8.css', dest: 'assets/', rename: { stripBase: 1 }},
+        }),
+      !isBuild ? undefined  : 
+        viteStaticCopy({
+          targets: [ { src: 'styles/normalize-v8.css', dest: 'assets/', rename: { stripBase: 1 }},
                     { src: 'help/*.md', dest: './' + publicationHelpDir + '/', rename: { stripBase: 1 }}
-          ]
-      })
-    ],
+          ],
+        }),
+    ].filter(Boolean),
     optimizeDeps: {
       include: ['vue', 'vue-i18n']
     },

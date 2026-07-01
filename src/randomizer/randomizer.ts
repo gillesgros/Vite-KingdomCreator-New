@@ -27,11 +27,11 @@ import { SupplyDivisions } from './supply-divisions';
 import { TypeSupplyBan } from './type-supply-ban';
 import { TypeSupplyRequirement } from './type-supply-requirement';
 import { getRandomInt, getRandomInts, selectRandomN } from '@/utils/rand';
-import type { Boon } from '@/dominion/boon';
 import { Way } from '@/dominion/way';
 import { Ally } from '@/dominion/ally';
 import { Trait } from '@/dominion/trait';
 import { Prophecy } from '@/dominion/prophecy';
+import { Boon } from '@/dominion/boon';
 import { DRUID_ID, BOONS_NB_FROM_DRUID } from './special-need-cards';
 import { APPROACHINGARMY_ID, APPROACHINGARMY_CARDTYPE_REQUESTED } from './special-need-cards';
 import { OBELISK_LANDMARK_ID, OBELISK_CARDTYPE_REQUESTED } from './special-need-cards';
@@ -387,6 +387,7 @@ export class Randomizer {
       allies: selectedAllies,
       prophecies: selectedProphecies,
       traits: selectedTraits,
+      boons: []
     };
   }
 

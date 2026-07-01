@@ -69,9 +69,9 @@ export default defineComponent({
 
     const handleSpecify = (card: any) => {
       if (card instanceof Ally) {
-        randomizerStore.UPDATE_SPECIFYING_REPLACEMENT_ALLY(card);
+        randomizerStore.UPDATE_SPECIFYING_REPLACEMENT_ADDON(card);
       } else if (card instanceof Prophecy) {
-        randomizerStore.UPDATE_SPECIFYING_REPLACEMENT_PROPHECY(card);
+        randomizerStore.UPDATE_SPECIFYING_REPLACEMENT_ADDON(card);
       }
     };
 

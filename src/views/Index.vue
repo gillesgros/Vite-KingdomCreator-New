@@ -1,10 +1,8 @@
 <template>
   <div>
     <ReplaceSupplyCardModal :key="randomizerKingdomId" />
-    <ReplaceAddonModal replacingType="Addon"/>
-    <ReplaceBoonModal />
-    <ReplaceAllyModal replacingType="Ally"/>
-    <<ReplaceAllyModal replacingType="Prophecy" />
+    <ReplaceAddonModal />
+        <!-- works for Addon, Ally and Prophecy-->    
     <Page :subtitle="$t('index_page_subtitle')" :selectedType="selectedType">
       <Randomizer @specify-replacement="showReplaceModal = true" />
     </Page>
@@ -25,9 +23,6 @@ import EnlargeButton from '@/components/EnlargeButton.vue';
 import Randomizer from '@/components/randomize/Randomizer.vue';
 import ReplaceSupplyCardModal from '@/components/randomize/ReplaceSupplyCardModal.vue';
 import ReplaceAddonModal from '@/components/randomize/ReplaceAddonModal.vue';
-import ReplaceBoonModal from '@/components/randomize/ReplaceBoonModal.vue';
-import ReplaceAllyModal from '@/components/randomize/ReplaceAllyModal.vue';
-import ReplaceProphecyModal from '@/components/randomize/ReplaceProphecyModal.vue';
 
 import useBase from './base';
 
@@ -38,9 +33,6 @@ export default defineComponent({
     Randomizer,
     ReplaceSupplyCardModal,
     ReplaceAddonModal,
-    ReplaceBoonModal,
-    ReplaceAllyModal,
-    ReplaceProphecyModal,
     EnlargeButton
   },
   setup() {

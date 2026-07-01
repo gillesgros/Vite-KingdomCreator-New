@@ -2,6 +2,7 @@ import type {CardType} from '@/dominion/card-type';
 import type {CostType} from '@/dominion/cost-type';
 import {SetId} from '@/dominion/set-id';
 import { useSettingsStore } from '@/pinia/settings-store';
+import { RANDOMIZATION_CONSTRAINT_USE } from '@/settings/Settings-value';
 
 export class RandomizerOptions {
   constructor(
@@ -32,17 +33,13 @@ export class RandomizerOptions {
 
 export const initializeExcludedCardIds = (setIds: SetId[], initialExcludedCardIds: string[]): string[] => {
   const settingsStore = useSettingsStore();
-  const useConstraints = settingsStore.useConstraintOnRandomization;
-  if (!useConstraints) {
+  if (!RANDOMIZATION_CONSTRAINT_USE()) {
     return initialExcludedCardIds;
   }
-  const excludedFromSettings = setIds.reduce((acc, setId) => {
-    const setConstraints = settingsStore.getSetConstraints(setId);
-    if (setConstraints && setConstraints.isSelected && setConstraints.excludedCards) {
-      acc.push(...setConstraints.excludedCards);
-    }
-    return acc;
-  }, [] as string[]);
+  const excludedFromSettings = setIds.flatMap(setId => {
+    const constraints = settingsStore.getSetConstraints(setId);
+    return (constraints && constraints.isSelected && constraints.excludedCards) ? constraints.excludedCards : [];
+  });
   return [...new Set([...initialExcludedCardIds, ...excludedFromSettings])];
 }
 

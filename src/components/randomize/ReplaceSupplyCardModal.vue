@@ -92,7 +92,7 @@
           class="card-selection-item" 
           @click="handleSelectCard(card)"
           @mouseenter="handleMouseEnterCard(card, $event)"
-          @mousemove="handleMouseMoveCard($event)"
+          @mousemove="handleMouseMoveCard"
           @mouseleave="handleMouseLeaveCard"
         >
           {{ $t(card.id) }}
@@ -150,9 +150,12 @@ import { useRandomizerStore } from '@/pinia/randomizer-store';
 import { usei18nStore } from '@/pinia/i18n-store';
 import { useI18n } from 'vue-i18n';
 import type { RandomizeSupplyCardParams } from '@/pinia/randomizer-store';
+import { useSettingsStore } from '@/pinia/settings-store';
+
 import  { getUnselectedSupplyCards, getSelectedSupplyCards } from '@/pinia/randomizer-actions';
 import { VISIBLE_CARD_TYPES } from '@/dominion/card-type';
 import { VISIBLE_COSTS } from '@/dominion/cost-type';
+import { RANDOMIZATION_CONSTRAINT_USE } from '@/settings/Settings-value'
 
 /* import Components */
 
@@ -162,10 +165,18 @@ export default defineComponent({
     const { t } = useI18n()
     const randomizerStore = useRandomizerStore()
     const i18nStore = usei18nStore();
+    const settingsStore = useSettingsStore();
     const selectedSetIds = computed(() => randomizerStore.settings.selectedSets);
     const selectedSetId = ref<SetId | null>(null);
     const selectedType = ref<CardType | null>(null);
     const selectedCosts = ref<CostType[]>(VISIBLE_COSTS.map(cost => cost.type)); 
+    const visibleTypes = VISIBLE_CARD_TYPES;
+    const visibleCosts = VISIBLE_COSTS;
+    const specifying = computed(() => { return randomizerStore.specifyingReplacementSupplyCard });
+    const specifying_names= computed(() => { return randomizerStore.selection.selectedSupplyIds.map(c=>t(c)).join(', ') });
+    
+    const searchQuery = ref('');
+    const kingdom = computed(() => randomizerStore.kingdom);
     const sets = computed(() => {
       return selectedSetIds.value.map((setId) => DominionSets.getSetById(setId)).sort((a, b) => {
         return a.name == b.name ? 0 : a.name < b.name ? -1 : 1;
@@ -191,47 +202,41 @@ export default defineComponent({
         if (allSupplyCardsToUse.some(card => card.isOfType(visibleType.type)))
           outputTypes.push(visibleType);
       }
-    
       return outputTypes;
     })
 
-
-    const visibleTypes = VISIBLE_CARD_TYPES;
-    const visibleCosts = VISIBLE_COSTS;
-
-    const specifying = computed(() => { return randomizerStore.specifyingReplacementSupplyCard });
-    const specifying_names= computed(() => { return randomizerStore.selection.selectedSupplyIds.map(c=>t(c)).join(', ') });
-    
-    const searchQuery = ref('');
-    const kingdom = computed(() => randomizerStore.kingdom);
-
     const filteredCards = computed(() => {
       if (!specifying.value) return [];
-      
       const randomizerSettings = randomizerStore.settings.randomizerSettings;
       const setIdsToUse = selectedSetId.value ? [selectedSetId.value] : selectedSetIds.value;
-      
-      const allSupplyCards =
-        Cards.getAllSupplyCards(Cards.getAllCardsFromSets(DominionSets.getAllSets()));
-        
-      let cards = Randomizer.removeDuplicateCards(
-        allSupplyCards.filter(Cards.filterByIncludedSetIds(setIdsToUse)), [])
+      const allSupplyCards = Cards.getAllSupplyCards(
+                  Cards.getAllCardsFromSets(DominionSets.getAllSets()
+                    .filter(set => setIdsToUse.includes(set.setId))
+                  ));
+      // remove duplicate cards and cards in kingdom
+      let cards = Randomizer.removeDuplicateCards(allSupplyCards,[])
         .filter(card => {
           const inKingdom = kingdom.value.supply.getSupplyCardsWithBaneandOthers().some(c => c.id === card.id);
-          const isSpecifyingCard = specifying.value && specifying.value.id === card.id;
-          return !inKingdom || isSpecifyingCard;
+          return !inKingdom 
         });
-
       if (selectedType.value) {
         cards = cards.filter(card => card.isOfType(selectedType.value!));
       }
-      
       cards = cards.filter(card => selectedCosts.value.includes(card.cost.getType()));
-      
       if (!randomizerSettings.allowAttacks) {
         cards = cards.filter(card => !card.isOfType(CardType.ATTACK));
       }
-
+      if (RANDOMIZATION_CONSTRAINT_USE()) {
+        const excludedCardIds = new Set(
+          setIdsToUse.flatMap(setId => {
+            const constraints = settingsStore.getSetConstraints(setId);
+            return (constraints && constraints.isSelected && constraints.excludedCards) ? constraints.excludedCards : [];
+          })
+        );
+        if (excludedCardIds.size > 0) {
+          cards = cards.filter(card => !excludedCardIds.has(card.id));
+        }
+      }
       return cards.sort((a, b) => {
         const nameA = t(a.id);
         const nameB = t(b.id);
@@ -258,19 +263,23 @@ export default defineComponent({
     const hoveredCard = ref<SupplyCard | null>(null);
     const mouseX = ref(0);
     const mouseY = ref(0);
+    let isHoveringEnabled = false;
 
     const handleMouseEnterCard = (card: SupplyCard, event: MouseEvent) => {
+      if (!isHoveringEnabled) return;
       hoveredCard.value = card;
       updateMousePosition(event);
     };
 
     const handleMouseMoveCard = (event: MouseEvent) => {
+      if (!isHoveringEnabled) return;
       updateMousePosition(event);
     };
 
     const handleMouseLeaveCard = () => {
       hoveredCard.value = null;
     };
+
 
     const updateMousePosition = (event: MouseEvent) => {
       mouseX.value = event.clientX;
@@ -303,7 +312,7 @@ export default defineComponent({
       };
     });
 
-    const handleImgError = (ev: Event) => {
+    const handleImgError = (ev: globalThis.Event) => {
       incaseofImgerror(ev);
     };
 
@@ -312,6 +321,7 @@ export default defineComponent({
       setTimeout(() => {
         if (specifying.value) {
           searchQuery.value = '';
+          isHoveringEnabled = true;
           (document.querySelector('.modal') as HTMLElement).focus();
         }
       }, 0);
@@ -332,11 +342,21 @@ export default defineComponent({
       }
     };
 
+    const cleanExitfunction = () => {
+      isHoveringEnabled = false;
+      hoveredCard.value = null;
+      selectedSetId.value = null;
+      selectedType.value = null;
+      selectedCosts.value = VISIBLE_COSTS.map(cost => cost.type);
+    }
+
     const handleEscapeKey = () => {
+      cleanExitfunction();
       randomizerStore.CLEAR_SPECIFYING_REPLACEMENT_SUPPLY_CARD();
     }
     const handleCancel = () => {
       randomizerStore.CLEAR_SPECIFYING_REPLACEMENT_SUPPLY_CARD();
+      cleanExitfunction();
     }
     const handleRandomize = () => {
       randomizerStore.RANDOMIZE_SUPPLY_CARD({
@@ -344,11 +364,12 @@ export default defineComponent({
         selectedCardType: selectedType.value,
         selectedCostTypes: selectedCosts.value
       } as RandomizeSupplyCardParams);
+      cleanExitfunction();
     }
 
     const handleSelectCard = (card: SupplyCard) => {
       randomizerStore.REPLACE_SPECIFYING_CARD(card);
-      hoveredCard.value = null;
+      cleanExitfunction()
     }
     
     return {
@@ -416,7 +437,7 @@ export default defineComponent({
 	  max-width: calc(100% - 8px);
 	  outline: none;
 	  overflow-x: hidden;
-	  overflow-y: auto;
+	  overflow-y: hidden;
 	  z-index: 20;
 	}
 
@@ -451,6 +472,7 @@ export default defineComponent({
 	.modal__body__section__options {
 	  display: flex;
 	  flex-direction: column;
+    max-height: 255px;
 	}
 
 	.modal__body__section__sep {
@@ -462,7 +484,7 @@ export default defineComponent({
 
 	.modal__body__section__title {
 	  font-size: 24px;
-	  margin-bottom: 6px;
+	  margin-bottom: 5px;
 	}
 
 	.modal__body__section .checkbox {
@@ -572,6 +594,7 @@ export default defineComponent({
 
   .modal__body__section--choose {
     width: 250px;
+    height: 300px;
   }
   
   .card-search-input {
@@ -580,7 +603,7 @@ export default defineComponent({
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 14px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     box-sizing: border-box;
     outline: none;
     transition: border-color 0.2s ease;

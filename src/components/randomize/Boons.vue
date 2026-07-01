@@ -88,7 +88,7 @@ export default defineComponent({
     watch(boons, handleBoonsChanged)
 
     const handleSpecify = (boon: any) => {
-      randomizerStore.UPDATE_SPECIFYING_REPLACEMENT_BOON(boon);
+      randomizerStore.UPDATE_SPECIFYING_REPLACEMENT_ADDON(boon);
     };
 
     return {

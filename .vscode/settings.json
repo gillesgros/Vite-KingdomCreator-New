@@ -30,7 +30,7 @@
     //"PATH": "${env:PATH};${execPath}\\..\\..\\node-v20-win-x64;D:\\Carte 32 Go\\# Portable App\\node-v22-win-x64"
   },
   "js/ts.tsdk.path": "node_modules\\typescript\\lib",
-  "workbench.colorTheme": "Dark+",
+  "workbench.colorTheme": "Solarized Light",
   "files.eol": "\n",
 
   "editor.formatOnSave": false,

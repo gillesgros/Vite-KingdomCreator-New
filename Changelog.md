@@ -12,8 +12,13 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/07/01 - 7.1.12** - Features & Fixes
+>***Feat*** -finalizing Replace Supply and Addon
+
 **2026/06/29 - 7.1.11** - Features & Fixes - in progress  
 >***Feat*** - allow addon, ally, boon, prophecy replacement specify.  
+>***Fix*** - make randomize addon follow the specified criterias.  
+>***Fix*** - make replacement windows not moving depending on selection.  
 
 **2026/06/27 - 7.1.10** - Features & Fixes
 >***Fix*** - allow rating reset  

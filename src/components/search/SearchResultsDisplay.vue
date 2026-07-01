@@ -15,8 +15,8 @@
       :is-vertical="false" :generic-nb-columns="numberOfColumnsForAddons" />
     <!-- Projects -->
     <SearchLayout :items="searchGetCards('Project')" :title="$t('Projects')" :getCostName="getCostName" :getCardTypeNames="getCardTypeNames"
-      :is-vertical="false" :generic-nb-columns="numberOfColumnsForAddons" />
-    <!--Boons -->
+          :is-vertical="false" :generic-nb-columns="numberOfColumnsForAddons" />
+    <!-- Boons -->
     <SearchLayout :items="searchGetCards('Boon')" :title="$t('Boons')" :getCostName="getCostName" :getCardTypeNames="getCardTypeNames"
       :is-vertical="false" :generic-nb-columns="numberOfColumnsForAddons" />
     <!-- Ways -->
@@ -279,6 +279,8 @@ export default defineComponent({
                 return card instanceof Ally;
               case 'Trait':
                 return card instanceof Trait;
+              case 'Boon':
+                return card instanceof Boon;
               case 'Prophecy':
                 return card instanceof Prophecy;
               case 'OtherCard':

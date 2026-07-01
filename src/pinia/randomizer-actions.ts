@@ -13,6 +13,7 @@ import type { Addon } from "../dominion/addon";
 import type { Selection } from "./selection";
 import { NUM_CARDS_IN_KINGDOM, MAX_ADDONS_IN_KINGDOM, FORCE_ADDONS_USE, MAX_ADDONS_OF_TYPE, USING_CUTOM_DESKSIZE } from "../settings/Settings-value";
 import { Addons_TYPE } from "../dominion/addon";
+import { SetId } from "../dominion/set-id";
 import type { Boon } from "../dominion/boon";
 import type { Ally } from "../dominion/ally";
 import type { Prophecy } from "../dominion/prophecy";
@@ -26,9 +27,11 @@ export interface randomizerStoreState {
   settings: Settings;
   specifyingReplacementSupplyCard: SupplyCard | null ;
   specifyingReplacementAddon: Addon | null;
+  /*
   specifyingReplacementBoon: Boon | null;
   specifyingReplacementAlly: Ally | null;
   specifyingReplacementProphecy: Prophecy | null;
+  */
   isFullScreen: boolean;
 }
 
@@ -92,17 +95,55 @@ export function randomizeSelectedCards(context: randomizerStoreState): Supply | 
   return supply;
 }
 
-export function randomizeSelectedAddons(context: randomizerStoreState) {
+export function randomizeSelectedAddons(context: randomizerStoreState, 
+                      setId? : SetId| null, addonType?:Addons_TYPE| null) {
+  console.log('randomizeSelectedAddons', setId, addonType)
   const newAddonsCount = getSelectedEvents(context).length
       + getSelectedLandmarks(context).length
       + getSelectedProjects(context).length
       + getSelectedWays(context).length
       + getSelectedTraits(context).length;
-  const addonIds = initializeExcludedCardIds(getSelectedSetIds(context), []);
+  const selectedSetIds = setId ? [setId] : getSelectedSetIds(context);
+  let initialExcludedCardIds: string[] = [];
+  if (addonType) {
+    // if addonType is provided, we want to exclude all other types of addons from the selected sets
+    // 1. Récupérer tous les addons des sets sélectionnés
+    const sets = selectedSetIds.map(id => DominionSets.getSetById(id));
+    for (const set of sets) {
+      initialExcludedCardIds.push(...set.events.map(c => c.id));
+      initialExcludedCardIds.push(...set.landmarks.map(c => c.id));
+      initialExcludedCardIds.push(...set.projects.map(c => c.id));
+      initialExcludedCardIds.push(...set.ways.map(c => c.id));
+      initialExcludedCardIds.push(...set.traits.map(c => c.id));
+    }
+    // 2. Filtrer pour ne garder que les types que l'on veut exclure
+    switch (addonType) {
+      case Addons_TYPE.EVENT:
+        initialExcludedCardIds = initialExcludedCardIds.filter(id => !sets.flatMap(s => s.events).some(c => c.id === id));
+        break;
+      case Addons_TYPE.LANDMARK:
+        initialExcludedCardIds = initialExcludedCardIds.filter(id => !sets.flatMap(s => s.landmarks).some(c => c.id === id));
+        break;
+      case Addons_TYPE.PROJECT:
+        initialExcludedCardIds = initialExcludedCardIds.filter(id => !sets.flatMap(s => s.projects).some(c => c.id === id));
+        break;
+      case Addons_TYPE.WAY:
+        initialExcludedCardIds = initialExcludedCardIds.filter(id => !sets.flatMap(s => s.ways).some(c => c.id === id));
+        break;
+      case Addons_TYPE.TRAIT:
+        initialExcludedCardIds = initialExcludedCardIds.filter(id => !sets.flatMap(s => s.traits).some(c => c.id === id));
+        break;
+      default:
+        // Si aucun type n'est spécifié, on n'exclut rien de spécifique (le comportement par défaut sera appliqué plus bas)
+        initialExcludedCardIds = [];
+    } 
+  }
+  console.log('initialExcludedCardIds', initialExcludedCardIds)
+  const addonIds = initializeExcludedCardIds(selectedSetIds, initialExcludedCardIds);
   addonIds.push(...getAddons(context).map((addon) => addon.id));
   EventTracker.trackEvent(EventType.RANDOMIZE_EVENTS_AND_LANDMARKS);
   if (!USING_CUTOM_DESKSIZE()) {
-    return Randomizer.getRandomAddons(getSelectedSetIds(context), addonIds, newAddonsCount);
+    return Randomizer.getRandomAddons(selectedSetIds, addonIds, newAddonsCount);
   } else {
     const kingdom = context.kingdom;
     const selectedEvents: Addon[] = [];
@@ -124,7 +165,7 @@ export function randomizeSelectedAddons(context: randomizerStoreState) {
     while(safetyNet<50)
     {
       safetyNet++;
-      const complementarySelectedCards = Randomizer.getRandomAddons(getSelectedSetIds(context), 
+      const complementarySelectedCards = Randomizer.getRandomAddons(selectedSetIds,
           previousComplementarySelectedIds, NUM_CARDS_IN_KINGDOM());
       for (const card of complementarySelectedCards) {
         if (card.constructor.name == Addons_TYPE.EVENT) {

@@ -33,10 +33,10 @@
                     </div>
                   </div>
                 </div>
-                <div class="modal__body__section">
+                <div v-if="availableAddonTypes.length > 0" class="modal__body__section">
                   <div class="modal__body__section__title">{{ $t('Card Type') }}</div>
                   <div class="modal__body__section__options">
-                    <div class="modal__body__section__option">
+                    <div v-if="availableAddonTypes.length > 0" class="modal__body__section__option">
                       <label class="checkbox">
                         <input type="radio" :value="null" v-model="selectedAddonType" />
                         <span>{{ $t('Any') }}</span>
@@ -51,9 +51,9 @@
               </div>
             </div>
 
-            <div class="modal__body__section__sep"></div>
+            <div class="modal__body__section__sep" v-if="isSingleCardSelected"></div>
 
-            <div class="modal__body__section modal__body__section--choose">
+            <div class="modal__body__section modal__body__section--choose" v-if="isSingleCardSelected">
               <div class="modal__body__section__title">{{ $t('Choose Card') }}</div>
               <input 
                 type="text" 
@@ -86,7 +86,7 @@
               <div class="standard-button standard-button--is-primary" @click="handleRandomize">{{ $t('Randomize') }}</div>
             </div>
 
-            <div class="modal__footer__right">
+            <div class="modal__footer__right" v-if="isSingleCardSelected">
               <span class="modal__footer__text">
                 {{ $t('ChooseCardExplanation') }}
               </span>
@@ -98,7 +98,7 @@
 
     <!-- Floating Card Preview -->
     <div 
-      v-if="hoveredCard" 
+      v-if="hoveredCard && isSingleCardSelected"
       class="card-hover-preview-horizontal" 
       :style="previewStyle"
     >
@@ -111,82 +111,94 @@
 import { defineComponent, computed, watch, ref } from 'vue';
 import type { SetId } from '@/dominion/set-id';
 import { DominionSets } from '@/dominion/dominion-sets';
-
-
 import { getCardImageUrl, incaseofImgerror } from '@/utils/resources';
 import { useRandomizerStore } from '@/pinia/randomizer-store';
+import { useSettingsStore } from '@/pinia/settings-store';
+import { RANDOMIZATION_CONSTRAINT_USE } from '@/settings/Settings-value';
 import { usei18nStore } from '@/pinia/i18n-store';
 import { useI18n } from 'vue-i18n';
 import type { Addon } from '@/dominion/addon';
-import { Addons_TYPE } from '@/dominion/addon';
+import { Addons_TYPE, getAddonTypeFromId, getAllowedAddonTypes } from '@/dominion/addon';
 
 export default defineComponent({
   name: "ReplaceAddonModal",
-    props: {
-    replacingType: String
-  },
-  setup(props) {
+  setup() {
     const { t } = useI18n();
     const randomizerStore = useRandomizerStore();
     const i18nStore = usei18nStore();
-    console.log(  'replacingType:', props.replacingType)
+    const settingsStore = useSettingsStore();
     const selectedSetIds = computed(() => randomizerStore.settings.selectedSets);
     const selectedSetId = ref<SetId | null>(null);
     const selectedAddonType = ref<Addons_TYPE | null>(null);
     const searchQuery = ref('');
 
-    const specifying = computed(() => {
-      switch (props.replacingType) {
-        case 'Ally':
-          return randomizerStore.specifyingReplacementAlly;
-        case 'Prophecy':
-          return randomizerStore.specifyingReplacementProphecy;
-        case 'Addon':
-          return randomizerStore.specifyingReplacementAddon;
-        default:
-          return null;
+    const specifying = computed(() => randomizerStore.specifyingReplacementAddon);
+    
+    const specifying_names = computed(() => { 
+      switch (getAddonTypeFromId(specifying.value.id)) {
+        case Addons_TYPE.EVENT:
+        case Addons_TYPE.LANDMARK:
+        case Addons_TYPE.PROJECT:
+        case Addons_TYPE.WAY:
+        case Addons_TYPE.TRAIT:
+          return randomizerStore.selection.selectedAddonIds.map(c=>t(c)).join(', ')
+        case Addons_TYPE.ALLY:
+          return randomizerStore.selection.selectedAllyId ? t(randomizerStore.selection.selectedAllyId) : ''
+        case Addons_TYPE.PROPHECY:
+          return randomizerStore.selection.selectedProphecyId ? t(randomizerStore.selection.selectedProphecyId) : '' 
+        case Addons_TYPE.BOON:
+          return randomizerStore.selection.selectedBoonIds.map(c=>t(c)).join(', ')
+        default: 
+          return ''
       }
     });
-    
-    const specifying_names = computed(() => specifying.value ? t(specifying.value.id) : '');
-    const allowedAddonTypes: Addons_TYPE[] = [];
-    switch (props.replacingType) {
-      case 'Ally':
-        allowedAddonTypes.push(Addons_TYPE.ALLY);
-        break;
-      case 'Prophecy':
-        allowedAddonTypes.push(Addons_TYPE.PROPHECY);
-        break;
-      case 'Addon':
-        allowedAddonTypes.push(Addons_TYPE.EVENT);
-        allowedAddonTypes.push(Addons_TYPE.LANDMARK);
-        allowedAddonTypes.push(Addons_TYPE.PROJECT);
-        allowedAddonTypes.push(Addons_TYPE.WAY);
-        allowedAddonTypes.push(Addons_TYPE.TRAIT);
-        break;
-      default:
-        break; 
-    }
+    const isSingleCardSelected = computed(() => {
+      switch (getAddonTypeFromId(specifying.value.id)) {
+        case Addons_TYPE.EVENT:
+        case Addons_TYPE.LANDMARK:
+        case Addons_TYPE.PROJECT:
+        case Addons_TYPE.WAY:
+        case Addons_TYPE.TRAIT:
+          return randomizerStore.selection.selectedAddonIds.length === 1;
+        case Addons_TYPE.ALLY:
+          return randomizerStore.selection.selectedAllyId  ? true : false
+        case Addons_TYPE.PROPHECY:
+          return randomizerStore.selection.selectedProphecyId ? true : false
+        case Addons_TYPE.BOON:
+          return randomizerStore.selection.selectedBoonIds.length === 1;
+        default: 
+          return false
+      }
+      return false
+    });    
+
+    const allowedAddonTypes = computed<Addons_TYPE[]>(() => {
+      if (!specifying.value) return [];
+      return getAllowedAddonTypes(getAddonTypeFromId(specifying.value.id));
+    });
+
     
     const sets = computed(() => {
-      const xx=  selectedSetIds.value
+      return selectedSetIds.value
         .map((setId) => DominionSets.getSetById(setId))
         .filter((set) => {
           const addonCollections: { type: Addons_TYPE; cards: any[] }[] = [
               { type: Addons_TYPE.EVENT, 
-                cards: allowedAddonTypes.includes(Addons_TYPE.EVENT) ? (set.events || []) : [] },
+                cards: allowedAddonTypes.value.includes(Addons_TYPE.EVENT) ? (set.events || []) : [] },
               { type: Addons_TYPE.LANDMARK, 
-                cards: allowedAddonTypes.includes(Addons_TYPE.LANDMARK) ? (set.landmarks || []) : [] },
+                cards: allowedAddonTypes.value.includes(Addons_TYPE.LANDMARK) ? (set.landmarks || []) : [] },
               { type: Addons_TYPE.PROJECT, 
-                cards: allowedAddonTypes.includes(Addons_TYPE.PROJECT) ? (set.projects || []) : [] },
+                cards: allowedAddonTypes.value.includes(Addons_TYPE.PROJECT) ? (set.projects || []) : [] },
               { type: Addons_TYPE.WAY, 
-                cards: allowedAddonTypes.includes(Addons_TYPE.WAY) ? (set.ways || []) : [] },
+                cards: allowedAddonTypes.value.includes(Addons_TYPE.WAY) ? (set.ways || []) : [] },
               { type: Addons_TYPE.TRAIT, 
-                cards: allowedAddonTypes.includes(Addons_TYPE.TRAIT) ? (set.traits || []) : [] },
+                cards: allowedAddonTypes.value.includes(Addons_TYPE.TRAIT) ? (set.traits || []) : [] },
               { type: Addons_TYPE.ALLY, 
-                cards: allowedAddonTypes.includes(Addons_TYPE.ALLY) ? (set.allies || []) : [] },
+                cards: allowedAddonTypes.value.includes(Addons_TYPE.ALLY) ? (set.allies || []) : [] },
               { type: Addons_TYPE.PROPHECY, 
-                cards: allowedAddonTypes.includes(Addons_TYPE.PROPHECY) ? (set.prophecies || []) : [] }
+                cards: allowedAddonTypes.value.includes(Addons_TYPE.PROPHECY) ? (set.prophecies || []) : [] },
+              { type: Addons_TYPE.BOON,
+                cards: allowedAddonTypes.value.includes(Addons_TYPE.BOON) ? (set.boons || []) : [] }
           ];
           console.log(addonCollections);
           return addonCollections.some((collection) => collection.cards.length > 0)
@@ -194,36 +206,43 @@ export default defineComponent({
         .sort((a, b) => {
           return a.name === b.name ? 0 : a.name < b.name ? -1 : 1;
         });
-        console.log(xx);
-      return xx;
     });
 
     const filteredCards = computed(() => {
       if (!specifying.value) return [];
-      
       const setIdsToUse = selectedSetId.value ? [selectedSetId.value] : selectedSetIds.value;
       const setsToSearch = setIdsToUse.map(id => DominionSets.getSetById(id));
       let matchedCards: Addon[] = [];
-
       const typesToConsider = selectedAddonType.value ? [selectedAddonType.value] : availableAddonTypes.value;
-
       for (const set of setsToSearch) {
         if (typesToConsider.includes(Addons_TYPE.EVENT) && set.events) matchedCards.push(...set.events);
         if (typesToConsider.includes(Addons_TYPE.LANDMARK) && set.landmarks) matchedCards.push(...set.landmarks);
         if (typesToConsider.includes(Addons_TYPE.PROJECT) && set.projects) matchedCards.push(...set.projects);
         if (typesToConsider.includes(Addons_TYPE.WAY) && set.ways) matchedCards.push(...set.ways);
         if (typesToConsider.includes(Addons_TYPE.TRAIT) && set.traits) matchedCards.push(...set.traits);
-        
-	if (typesToConsider.includes(Addons_TYPE.ALLY) && set.allies) matchedCards.push(...set.allies);
+        if (typesToConsider.includes(Addons_TYPE.ALLY) && set.allies) matchedCards.push(...set.allies);
         if (typesToConsider.includes(Addons_TYPE.PROPHECY) && set.prophecies) matchedCards.push(...set.prophecies);
+        if (typesToConsider.includes(Addons_TYPE.BOON) && set.boons) matchedCards.push(...set.boons);
       }
       
-      const currentAddonsIds = randomizerStore.addons.map(a => a.id);
+      const currentAddonsIds = randomizerStore.extendedAddons.map(a => a.id);
+      // notice randomizerStore.addons contains only true addons : events, landmarks, projects, ways, traits
+      console.log('currentAddonsIds:', currentAddonsIds)
       matchedCards = matchedCards.filter(card => {
         const inKingdom = currentAddonsIds.includes(card.id);
-        const isSpecifyingCard = specifying.value && specifying.value.id === card.id;
-        return !inKingdom || isSpecifyingCard;
+        return !inKingdom ;
       });
+      if (RANDOMIZATION_CONSTRAINT_USE()) {
+        const excludedCardIds = new Set(
+          setIdsToUse.flatMap(setId => {
+            const constraints = settingsStore.getSetConstraints(setId);
+            return (constraints && constraints.isSelected && constraints.excludedCards) ? constraints.excludedCards : [];
+          })
+        );
+        if (excludedCardIds.size > 0) {
+          matchedCards = matchedCards.filter(card => !excludedCardIds.has(card.id));
+        }
+      }
 
       return (matchedCards as Addon[]).sort((a, b) => {
         const nameA = t(a.id);
@@ -237,18 +256,15 @@ export default defineComponent({
       const setIdsToUse = selectedSetId.value ? [selectedSetId.value] : selectedSetIds.value;
       const setsToSearch = setIdsToUse.map(id => DominionSets.getSetById(id));
       for (const set of setsToSearch) {
-        if (allowedAddonTypes.includes(Addons_TYPE.EVENT) && set.events && set.events.length > 0) types.add(Addons_TYPE.EVENT);
-        if (allowedAddonTypes.includes(Addons_TYPE.LANDMARK) &&set.landmarks && set.landmarks.length > 0) types.add(Addons_TYPE.LANDMARK);
-        if (allowedAddonTypes.includes(Addons_TYPE.PROJECT) &&set.projects && set.projects.length > 0) types.add(Addons_TYPE.PROJECT);
-        if (allowedAddonTypes.includes(Addons_TYPE.WAY) &&set.ways && set.ways.length > 0) types.add(Addons_TYPE.WAY);
-        if (allowedAddonTypes.includes(Addons_TYPE.TRAIT) &&set.traits && set.traits.length > 0) types.add(Addons_TYPE.TRAIT);
+        if (allowedAddonTypes.value.includes(Addons_TYPE.EVENT) && set.events && set.events.length > 0) types.add(Addons_TYPE.EVENT);
+        if (allowedAddonTypes.value.includes(Addons_TYPE.LANDMARK) && set.landmarks && set.landmarks.length > 0) types.add(Addons_TYPE.LANDMARK);
+        if (allowedAddonTypes.value.includes(Addons_TYPE.PROJECT) && set.projects && set.projects.length > 0) types.add(Addons_TYPE.PROJECT);
+        if (allowedAddonTypes.value.includes(Addons_TYPE.WAY) && set.ways && set.ways.length > 0) types.add(Addons_TYPE.WAY);
+        if (allowedAddonTypes.value.includes(Addons_TYPE.TRAIT) && set.traits && set.traits.length > 0) types.add(Addons_TYPE.TRAIT);
         
-	if (allowedAddonTypes.includes(Addons_TYPE.ALLY) &&set.allies && set.allies.length > 0) types.add(Addons_TYPE.ALLY);
-        if (allowedAddonTypes.includes(Addons_TYPE.PROPHECY) &&set.prophecies && set.prophecies.length > 0) types.add(Addons_TYPE.PROPHECY);
-      }
-      // If a specific addon type is selected, but after changing set there are no cards of this type, reset it
-      if (selectedAddonType.value && !types.has(selectedAddonType.value)) {
-        selectedAddonType.value = null;
+	      if (allowedAddonTypes.value.includes(Addons_TYPE.ALLY) && set.allies && set.allies.length > 0) types.add(Addons_TYPE.ALLY);
+        if (allowedAddonTypes.value.includes(Addons_TYPE.PROPHECY) && set.prophecies && set.prophecies.length > 0) types.add(Addons_TYPE.PROPHECY);
+        if (allowedAddonTypes.value.includes(Addons_TYPE.BOON) && set.boons && set.boons.length > 0) types.add(Addons_TYPE.BOON);
       }
       return Array.from(types);
     });
@@ -271,14 +287,17 @@ export default defineComponent({
     //const hoveredCard = ref<Ally | null>(null);
     const mouseX = ref(0);
     const mouseY = ref(0);
+    let isHoveringEnabled = false;
 
     //const handleMouseEnterCard = (card: Ally, event: MouseEvent) => {
     const handleMouseEnterCard = (card: Addon, event: MouseEvent) => {
+      if (!isHoveringEnabled) return;
       hoveredCard.value = card;
       updateMousePosition(event);
     };
 
     const handleMouseMoveCard = (event: MouseEvent) => {
+      if (!isHoveringEnabled) return;
       updateMousePosition(event);
     };
 
@@ -325,31 +344,39 @@ export default defineComponent({
       setTimeout(() => {
         if (specifying.value) {
           searchQuery.value = '';
+          isHoveringEnabled = true;
           (document.querySelector('.modal') as HTMLElement).focus();
         }
       }, 0);
     };
     watch(specifying, handleSpecifyingChanged);
 
+    const cleanExitfunction = () => {
+      isHoveringEnabled = false;
+      hoveredCard.value = null;
+      selectedSetId.value = null;
+      selectedAddonType.value = null;
+    }
+
     const handleEscapeKey = () => {
       randomizerStore.CLEAR_SPECIFYING_REPLACEMENT_ADDON();
-      //randomizerStore.CLEAR_SPECIFYING_REPLACEMENT_ALLY();
+      cleanExitfunction();
     };
     const handleCancel = () => {
       randomizerStore.CLEAR_SPECIFYING_REPLACEMENT_ADDON();
-      //randomizerStore.CLEAR_SPECIFYING_REPLACEMENT_ALLY();
+      cleanExitfunction();
     };
 
     //const handleSelectCard = (card: Ally) => {
     //  randomizerStore.REPLACE_SPECIFYING_ALLY(card);
     const handleSelectCard = (card: Addon) => {
       randomizerStore.REPLACE_SPECIFYING_ADDON(card);
-      hoveredCard.value = null;
+      cleanExitfunction();
     };
 
     const handleRandomize = () => {
-      const cards = searchedCards.value;
-      handleSelectCard(cards[Math.floor(Math.random() * cards.length)]);
+      randomizerStore.RANDOMIZE_ADDON({ selectedSetId: selectedSetId.value, selectedAddonType: selectedAddonType.value });
+      cleanExitfunction();
     };
     
     return {
@@ -363,6 +390,7 @@ export default defineComponent({
       searchedCards,
       handleSelectCard,
       hoveredCard,
+      isSingleCardSelected,
       handleMouseEnterCard,
       handleMouseMoveCard,
       handleMouseLeaveCard,
@@ -445,6 +473,7 @@ export default defineComponent({
   .modal__body__section__options {
     display: flex;
     flex-direction: column;
+    max-height: 255px;
   }
 
   .modal__body__section__sep {
@@ -456,7 +485,7 @@ export default defineComponent({
 
   .modal__body__section__title {
     font-size: 24px;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
 
   .modal__body__section .checkbox {
@@ -539,7 +568,7 @@ export default defineComponent({
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 14px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     box-sizing: border-box;
     outline: none;
     transition: border-color 0.2s ease;

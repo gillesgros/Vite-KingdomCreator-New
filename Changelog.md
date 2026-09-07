@@ -12,6 +12,9 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/09/07 - 7.1.13** - Features & Fixes
+>***Fix*** - updating package.json 
+
 **2026/07/01 - 7.1.12** - Features & Fixes
 >***Feat*** -finalizing Replace Supply and Addon
 

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 export function fixChangelogSpaces() {
-  const changelogPath = path.resolve(__dirname, '../Changelog.md');
+  const changelogPath = path.resolve(import.meta.dirname, '../Changelog.md');
   if (!fs.existsSync(changelogPath)) return;
   console.log('\x1b[33m%s\x1b[0m', '⚠️  Vérification du fichier Changelog.md pour les espaces manquants...');
 

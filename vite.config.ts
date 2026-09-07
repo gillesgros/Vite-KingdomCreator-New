@@ -2,7 +2,7 @@ import { defineConfig,loadEnv } from 'vite';
 import path from 'path';
 import { fileURLToPath, URL } from 'node:url'; // Importation nécessaire
 import fs from 'fs';
-import packageJson from './package.json';
+import packageJson from './package.json' with { type: 'json' };
 
 import vue from '@vitejs/plugin-vue';
 import legacy from '@vitejs/plugin-legacy';
@@ -10,10 +10,10 @@ import vueI18n from '@intlify/unplugin-vue-i18n/vite';
 import del  from 'rollup-plugin-delete';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
-import { DominionContentGenerate, HandleLocaleGenerateAndMerge } from './plugins/vite-dominion-content';
+import { DominionContentGenerate, HandleLocaleGenerateAndMerge } from './plugins/vite-dominion-content.js';
 
-import { CheckVersions_Package_Readme_Changelog } from './plugins/Check-Version-Package-Readme-Changelog';
-import { fixChangelogSpaces } from './plugins/Fix-Changelog'; 
+import { CheckVersions_Package_Readme_Changelog } from './plugins/Check-Version-Package-Readme-Changelog.js';
+import { fixChangelogSpaces } from './plugins/Fix-Changelog.js'; 
 
 const devServerPort = 5173;
 const publicationDir = 'docs';
@@ -72,8 +72,8 @@ export default defineConfig( ({ command, mode }) => {
           closeBundle() {
             try {
             fs.copyFileSync(
-              path.resolve(__dirname, './'+ publicationDir +'/index.html'), 
-              path.resolve(__dirname, './'+ publicationDir +'/404.html'))
+              path.resolve(import.meta.dirname, './'+ publicationDir +'/index.html'), 
+              path.resolve(import.meta.dirname, './'+ publicationDir +'/404.html'))
               console.log('index.html copied successfully');
 
             } catch (err) {
@@ -89,7 +89,7 @@ export default defineConfig( ({ command, mode }) => {
       isPreview ? undefined  :  // si preview alors ==>
         vueI18n({
           // Appliquer ce plugin uniquement si ce n'est pas un 'preview'
-          include: path.resolve(__dirname, './'+ publicationDir +'/locales/*.json'),
+          include: path.resolve(import.meta.dirname, './'+ publicationDir +'/locales/*.json'),
           compositionOnly: true,
           fullInstall: true,
           allowDynamic: true,
@@ -125,7 +125,7 @@ export default defineConfig( ({ command, mode }) => {
       alias: {
         // Alias pour les modules non-Esbuild compatibles avec Vite
         '@': fileURLToPath(new URL('./src', import.meta.url)),
-        //'@': path.resolve(__dirname, './src'),
+        //'@': path.resolve(import.meta.dirname, './src'),
         //'vue-i18n': 'vue-i18n/dist/vue-i18n.esm-bundler.js',
         //'vue': 'vue/dist/vue.esm-bundler.js', 
       },

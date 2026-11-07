@@ -45,6 +45,14 @@
       </header>
       <slot></slot>
       <footer>
+        <button
+          v-if="isNewsButtonVisible"
+          class="standard-button standard-button--is-primary footer-news-button"
+          type="button"
+          @click="openNewsModal"
+        >
+          {{ $t('news_modal_open_button') }}
+        </button>
         <div class="languages">
           <span v-for="(language, index) in languages" :key="language">
             <router-link :to="getLanguageLinkOptions(language)">
@@ -90,7 +98,7 @@
 
 <script lang="ts">
 /* import Vue, typescript */
-import { defineComponent, computed, ref, onMounted, onUnmounted} from 'vue';
+import { defineComponent, computed, ref, onMounted, onUnmounted, inject} from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue';
@@ -104,6 +112,7 @@ import { Language } from '@/i18n/language';
 
 /* import Components */
 import GoogleSyncBadge from '@/components/GoogleSyncBadge.vue';
+import { RELEASE_DATE, TTL_DAYS } from '@/components/WhatsNew_ShowConstants';
 
 export enum MenuItemType {
   RANDOMIZER,
@@ -114,6 +123,17 @@ export enum MenuItemType {
   BOXES,
   SETTINGS,
   HISTORY
+}
+
+function isReleasePeriodActive(timestamp: number): boolean {
+  const expiryDate = new Date(`${RELEASE_DATE}T00:00:00`);
+  expiryDate.setDate(expiryDate.getDate() + TTL_DAYS);
+
+  const currentDate = new Date(timestamp);
+  currentDate.setHours(0, 0, 0, 0);
+  console.log (`Current date: ${currentDate.toISOString()}, Expiry date: ${expiryDate.toISOString()}`);
+  console.log(`CurrentDate.getTime() <= expiryDate.getTime(): ${currentDate.getTime() <= expiryDate.getTime()}`);
+  return currentDate.getTime() <= expiryDate.getTime();
 }
 
 class LocalMenuItem {
@@ -154,6 +174,11 @@ export default defineComponent({
     const route = useRoute();
     const WindowStore = useWindowStore();
     const i18nStore = usei18nStore();
+    const openNewsModalAction = inject<(() => void) | undefined>('openNewsModal');
+    const currentTimestamp = ref(Date.now());
+    const isNewsButtonVisible = computed(() =>
+      props.selectedType === MenuItemType.SETTINGS || isReleasePeriodActive(currentTimestamp.value)
+    );
 
     const { t } = useI18n();
     const language = computed(() => i18nStore.language);
@@ -194,8 +219,26 @@ export default defineComponent({
     });
 
     let recalculateMenuItems: () => void;
+    let newsVisibilityTimeout: number | undefined;
+
+    const scheduleNewsVisibilityUpdate = () => {
+      if (!isReleasePeriodActive(currentTimestamp.value)) return;
+
+      const currentDate = new Date(currentTimestamp.value);
+      const nextMidnight = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate() + 1
+      ).getTime();
+
+      newsVisibilityTimeout = window.setTimeout(() => {
+        currentTimestamp.value = Date.now();
+        scheduleNewsVisibilityUpdate();
+      }, nextMidnight - currentTimestamp.value + 1);
+    };
 
     onMounted(() => {
+      scheduleNewsVisibilityUpdate();
       recalculateMenuItems = () => {
         menuItems.value.condensed = MENU_ITEMS.slice(0, calculateMaxItems(true));
         menuItems.value.extended = MENU_ITEMS.slice(calculateMaxItems(true), MENU_ITEMS.length);
@@ -230,6 +273,9 @@ export default defineComponent({
 
     onUnmounted(() => {
       window.removeEventListener("resize", recalculateMenuItems);
+      if (newsVisibilityTimeout !== undefined) {
+        window.clearTimeout(newsVisibilityTimeout);
+      }
     });
 
     const getLanguageLinkOptions = (language: string) => {
@@ -261,6 +307,8 @@ export default defineComponent({
       getCurrentMenuItemUrl,
       getLanguageLinkOptions,
       handleMenuClick,
+      openNewsModal: () => openNewsModalAction?.(),
+      isNewsButtonVisible,
       isMenuItemActive,
       PackageVersion,
       PackageURL,
@@ -278,6 +326,16 @@ footer {
   font-weight: 300;
   margin: 10px -10px -10px -10px;
   padding: 10px;
+}
+
+.footer-news-button {
+  display: block;
+  min-height: 48px;
+  max-width: 100%;
+  margin: 0 auto 10px;
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
 }
 
 .languages {

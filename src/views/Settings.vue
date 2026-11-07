@@ -52,4 +52,5 @@ export default defineComponent({
   flex-direction: row;
   flex-wrap: wrap;
 }
+
 </style>

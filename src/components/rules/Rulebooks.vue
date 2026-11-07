@@ -81,7 +81,8 @@ export default defineComponent({
               name: t(setid),
             } as RulebookInterface
           })
-          .filter((set) => !Set_To_Ignore_Rules[language.value as keyof typeof Set_To_Ignore_Rules].has(set.id as SetId));
+          .filter((set) => !(Set_To_Ignore_Rules[language.value as keyof typeof Set_To_Ignore_Rules]
+            ?? Set_To_Ignore_Rules[Language.ENGLISH]).has(set.id as SetId));
         return listsets;
       }
       )
@@ -95,4 +96,3 @@ export default defineComponent({
   }
 });
 </script>
-

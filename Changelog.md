@@ -12,6 +12,10 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/10/27 - 7.1.15** - What's New
+>***Feat*** - introduce What's New modal to explain news features  
+>***Fix*** - fix errorr in rulebooks for some language
+
 **2026/09/14 - 7.1.14** - Fixes
 >***Fix*** - updating package.json  
 >***Fix*** - fix for vue-tsc  

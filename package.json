@@ -2,7 +2,7 @@
   "author": "Gilles GROS",
   "name": "vite-kigndomcreator-new",
   "license": "MIT",
-  "version": "7.1.15",
+  "version": "7.1.16",
   "private": true,
   "type": "module",
   "repository": {
@@ -41,7 +41,7 @@
     "@vitejs/plugin-legacy": "^8.2.4",
     "@vitejs/plugin-vue": "^6.0.10",
     "@vue/tsconfig": "^0.9.1",
-    "axios": "^1.21.0",
+    "axios": "^1.21.1",
     "csv-parse": "^7.0.3",
     "file-saver": "^2.0.5",
     "html-to-image": "^1.11.13",
@@ -52,7 +52,7 @@
     "stylus": "^0.64.0",
     "terser": "^5.51.2",
     "typescript": "^6.0.3",
-    "vite": "^8.3.6",
+    "vite": "^8.3.7",
     "vite-plugin-static-copy": "^4.1.1",
     "vue-tsc": "^3.3.14",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"

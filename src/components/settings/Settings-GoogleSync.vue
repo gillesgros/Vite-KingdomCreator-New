@@ -32,8 +32,9 @@
         :disabled="googleSyncStore.isLoading"
       >
         <div class="google-avatar-left-wrapper">
-          <img v-if="googleSyncStore.profile.picture" :src="googleSyncStore.profile.picture" 
+          <img v-if="googleSyncStore.profile.picture && !photoLoadFailed" :src="googleSyncStore.profile.picture"
             class="google-avatar" alt="Profile"
+            @error="photoLoadFailed = true"
           />
           <span v-else class="google-avatar-placeholder">
             {{ googleSyncStore.profile.name?.charAt(0) || googleSyncStore.profile.email?.charAt(0) || 'G' }}
@@ -61,7 +62,13 @@
       <template v-if="googleSyncStore.isSignedIn && googleSyncStore.profile">
         <div class="google-profile-badge google-official-btn google-account-picker-btn">
           <div class="google-avatar-left-wrapper">
-            <img v-if="googleSyncStore.profile.picture" :src="googleSyncStore.profile.picture" class="google-avatar" alt="Profile" />
+            <img
+              v-if="googleSyncStore.profile.picture && !photoLoadFailed"
+              :src="googleSyncStore.profile.picture"
+              class="google-avatar"
+              alt="Profile"
+              @error="photoLoadFailed = true"
+            />
             <span v-else class="google-avatar-placeholder">
               {{ googleSyncStore.profile.name?.charAt(0) || googleSyncStore.profile.email?.charAt(0) || 'G' }}
             </span>
@@ -92,7 +99,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent } from 'vue';
+import { computed, defineComponent, ref, watch } from 'vue';
 import { useGoogleSyncStore } from '@/pinia/google-sync-store';
 import { getGoogleClientId, isGoogleSyncAvailable } from '@/utils/google-sync';
 
@@ -102,17 +109,27 @@ export default defineComponent({
     const googleSyncStore = useGoogleSyncStore();
     const isGoogleConfigured = computed(() => isGoogleSyncAvailable());
     const googleClientId = computed(() => getGoogleClientId());
+    const photoLoadFailed = ref(false);
+
+    watch(
+      () => googleSyncStore.profile?.picture,
+      () => {
+        photoLoadFailed.value = false;
+      }
+    );
 
     return {
       googleSyncStore,
       isGoogleConfigured,
-      googleClientId
+      googleClientId,
+      photoLoadFailed
       };
   },
 });
 </script>
 
 <style scoped>
+
 .setting-panel {
   background: #f7f7f7;
   border: 1px solid #ddd;
@@ -143,12 +160,14 @@ export default defineComponent({
   border-radius: 50%;
 }
 
+/* set in global css
 .google-sync-message {
   margin-top: 10px;
   color: #555;
-  font-family: secondary-font;
+  font-family: primary-font;
   font-weight: 300;
 }
+*/
 
 .google-sync-warning {
   color: #8a4b00;

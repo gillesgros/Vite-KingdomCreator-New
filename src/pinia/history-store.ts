@@ -43,6 +43,7 @@ export const useHistoryStore = defineStore('historyStore', {
         */
 
        } catch (err) {
+        googleSyncStore.isDriveAccessVerified = false;
         this.error = err instanceof Error ? err.message : 'Failed to load history';
         console.error(err);
       } finally {
@@ -127,6 +128,7 @@ export const useHistoryStore = defineStore('historyStore', {
           await saveHistoryToGoogle(token, this.playedKingdoms);
           console.log('History saved to Google Drive successfully.');
         } catch (err) {
+          googleSyncStore.isDriveAccessVerified = false;
           console.error('Failed to sync added kingdom to Google Drive:', err);
           alert('Failed to sync added kingdom to Google Drive');
           // On peut choisir de lever une erreur ou de gérer un mode hors-ligne ici

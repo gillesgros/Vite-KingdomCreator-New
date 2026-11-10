@@ -1,10 +1,20 @@
 <template>
   <li v-if="isCondensed" class="condensed-menu-profile" @click="handleAction">
-    <template v-if="googleSyncStore.isSignedIn && googleSyncStore.profile">
-      <img v-if="googleSyncStore.profile.picture" :src="googleSyncStore.profile.picture" class="mobile-avatar" />
+    <template v-if="googleSyncStore.profile">
+      <img
+        v-if="googleSyncStore.profile.picture && !photoLoadFailed"
+        :src="googleSyncStore.profile.picture"
+        class="mobile-avatar"
+        @error="photoLoadFailed = true"
+      />
+      <div v-else class="mobile-avatar-placeholder">
+        {{ googleSyncStore.profile.name?.charAt(0) || 'G' }}
+      </div>
       <div class="profile-info">
         <span class="profile-name">{{ googleSyncStore.profile.name }}</span>
-        <span class="profile-status">✓ Cloud Sync actif</span>
+        <span class="profile-status" :class="{ 'status-disconnected': !hasDriveAccess }">
+          {{ hasDriveAccess ? '✓ Cloud Sync actif' : 'Autorisation Drive requise' }}
+        </span>
       </div>
     </template>
     <template v-else>
@@ -18,14 +28,18 @@
 
 <span v-else 
       class="title-profile-badge" 
-      :class="{ 'is-disconnected': !isConnected }"
+      :class="{ 'is-disconnected': !hasDriveAccess }"
       :title="badgeTooltip"
       @click="handleAction">
   
-  <img v-if="isConnected && googleSyncStore.profile?.picture" 
+  <img v-if="googleSyncStore.profile?.picture && !photoLoadFailed"
        :src="googleSyncStore.profile.picture" 
-       class="title-avatar" />
+       class="title-avatar"
+       @error="photoLoadFailed = true" />
        
+  <span v-else-if="googleSyncStore.profile" class="title-avatar-placeholder">
+    {{ googleSyncStore.profile.name?.charAt(0) || googleSyncStore.profile.email?.charAt(0) || 'G' }}
+  </span>
   <span v-else class="title-avatar-placeholder">
     <svg viewBox="0 0 24 24" width="18" height="18">
       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -40,7 +54,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { useGoogleSyncStore } from '@/pinia/google-sync-store';
@@ -56,29 +70,68 @@ export default defineComponent({
   setup() {
     const { t } = useI18n();
     const googleSyncStore = useGoogleSyncStore();
+    const photoLoadFailed = ref(false);
+    const currentTime = ref(Date.now());
+    let statusRefreshInterval: number | undefined;
+
+    watch(
+      () => googleSyncStore.profile?.picture,
+      () => {
+        photoLoadFailed.value = false;
+      }
+    );
 
     // Raccourci pour valider la connexion
     const isConnected = computed(() => {
-      return googleSyncStore.isSignedIn && googleSyncStore.profile;
+      return googleSyncStore.isSignedIn && !!googleSyncStore.profile;
+    });
+
+    const hasDriveAccess = computed(() =>
+      isConnected.value &&
+      googleSyncStore.isDriveAccessVerified &&
+      !!googleSyncStore.accessToken &&
+      !!googleSyncStore.tokenExpirationTime &&
+      currentTime.value < googleSyncStore.tokenExpirationTime - 120000
+    );
+
+    onMounted(() => {
+      statusRefreshInterval = window.setInterval(() => {
+        currentTime.value = Date.now();
+      }, 60000);
+    });
+
+    onUnmounted(() => {
+      if (statusRefreshInterval !== undefined) {
+        window.clearInterval(statusRefreshInterval);
+      }
     });
 
     // Détermine la classe CSS de la puce de couleur
     const statusClass = computed(() => {
-      if (!googleSyncStore.isSignedIn) return 'status-grey';
-      return 'status-green';
+      if (hasDriveAccess.value) return 'status-green';
+      if (isConnected.value) return 'status-warning';
+      return 'status-grey';
     });
 
     // Infobulle dynamique au survol
     const badgeTooltip = computed(() => {
-      if (isConnected.value) {
-        return t(`Signed as`, { name: googleSyncStore.profile?.name });
+      if (!isConnected.value || !googleSyncStore.profile) {
+        return t('Cloud backup disabled');
       }
-      return t('Cloud backup disabled.');
+
+      const accountName = t('Signed in as', {
+        name: googleSyncStore.profile.name || googleSyncStore.profile.email || 'Google',
+      });
+      return hasDriveAccess.value
+        ? t('Signed as', {
+            name: googleSyncStore.profile.name || googleSyncStore.profile.email || 'Google',
+          })
+        : `${accountName} — ${t('Cloud backup disabled')}`;
     });
 
     // Gestion du clic
     const handleAction = async () => {
-      if (!isConnected.value) {
+      if (!hasDriveAccess.value) {
         try {
           // Déclenche l'authentification Google
           await googleSyncStore.signInAndInit();
@@ -96,7 +149,9 @@ export default defineComponent({
 
     return {
       googleSyncStore,
+      photoLoadFailed,
       isConnected,
+      hasDriveAccess,
       statusClass,
       badgeTooltip,
       handleAction
@@ -178,8 +233,8 @@ export default defineComponent({
   border: 2px solid #bdc1c6;
 }
 
-.title-profile-badge:hover .title-avatar,
-.title-profile-badge:hover .title-avatar-placeholder {
+.title-profile-badge:not(.is-disconnected):hover .title-avatar,
+.title-profile-badge:not(.is-disconnected):hover .title-avatar-placeholder {
   transform: scale(1.1);
   border-color: #22c55e; /* Devient vert au survol pour inciter au clic */
 }
@@ -208,6 +263,9 @@ export default defineComponent({
 }
 .status-grey {
   background-color: #9ca3af; /* Gris : Déconnecté */
+}
+.status-warning {
+  background-color: #f59e0b;
 }
 .status-red {
   background-color: #ef4444; /* Rouge : Erreur (token expiré, réseau) */

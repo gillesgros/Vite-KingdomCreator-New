@@ -131,8 +131,6 @@ function isReleasePeriodActive(timestamp: number): boolean {
 
   const currentDate = new Date(timestamp);
   currentDate.setHours(0, 0, 0, 0);
-  console.log (`Current date: ${currentDate.toISOString()}, Expiry date: ${expiryDate.toISOString()}`);
-  console.log(`CurrentDate.getTime() <= expiryDate.getTime(): ${currentDate.getTime() <= expiryDate.getTime()}`);
   return currentDate.getTime() <= expiryDate.getTime();
 }
 

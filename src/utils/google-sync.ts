@@ -115,6 +115,24 @@ export async function requestDriveAccessToken(hintEmail?: string, silent: boolea
   });
 }
 
+export async function verifyDriveAccess(token: string): Promise<void> {
+  const searchParams = new URLSearchParams({
+    spaces: APPDATA_FOLDER,
+    pageSize: '1',
+    fields: 'files(id)',
+  });
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files?${searchParams.toString()}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Google Drive access check failed (${response.status})`);
+  }
+}
+
 /**
  * Recherche le fichier en utilisant le jeton fourni par le Store
  */

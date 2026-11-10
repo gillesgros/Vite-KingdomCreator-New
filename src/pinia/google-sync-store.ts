@@ -10,6 +10,7 @@ import {
   restoreConfigFromGoogle,
   saveConfigToGoogle,
   requestDriveAccessToken,
+  verifyDriveAccess,
   decodeGoogleCredential,
   ensureGoogleIdInitGuard,
   type GoogleBackupPayload,
@@ -25,6 +26,7 @@ export interface GoogleSyncProfile {
 export const useGoogleSyncStore = defineStore('googleSyncStore', {
   state: () => ({
     isSignedIn: false,
+    isDriveAccessVerified: false,
     profile: null as GoogleSyncProfile | null,
     accessToken: null as string | null, 
     tokenExpirationTime: null as number | null,
@@ -52,32 +54,40 @@ export const useGoogleSyncStore = defineStore('googleSyncStore', {
       });
       // 2. Si l'utilisateur s'était déjà connecté lors d'une session précédente
       if (this.isSignedIn && this.accessToken && this.tokenExpirationTime) {
-      const now = Date.now();
-      // Si le jeton en cache est encore valide (avec une marge de sécurité de 2 minutes)
-      if (now < this.tokenExpirationTime - 120000) {
         try {
+          const now = Date.now();
+          const cachedToken = this.accessToken;
+          if (now >= this.tokenExpirationTime - 120000) {
+            throw new Error('Cached Google Drive token has expired.');
+          }
+          await verifyDriveAccess(cachedToken);
+          this.isDriveAccessVerified = true;
           this.lastMessage = `Connected (loaded from session cache).`;
-          console.log(" ==> from initialize")
-          useHistoryStore().loadHistory();
+          await useHistoryStore().loadHistory();
           return;
-        } catch (error) { 
+        } catch {
           this.accessToken = null;
+          this.tokenExpirationTime = null;
+          this.isDriveAccessVerified = false;
         }
       }
-    }
       if (this.isSignedIn) {
         try {
           this.isLoading = true;
           // On récupère un token Drive frais sans ouvrir de pop-up 
           // (Google s'en souvient si la session globale de son navigateur est active)
-          this.accessToken = await requestDriveAccessToken(this.profile?.email, true /* silent prompt */);
-          this.tokenExpirationTime = Date.now() + 3600000
-          console.log(" ==> from initialize after reconnect")
-          useHistoryStore().loadHistory();
+          const token = await requestDriveAccessToken(this.profile?.email, true /* silent prompt */);
+          await verifyDriveAccess(token);
+          this.accessToken = token;
+          this.tokenExpirationTime = Date.now() + 3600000;
+          this.isDriveAccessVerified = true;
+          await useHistoryStore().loadHistory();
           this.lastMessage = `Welcome back! Connected to Google Drive.`;
         } catch (error) {
-          // Si le rafraîchissement échoue (ex: hors ligne), on ne déconnecte pas brutalement, 
-          // getValidToken() s'en occupera au premier clic sur Save/Restore
+          this.accessToken = null;
+          this.tokenExpirationTime = null;
+          this.isDriveAccessVerified = false;
+          this.isSignedIn = false;
           console.warn("Auto-login Google Drive deferred:", error);
         } finally {
           this.isLoading = false;
@@ -90,8 +100,10 @@ export const useGoogleSyncStore = defineStore('googleSyncStore', {
       this.isLoading = true;
       try {
         const token = await requestDriveAccessToken('', false /* silent prompt ? */);
+        await verifyDriveAccess(token);
         this.accessToken = token;
         this.tokenExpirationTime = Date.now() + 3600000;
+        this.isDriveAccessVerified = true;
 
         // 2. On profite de ce token pour aller chercher les infos de profil (nom, email, photo)
         const profileResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -112,12 +124,12 @@ export const useGoogleSyncStore = defineStore('googleSyncStore', {
           this.lastMessage = 'Connected to Google Drive.';
         }
         this.isSignedIn = true;
-        console.log(" ==> from signInAndInit")
-        useHistoryStore().loadHistory();
+        await useHistoryStore().loadHistory();
       } catch (error) {
         this.accessToken = null;
+        this.tokenExpirationTime = null;
+        this.isDriveAccessVerified = false;
         this.isSignedIn = false;
-        this.profile = null;
         this.lastMessage = error instanceof Error ? error.message : 'Login failed.';
       } finally {
         this.isLoading = false;
@@ -128,30 +140,53 @@ export const useGoogleSyncStore = defineStore('googleSyncStore', {
     async getValidToken(): Promise<string> {
       const now = Date.now();
       if (this.accessToken && this.tokenExpirationTime && now < this.tokenExpirationTime - 120000) {
-          return this.accessToken;
+        const cachedToken = this.accessToken;
+        if (this.isDriveAccessVerified) {
+          return cachedToken;
+        }
+        try {
+          await verifyDriveAccess(cachedToken);
+          this.isDriveAccessVerified = true;
+          return cachedToken;
+        } catch {
+          this.isDriveAccessVerified = false;
+          this.accessToken = null;
+          this.tokenExpirationTime = null;
+        }
       }
       console.log("No valid token found. Requesting a new one from Google Drive...");
-      // Si perdu ou expiré, ouvre la pop-up
-try {
-    // Tentative de récupération transparente sans pop-up
-    const token = await requestDriveAccessToken(this.profile?.email, true /* silent prompt */);
-    this.accessToken = token;
-    this.tokenExpirationTime = Date.now() + 3600000;
-    return token;
-  } catch (silentError) {
-    console.warn("Échec du rafraîchissement silencieux, ouverture de la pop-up Google...");
-    
-    // Si le mode silencieux échoue, on ouvre la pop-up habituelle
-    const token = await requestDriveAccessToken(this.profile?.email, false /* interactive prompt */);
-    this.accessToken = token;
-    this.tokenExpirationTime = Date.now() + 3600000;
-    return token;
-  }
+      try {
+        const token = await requestDriveAccessToken(this.profile?.email, true /* silent prompt */);
+        await verifyDriveAccess(token);
+        this.accessToken = token;
+        this.tokenExpirationTime = Date.now() + 3600000;
+        this.isDriveAccessVerified = true;
+        return token;
+      } catch (silentError) {
+        console.warn("Échec du rafraîchissement silencieux, ouverture de la pop-up Google...", silentError);
+
+        try {
+          const token = await requestDriveAccessToken(this.profile?.email, false /* interactive prompt */);
+          await verifyDriveAccess(token);
+          this.accessToken = token;
+          this.tokenExpirationTime = Date.now() + 3600000;
+          this.isDriveAccessVerified = true;
+          return token;
+        } catch (error) {
+          this.accessToken = null;
+          this.tokenExpirationTime = null;
+          this.isDriveAccessVerified = false;
+          throw error;
+        }
+      }
     },
 
     async signOut() {
       this.isSignedIn = false;
+      this.isDriveAccessVerified = false;
       this.accessToken = null;
+      this.tokenExpirationTime = null;
+      this.profile = null;
       useHistoryStore().clearLocalHistory();
       this.lastMessage = 'Signed out from Google.';
     },
@@ -183,6 +218,7 @@ try {
         await saveConfigToGoogle(token, payload);
         this.lastMessage = 'Configuration saved to Google Drive.';
       } catch (error) {
+        this.isDriveAccessVerified = false;
         const message = error instanceof Error ? error.message : 'Unable to save configuration.';
         if (/401|403|invalid token|token expired|unauthorized/i.test(message)) {
           this.accessToken = null;
@@ -224,6 +260,7 @@ try {
         }
         this.lastMessage = 'Configuration restored from Google Drive.';
       } catch (error) {
+        this.isDriveAccessVerified = false;
         const message = error instanceof Error ? error.message : 'Unable to restore configuration.';
         if (/401|403|invalid token|token expired|unauthorized/i.test(message)) {
           this.accessToken = null;

@@ -52,12 +52,21 @@
     "stylus": "^0.64.0",
     "terser": "^5.51.2",
     "typescript": "^6.0.3",
-    "vite": "^8.3.7",
+    "vite": "^8.3.6",
     "vite-plugin-static-copy": "^4.1.1",
     "vue-tsc": "^3.3.14",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   },
   "trustedDependencies": [
-    "core-js"
-  ]
+    "core-js",
+    "esbuild"
+  ],
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.5"
+    },
+    "stylus": {
+      "glob": "^14.0.4"
+    }
+  }
 }

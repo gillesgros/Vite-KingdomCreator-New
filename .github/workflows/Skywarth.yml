@@ -1,4 +1,4 @@
-name: SkyWarth - Vite Github Pages Deploy
+name: Vite-Kingdom - Github Pages Deploy
 
 on:
   # Runs on pushes targeting the default branch
@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+# Forces redeployment of the GitHub Pages site on every push to the default branch
 permissions:
   contents: read
   pages: write
@@ -39,4 +40,5 @@ jobs:
         with:
           public_base_path: '/Vite-KingdomCreator-New'
           build_path: './docs'
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
         id: deploy_to_pages

@@ -113,6 +113,7 @@ import { Language } from '@/i18n/language';
 /* import Components */
 import GoogleSyncBadge from '@/components/GoogleSyncBadge.vue';
 import { RELEASE_DATE, TTL_DAYS } from '@/components/WhatsNew_ShowConstants';
+import { EventTracker, EventType } from '@/analytics/follow-activity';
 
 export enum MenuItemType {
   RANDOMIZER,
@@ -191,6 +192,11 @@ export default defineComponent({
         if (isCondensedMenuActive.value) return returnStr;
         return ""
       });
+
+    const openNewsModal = () => {
+      EventTracker.trackEvent(EventType.NEWS_MODAL_OPEN);
+      openNewsModalAction?.();
+    };
 
     const getMenuItemUrl = (url: string) => {
       return {
@@ -305,7 +311,7 @@ export default defineComponent({
       getCurrentMenuItemUrl,
       getLanguageLinkOptions,
       handleMenuClick,
-      openNewsModal: () => openNewsModalAction?.(),
+      openNewsModal,
       isNewsButtonVisible,
       isMenuItemActive,
       PackageVersion,

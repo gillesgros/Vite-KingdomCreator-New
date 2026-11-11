@@ -10,6 +10,9 @@ As I became a maintainer for Kingdom Creator, https://www.dominionrandomizer.com
 Feel free to propose any improvements you see fit and send me a pull request!
 
 ## Changelog
+**2026/11/11 - 7.1.17** - Handling mutiple rlease of rules
+>***Feat*** (see [Changelog.md](./Changelog.md))
+
 **2026/11/09 - 7.1.16** - Handling mutiple rlease of rules
 >***Feat*** (see [Changelog.md](./Changelog.md))
 

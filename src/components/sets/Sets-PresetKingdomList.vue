@@ -65,7 +65,7 @@ setup(props) {
     if (setId === SetId.ALL) {
       returnedKingdom  =  DominionKingdoms.getAllKingdoms();
     } else if (!(setId in DominionKingdoms.kingdoms)) { 
-      console.log("return empty")
+      console.log("return sets empty")
       return []; 
     } else {
       returnedKingdom =  DominionKingdoms.kingdoms[setId] as DominionKingdom[]
@@ -75,7 +75,7 @@ setup(props) {
       returnedKingdom = returnedKingdom
         .filter(kd => { return kd.setIds.every(setid => OwnedSets.has(setid))})
     } 
-    console.log(returnedKingdom)
+    //console.log(returnedKingdom)
     return returnedKingdom
   })
 

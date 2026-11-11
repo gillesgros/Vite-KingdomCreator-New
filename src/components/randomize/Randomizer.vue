@@ -32,8 +32,10 @@ import { useRandomizerStore } from '@/pinia/randomizer-store';
 import { useWindowStore } from '@/pinia/window-store';
 import { usei18nStore } from '@/pinia/i18n-store';
 import { useHistoryStore } from '@/pinia/history-store';
+import { useGoogleSyncStore } from '@/pinia/google-sync-store';
 import { deserializeKingdom, serializeKingdom } from '@/randomizer/serializer';
 import { generateKingdomHash } from '@/randomizer/kingdom-hash';
+import { EventTracker, EventType } from '@/analytics/follow-activity';
 
 /* import Components */
 import Addons from './Addons.vue';
@@ -66,6 +68,7 @@ export default defineComponent({
     const windowStore = useWindowStore();
     const i18nStore = usei18nStore();
     const historyStore = useHistoryStore(); 
+    const googleSyncStore = useGoogleSyncStore();
     const { t } = useI18n();
     const route = useRoute();
     const router = useRouter();
@@ -123,6 +126,9 @@ export default defineComponent({
     }
 
     const handlePlayed = async () => {
+      if (googleSyncStore.isSignedIn) {
+        EventTracker.trackEvent(EventType.MARK_KINGDOM_PLAYED,kingdom.value);
+      }
       if (historyStore.isKingdomAlreadyPlayed(kingdom.value)) return;
       isSaving.value = true;
       try {

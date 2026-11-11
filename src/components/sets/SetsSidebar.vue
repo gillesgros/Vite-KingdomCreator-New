@@ -100,6 +100,7 @@ import { DominionKingdoms } from '@/dominion/dominion-kingdoms';
 import { MultipleVersionSets, HideMultipleVersionSets } from '@/dominion/set-id';
 import { SetId, Set_To_Ignore_Kingdoms } from '@/dominion/set-id';
 import { Year_set } from '@/dominion/digital_cards/digital-cards-Illustrator';
+import { EventTracker, EventType } from '@/analytics/follow-activity';
 
 import { SortOption } from '@/settings/settings';
 import { load as Yaml_Parsing } from 'js-yaml';
@@ -147,7 +148,7 @@ export default defineComponent({
             ? AllSetIdsToConsider.sort((a, b) => (Year_set.find(set => set.id === a)?.order ||1000) - (Year_set.find(set => set.id === b)?.order ||1000))
             : AllSetIdsToConsider.sort((a, b) => t(a).localeCompare(t(b)))
 
-        console.log(sortedSets)
+        //console.log(sortedSets)
         return sortedSets;
       }
       );
@@ -229,6 +230,7 @@ export default defineComponent({
         ? show_PersonalFileSelection_Input.value = true
         : show_PersonalFileSelection_Input.value = false;
       setsStore.updateSelectedSet(value);
+      EventTracker.trackEvent(EventType.SET_VIEW, { setId: value });
     };
 
     const handleSortChange = (value: SortOption) => {

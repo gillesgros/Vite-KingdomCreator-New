@@ -200,7 +200,7 @@ export default defineComponent({
               { type: Addons_TYPE.BOON,
                 cards: allowedAddonTypes.value.includes(Addons_TYPE.BOON) ? (set.boons || []) : [] }
           ];
-          console.log(addonCollections);
+          //console.log(addonCollections);
           return addonCollections.some((collection) => collection.cards.length > 0)
         })
         .sort((a, b) => {
@@ -227,7 +227,7 @@ export default defineComponent({
       
       const currentAddonsIds = randomizerStore.extendedAddons.map(a => a.id);
       // notice randomizerStore.addons contains only true addons : events, landmarks, projects, ways, traits
-      console.log('currentAddonsIds:', currentAddonsIds)
+      //('currentAddonsIds:', currentAddonsIds)
       matchedCards = matchedCards.filter(card => {
         const inKingdom = currentAddonsIds.includes(card.id);
         return !inKingdom ;

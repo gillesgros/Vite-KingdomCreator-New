@@ -26,16 +26,15 @@ export function initialize<S>(router: Router) {
 };
 
 function initializeWindowListener () {
-  window.addEventListener("resize", () => {
-    updateWindowSize();
+  window.addEventListener("resize", updateWindowSize);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) updateWindowSize();
   });
-  updateWindowSize();   
-    if (window.outerWidth === 0) {
-    window.location.href = window.location.href.replace(/\/$/, '');
-  }
+  updateWindowSize();
 };
 
 function updateWindowSize () {
+  if (window.outerWidth <= 0) return;
   const WindowStore = useWindowStore();
   WindowStore.updateWindowWidth(window.outerWidth);
 };

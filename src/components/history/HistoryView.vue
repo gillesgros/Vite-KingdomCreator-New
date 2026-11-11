@@ -154,6 +154,7 @@ import { deserializeKingdomFromHash } from '@/randomizer/kingdom-hash';
 import { serializeKingdom } from '@/randomizer/serializer';
 import { Language } from '@/i18n/language';
 import { DominionSets } from '@/dominion/dominion-sets';
+import { EventTracker, EventType } from '@/analytics/follow-activity';
 
 import HistoryKingdomDetails from './HistoryKingdomDetails.vue';
 
@@ -299,14 +300,14 @@ export default defineComponent({
       try {
         const kingdom = deserializeKingdomFromHash(hash);
         if (!kingdom) return;
-
+        EventTracker.trackEvent(EventType.HISTORY_KINGDOM_REPLAY, kingdom);
         await historyStore.addKingdomToHistory(kingdom);
 
         const lang = Array.isArray(route.query.lang)
           ? route.query.lang[0]
           : route.query.lang || Language.ENGLISH;
 
-        randomizerStore.LOAD_INITIAL_KINGDOM(kingdom);
+        randomizerStore.LOAD_INITIAL_KINGDOM(kingdom, 'play_again');
 
         await router.push({
           path: '/',

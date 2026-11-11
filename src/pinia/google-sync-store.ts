@@ -46,12 +46,12 @@ export const useGoogleSyncStore = defineStore('googleSyncStore', {
         this.lastMessage = 'Google sync is not configured.';
         return;
       }
-      console.log("Google sync is available. Checking for existing session...");
-      console.log("Current state:", {
-        isSignedIn: this.isSignedIn,
-        accessToken: this.accessToken,
-        tokenExpirationTime: new Date(this.tokenExpirationTime || Date.now()).toLocaleTimeString(),
-      });
+      //console.log("Google sync is available. Checking for existing session...");
+      //console.log("Current state:", {
+      //   isSignedIn: this.isSignedIn,
+      //   accessToken: this.accessToken,
+      //   tokenExpirationTime: new Date(this.tokenExpirationTime || Date.now()).toLocaleTimeString(),
+      // });
       // 2. Si l'utilisateur s'était déjà connecté lors d'une session précédente
       if (this.isSignedIn && this.accessToken && this.tokenExpirationTime) {
         try {
@@ -154,7 +154,7 @@ export const useGoogleSyncStore = defineStore('googleSyncStore', {
           this.tokenExpirationTime = null;
         }
       }
-      console.log("No valid token found. Requesting a new one from Google Drive...");
+      //console.log("No valid token found. Requesting a new one from Google Drive...");
       try {
         const token = await requestDriveAccessToken(this.profile?.email, true /* silent prompt */);
         await verifyDriveAccess(token);
@@ -244,7 +244,7 @@ export const useGoogleSyncStore = defineStore('googleSyncStore', {
           this.lastMessage = 'No saved configuration was found in Google Drive.';
           return;
         }
-        console.log("Restoring configuration from Google Drive:", payload);
+        //console.log("Restoring configuration from Google Drive:", payload);
         const settingsStore = useSettingsStore();
         const randomizerStore = useRandomizerStore();
         const i18nStore = usei18nStore();

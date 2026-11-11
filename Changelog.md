@@ -12,6 +12,10 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/11/11 - 7.1.17** - analytics info
+>***Feat*** - Introducing analytics informatiosn to follow randomizer usage  
+>***Fix*** - precise palyed button behavior  
+
 **2026/11/09 - 7.1.16** - Handling mutiple rlease of rules
 >***Feat*** - Handling multiple release of rulebooks  
 >***Fix*** - fix error google badge  

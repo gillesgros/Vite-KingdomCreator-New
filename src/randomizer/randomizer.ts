@@ -113,13 +113,19 @@ export class Randomizer {
     return Cards.filterSetsByAllowedSetIds(DominionSets.getAllSets(), SavedSetIds);
   }
 
-  static createSupplySafe(randomizerOptions: RandomizerOptions): Supply | null {
+  static createSupplySafe(
+    randomizerOptions: RandomizerOptions,
+    trackingData: Record<string, unknown> = {}
+  ): Supply | null {
     try {
       return this.createSupplyWithRetries(randomizerOptions);
     } catch (error) {
       if (typeof error === 'object' && error !== null) {
         console.log(`Failed to create supply: \n${error.toString()}`);
-        EventTracker.trackError(EventType.RANDOMIZE_MULTIPLE_SUPPLY, { message: error.toString() });
+        EventTracker.trackError(EventType.RANDOMIZE_MULTIPLE_SUPPLY, {
+          ...trackingData,
+          message: error.toString(),
+        });
         alert(`Failed to create supply: \n${error.toString()}`)
       }
       else
@@ -360,10 +366,10 @@ export class Randomizer {
       if (FORCE_ADDONS_USE()) {
         if (selectedEvents.length + selectedLandmarks.length + selectedProjects.length 
               + selectedWays.length + selectedTraits.length == MAX_ADDONS_IN_KINGDOM())   {
-          console.log("getAddons: forced addons use & addons number satisfied");
+          //console.log("getAddons: forced addons use & addons number satisfied");
           break
         } else {
-          console.log("getAddons: forced addons use & addons number not satisfied, retrying with new selectedCards");
+          //console.log("getAddons: forced addons use & addons number not satisfied, retrying with new selectedCards");
           previousComplementarySelectedIds = [
             ...previousComplementarySelectedIds,
             ...selectedCards.map(card => card.id)
@@ -519,7 +525,7 @@ export class Randomizer {
                     && card.id != supply.baneCard?.id 
                     && card.id != supply.riverboatCard?.id )
             .filter(card => card.isOfType(APPROACHINGARMY_CARDTYPE_REQUESTED))
-        // console.log(candidateCards)
+        //console.log(candidateCards)
         // ugly by definition if No APPROACHINGARMY_CARDTYPE_REQUESTED present
         const randomIndex = Math.floor(Math.random() * candidateCards.length);
         calculateApproachingArmyCard  = candidateCards[randomIndex]
@@ -562,7 +568,7 @@ export class Randomizer {
   }
 
   private static selectRandomCards<T>(cards: T[], numberToSelect: number): T[] {
-    console.log('[Randomizer] Random selecting',numberToSelect, 'among', cards.length);
+    //console.log('[Randomizer] Random selecting',numberToSelect, 'among', cards.length);
     const randomIndices = getRandomInts(numberToSelect, cards.length);
     const selectedCards: T[] = [];
     for (const index of randomIndices) {
@@ -758,4 +764,3 @@ export class Randomizer {
     return distribution;
   }
 }
-

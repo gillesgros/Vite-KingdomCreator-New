@@ -20,7 +20,7 @@ export const useHistoryStore = defineStore('historyStore', {
       const googleSyncStore = useGoogleSyncStore();
       if (!googleSyncStore.isSignedIn) return;
       this.isLoading = true;
-      console.log('Loading history from Google Drive...', this.isLoading);
+      //('Loading history from Google Drive...', this.isLoading);
       this.error = null;
       try {
         const token = await googleSyncStore.getValidToken();
@@ -60,7 +60,7 @@ export const useHistoryStore = defineStore('historyStore', {
       //console.log (`Adding kingdom to history with hash: ${hash}`);
       // S'il est déjà présent, inutile de fatiguer le réseau ou de réécrire
       if (this.playedKingdoms[hash]) {
-        console.log(`Kingdom is already in history.`);
+        //console.log(`Kingdom is already in history.`);
         return;
       }
       // Ajout local immédiat (UI réactive)
@@ -89,7 +89,7 @@ export const useHistoryStore = defineStore('historyStore', {
 
     // À ajouter dans les actions de votre history-store.ts
     async deleteKingdomFromHistory(hash: string) {
-      console.log(`Suppression du royaume avec le hash: ${hash}`);
+      //console.log(`Suppression du royaume avec le hash: ${hash}`);
       
       // 1. Suppression locale
       if (this.playedKingdoms[hash]) {
@@ -126,7 +126,7 @@ export const useHistoryStore = defineStore('historyStore', {
         try {
           const token = await googleSyncStore.getValidToken();
           await saveHistoryToGoogle(token, this.playedKingdoms);
-          console.log('History saved to Google Drive successfully.');
+          //console.log('History saved to Google Drive successfully.');
         } catch (err) {
           googleSyncStore.isDriveAccessVerified = false;
           console.error('Failed to sync added kingdom to Google Drive:', err);

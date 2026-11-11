@@ -1,9 +1,17 @@
 <template>
   <div class="sidebar">
-    <a class="standard-button standard-button--is-primary standard-button--large desktop_randomize-button"
-      v-if="!isCondensed" @click="handleRandomize">
-      {{ $t(randomizeButtonText) }}
-    </a>
+<div v-if="!isCondensed" class="sidebar-actions-container">
+      <a class="standard-button standard-button--is-primary randomize-button"
+         :class="{ 'button--half-width': googleSyncStore.isSignedIn }"
+         @click="handleRandomize">
+        {{ $t(randomizeButtonText) }}
+      </a>
+      <a v-if="googleSyncStore.isSignedIn" 
+         class="standard-button standard-button--is-primary played-button"
+         @click="handlePlayed">
+        {{ $t(playedButtonText) }}
+      </a>
+    </div>
     <div class="sidebar-content filters">
       <div class="sidebar-content-title">
         <span>{{ $t("Sets") }}</span>
@@ -73,6 +81,12 @@
             <span>{{ $t("Require Reaction") }}</span>
           </label>
         </div>
+        <div class="suboption">
+          <label class="checkbox" :class="{ disable: !allowAttacks }" :title="$t('requireAttack')">
+            <input id="requireAttack" type="checkbox" v-model="requireAttack" :disabled="!allowAttacks">
+            <span>{{ $t("Require Attack") }}</span>
+          </label>
+        </div>
       </div>
       <div class="option">
         <label class="checkbox" :title="$t('requireTrashing')">
@@ -113,11 +127,21 @@
           <span>{{ $t(sortOption.display) }}</span>
         </label>
       </div>
-      <a class="standard-button standard-button--is-primary standard-button--large condensed_randomize-button"
-        v-if="isCondensed" @click="handleRandomize">
-        {{ $t(randomizeButtonText) }}
-      </a>
+
     </div>
+          <div v-if="isCondensed" class="sidebar-actions-container mobile-actions">
+        <a class="standard-button standard-button--is-primary standard-button--large randomize-button"
+           :class="{ 'button--half-width': googleSyncStore.isSignedIn }"
+           @click="handleRandomize">
+          {{ $t(randomizeButtonText) }}
+        </a>
+        <!-- Bouton "Joué" Mobile -->
+        <a v-if="googleSyncStore.isSignedIn" 
+           class="standard-button standard-button--is-primary standard-button--large played-button"
+           @click="handlePlayed">
+          {{ $t(playedButtonText) }}
+        </a>
+      </div>
   </div>
 </template>
 
@@ -137,7 +161,7 @@ import { useWindowStore } from '@/pinia/window-store';
 import { useRandomizerStore } from '@/pinia/randomizer-store';
 import { useSetsStore } from '@/pinia/sets-store';
 import { useSettingsStore } from '@/pinia/settings-store';
-
+import { useGoogleSyncStore } from '@/pinia/google-sync-store';
 
 import type { SettingsParams } from '@/settings/settings';
 import { SortOption } from '@/settings/settings';
@@ -149,12 +173,21 @@ export default defineComponent({
   name: "RandomizerSidebar",
   components: {
   },
+  emits: ['randomize', 'played'], 
+  props: {
+    playedButtonText: {
+      type: String,
+      default: 'Play_It'
+    }
+  },
   setup(props, { emit }) {
     const { t } = useI18n();
-    const randomizerStore = useRandomizerStore()
-    const setsStore = useSetsStore()
-    const windowStore = useWindowStore()
-    const settingsStore = useSettingsStore()
+    const randomizerStore = useRandomizerStore();
+    const setsStore = useSetsStore();
+    const windowStore = useWindowStore();
+    const settingsStore = useSettingsStore();
+    const googleSyncStore = useGoogleSyncStore();
+
     const isCondensed = computed(() => { return windowStore.isCondensed });
     const isDistributeCostAllowed = computed(() => { return randomizerStore.isDistributeCostAllowed });
     const isPrioritizeSetAllowed = computed(() => { return randomizerStore.isPrioritizeSetAllowed });
@@ -167,6 +200,16 @@ export default defineComponent({
     let selectAllState: 'checked' | 'unchecked' | 'indeterminate' = 'unchecked';
     let PreviousSelectAllState: 'checked' | 'unchecked' | 'indeterminate' = 'unchecked';
     let previousSelectedSetIds: SetId[] = [];
+
+    const SetIdsWithDuplicates = computed(() => {
+      return DominionSets.getAllSetsIds()
+        .filter(setId => {
+          if (settingsStore.isUsingOnlyOwnedsets)
+            return settingsStore.ownedSets.indexOf(setId as never) != -1
+          return true;
+        })
+      }
+    );
 
     const setIds = computed(() => {
       const AllSetIdsToConsiderWithDuplicates = DominionSets.getAllSetsIds()
@@ -205,7 +248,7 @@ export default defineComponent({
       nextTick(() => {
         const checkbox = document.getElementById('selectAllSets') as HTMLInputElement;
         if (!checkbox) return;
-        if (values.length === setIds.value.length) {
+        if (values.length === SetIdsWithDuplicates.value.length) {
           selectAllState = 'checked';
           checkbox.checked = true;
           checkbox.indeterminate = false;
@@ -274,8 +317,19 @@ export default defineComponent({
     const requireActionProvider = createComputedSettingsObject('requireActionProvider');
     const requireCardProvider = createComputedSettingsObject('requireCardProvider');
     const requireBuyProvider = createComputedSettingsObject('requireBuyProvider');
-    const allowAttacks = createComputedSettingsObject('allowAttacks');
+    const allowAttacks = computed<boolean>({
+      get: (): boolean => randomizerSettings.value.allowAttacks,
+      set: (value: boolean) => {
+        const updateObject: SettingsObject = { allowAttacks: value };
+        if (!value) {
+          updateObject.requireReaction = false;
+          updateObject.requireAttack = false;
+        }
+        updateRandomizerSettings(updateObject);
+      }
+    });
     const requireReaction = createComputedSettingsObject('requireReaction');
+    const requireAttack = createComputedSettingsObject('requireAttack');
     const requireTrashing = createComputedSettingsObject('requireTrashing');
     const distributeCost = createComputedSettingsObject('distributeCost');
 
@@ -321,7 +375,9 @@ export default defineComponent({
       } else {
         emit("randomize")
       }
-    }
+    };
+
+    const handlePlayed = () => { emit('played'); }
 
     const handleSetOrderTypeChange = (value: string) => {
       setsStore.updateSetsOrderType(value);
@@ -334,7 +390,7 @@ export default defineComponent({
       // Cycle à 3 états
       if (selectAllState === 'unchecked') {
         //    previousSelectedSetIds = [...selectedSetIds.value];
-        selectedSetIds.value = [...setIds.value];
+        selectedSetIds.value = [...SetIdsWithDuplicates.value];
         selectAllState = 'checked';
       } else if (selectAllState === 'checked') {
         selectedSetIds.value = previousSelectedSetIds.length > 0 ? [...previousSelectedSetIds] : [];
@@ -367,7 +423,9 @@ export default defineComponent({
 
     return {
       randomizeButtonText,
+      googleSyncStore,
       handleRandomize,
+      handlePlayed,
       handleSetOrderTypeChange,
       isCondensed,
       setIds,
@@ -378,6 +436,7 @@ export default defineComponent({
       requireBuyProvider,
       requireCardProvider,
       requireReaction,
+      requireAttack,
       requireTrashing,
       allowAttacks,
       prioritizeSet,
@@ -398,13 +457,42 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.desktop_randomize-button,
-.condensed_randomize-button {
+.randomize-button,
+.played-button
+ {
   display: block;
-  margin: 2px;
+  margin: 2px; 
 }
 
-.condensed_randomize-button {
-  margin-top: 12px;
+
+.sidebar-actions-container {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: stretch; /* Aligne parfaitement les hauteurs */
+}
+
+/* Le bouton principal prend toute la place par défaut */
+.randomize-button {
+  flex: 1;
+  text-align: center;
+}
+
+/* Si l'utilisateur est connecté, les boutons se partagent équitablement l'espace */
+.button--half-width {
+  flex: 1 1 70%;
+}
+
+/* Style personnalisé pour le bouton de validation vert */
+.played-button {
+  flex: 1 1 30%;
+  border: 1px solid #1b5e20 !important;
+  color: white !important;
+  text-align: center;
+}
+
+.xplayed-button:hover {
+  background-color: #1b5e20 !important;
 }
 </style>

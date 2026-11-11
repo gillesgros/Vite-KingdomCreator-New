@@ -10,6 +10,57 @@ As I became a maintainer for Kingdom Creator, https://www.dominionrandomizer.com
 Feel free to propose any improvements you see fit and send me a pull request!
 
 ## Changelog
+**2026/11/11 - 7.1.17** - Handling mutiple rlease of rules
+>***Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/11/09 - 7.1.16** - Handling mutiple rlease of rules
+>***Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/10/27 - 7.1.15** - What's New
+>***Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/09/14 - 7.1.14** - Clean up
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/09/07 - 7.1.13** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/07/01 - 7.1.12** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/29 - 7.1.11** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/27 - 7.1.10** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/26 - 7.1.9** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/25 - 7.1.8** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/24 - 7.1.7** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/23 - 7.1.6** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/20 - 7.1.5** - played games
+>***Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/20 - 7.1.4** - played games
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/20 - 7.1.3** - Fix from 7.0
+>***Fix*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/19 - 7.1.2** - Oauth google OK
+>***Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/06/19 - 7.1.1** - Oauth google start
+>***Feat*** (see [Changelog.md](./Changelog.md))
+
 **2026/06/11 - 7.0.7** - Fix for 7.0
 >***Fix & Feat*** (see [Changelog.md](./Changelog.md))
 

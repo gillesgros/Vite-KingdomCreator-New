@@ -8,6 +8,7 @@
       </a>
       <a v-if="googleSyncStore.isSignedIn" 
          class="standard-button standard-button--is-primary played-button"
+         :class="{ 'played-button--alreadyPlayed': playedButtonHasStatus }"
          @click="handlePlayed">
         {{ $t(playedButtonText) }}
       </a>
@@ -138,6 +139,7 @@
         <!-- Bouton "Joué" Mobile -->
         <a v-if="googleSyncStore.isSignedIn" 
            class="standard-button standard-button--is-primary standard-button--large played-button"
+           :class="{ 'played-button--alreadyPlayed': playedButtonHasStatus }"
            @click="handlePlayed">
           {{ $t(playedButtonText) }}
         </a>
@@ -182,6 +184,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const { t } = useI18n();
+    const playedButtonHasStatus = computed(() => props.playedButtonText !== t('Play_It'));
     const randomizerStore = useRandomizerStore();
     const setsStore = useSetsStore();
     const windowStore = useWindowStore();
@@ -423,6 +426,7 @@ export default defineComponent({
 
     return {
       randomizeButtonText,
+      playedButtonHasStatus,
       googleSyncStore,
       handleRandomize,
       handlePlayed,
@@ -492,7 +496,15 @@ export default defineComponent({
   text-align: center;
 }
 
+.played-button--alreadyPlayed {
+  background:  rgba(2, 119, 158, 0.4);
+  pointer-events: none; /* Empêche le clic */
+  cursor: default;      /* Rétablit le curseur normal */
+  color: #888888;       /* Grise le texte */
+  text-decoration: none;/* Enlève le soulignement */
+}
+
 .xplayed-button:hover {
-  background-color: #1b5e20 !important;
+  background-color: rgb(27, 58, 94) !important;
 }
 </style>

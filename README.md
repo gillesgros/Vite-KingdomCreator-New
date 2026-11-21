@@ -10,13 +10,16 @@ As I became a maintainer for Kingdom Creator, https://www.dominionrandomizer.com
 Feel free to propose any improvements you see fit and send me a pull request!
 
 ## Changelog
-**2026/11/13 - 7.1.18** - Handling mutiple rlease of rules
+**2026/11/21 - 7.2.1** - Analytics switch to vue
 >***Feat*** (see [Changelog.md](./Changelog.md))
 
-**2026/11/11 - 7.1.17** - Handling mutiple rlease of rules
+**2026/11/16 - 7.1.18** - Analytics enhancements
 >***Feat*** (see [Changelog.md](./Changelog.md))
 
-**2026/11/09 - 7.1.16** - Handling mutiple rlease of rules
+**2026/11/11 - 7.1.17** - Analytics info
+>***Feat*** (see [Changelog.md](./Changelog.md))
+
+**2026/11/09 - 7.1.16** - Handling mutiple release of rules
 >***Feat*** (see [Changelog.md](./Changelog.md))
 
 **2026/10/27 - 7.1.15** - What's New

@@ -2,9 +2,12 @@
 
 ## Installation
 
-Copier `index.html` et `server.php` dans le répertoire web de `suivi.71yeti.fr`.
-Le serveur doit disposer de PHP avec PDO SQLite (`pdo_sqlite`) et pouvoir créer
-un répertoire `databases` accessible en écriture à côté de `server.php`.
+Le déploiement publie le build Vue (`dist/`) et `server.php` à la racine du
+répertoire web de `suivi.71yeti.fr`. Le serveur doit disposer de PHP avec PDO
+SQLite (`pdo_sqlite`) et pouvoir créer un répertoire `databases` accessible en
+écriture à côté de `server.php`. Il faut également installer le lecteur GeoIP
+et la base GeoLite2 décrits ci-dessous ; ils doivent rester hors du répertoire
+web.
 
 Configurer une variable d’environnement serveur `ANALYTICS_DASHBOARD_TOKEN` avec
 un jeton administrateur long et aléatoire. Si l’hébergeur ne permet pas de
@@ -26,6 +29,52 @@ par `EventType` et une pagination ; la vue analytique est présentée en dessous
 Les colonnes des tableaux de données brutes et des royaumes récents sont
 redimensionnables ; leurs largeurs sont conservées dans le navigateur.
 
+## Déploiement depuis le dépôt
+
+Depuis la racine du dépôt, lancer :
+
+```sh
+bun run deploy:follow
+```
+
+Au premier lancement sur un poste, l’assistant demande l’utilisateur et l’hôte
+SSH IONOS. Il requiert `ssh` et `ssh-keygen` dans le `PATH` pour cette
+initialisation. Il génère une clé Ed25519 sans passphrase dans
+`src/analytics/server/keys/ionos_follow`, puis demande le mot de passe SSH pour
+ajouter la clé publique au compte IONOS. Le mot de passe n’est pas enregistré.
+La configuration locale est conservée dans
+`src/analytics/server/keys/.env.do_not_commit` ; le dossier `keys/` est ignoré
+par Git. Cette exclusion ne protège pas les fichiers contre les autres comptes
+Windows ni contre un accès à votre poste : protégez ce compte et ne partagez
+jamais la clé privée.
+
+Chaque clone ou nouveau poste doit refaire cette initialisation : les réglages
+et la clé privée ne sont pas inclus dans le dépôt. L’assistant remplace sur le
+serveur les entrées `authorized_keys` dont le commentaire contient
+`ionos-follow` avant d’ajouter la nouvelle clé. Ainsi, initialiser un autre poste
+rend inutilisable l’ancienne clé de déploiement portant ce commentaire.
+
+Les valeurs par défaut sont le répertoire distant `~/KingdomCreator/Follow` et
+le vérificateur PHP `/usr/bin/php8.5-cli`. Elles peuvent être modifiées dans le
+fichier local `.env.do_not_commit` (`IONOS_REMOTE_DIR` et `IONOS_PHP_CLI`).
+`IONOS_SSH_USER`, `IONOS_SSH_HOST` et `IONOS_SSH_KEY` y sont également stockés.
+Pour les déploiements, `IONOS_SSH_EXE` et `IONOS_SCP_EXE` peuvent remplacer les
+exécutables `ssh` et `scp` trouvés dans le `PATH`.
+
+Le déploiement construit d’abord le dashboard Vue dans `src/analytics/server/`,
+puis transfère `server.php` et le contenu de `dist/` dans le répertoire web
+IONOS. Il prépare un dossier temporaire distant et vérifie la syntaxe de
+`server.php` avant installation. Les assets sont copiés avant le nouvel
+`index.html` afin que la page publiée ne référence pas des fichiers pas encore
+transférés. Les anciens assets portant un nom hashé ne sont pas supprimés.
+Le script crée `databases/` s’il n’existe pas, mais ne transfère ni ne supprime
+les bases SQLite, `server-config.php` ou `index-2.html`.
+
+Pour simuler le déploiement après l’initialisation, définir
+`IONOS_DEPLOY_DRY_RUN=1` dans l’environnement du terminal avant de lancer la
+commande. Sur un clone non initialisé, le premier lancement configure quand
+même l’accès SSH avant d’effectuer la simulation.
+
 ## Gestion des données
 
 Depuis la section des données brutes, les actions de maintenance permettent :
@@ -37,7 +86,7 @@ Depuis la section des données brutes, les actions de maintenance permettent :
   présent dans les paramètres JSON, puis de sélectionner et supprimer des lignes.
   La sélection est conservée entre les pages, effacée lorsque les critères
   changent et limitée à 1 000 lignes par opération. Le nombre de résultats par
-  page peut être réglé sur 50, 100, 250, 500 ou 1 000.
+  page peut être réglé entre 10 et 1 000 parmi les valeurs proposées.
 
 La liste « Cartes et addons les plus utilisés » est distribuée en quatre colonnes
 sur grand écran, deux sur écran moyen et une sur mobile.
@@ -45,6 +94,48 @@ sur grand écran, deux sur écran moyen et une sur mobile.
 Chaque suppression requiert une confirmation dans l’interface et le jeton
 administrateur. Les événements reçus pendant une suppression restent soumis au
 fonctionnement normal de l’écriture.
+
+## Installer GeoIP sur IONOS
+
+Le serveur charge le lecteur Composer depuis
+`~/KingdomCreator/geoip-reader/vendor/autoload.php` et la base depuis
+`~/KingdomCreator/geoip-reader/GeoLite2-Country.mmdb`. Ces chemins sont calculés
+à partir de `~/KingdomCreator/Follow/server.php` ; ne placez pas `geoip-reader`
+dans le répertoire web `Follow`.
+
+1. Créer un compte MaxMind et télécharger la base **GeoLite2 Country** au format
+   MMDB. Décompresser l’archive et transférer le fichier
+   `GeoLite2-Country.mmdb` sur IONOS vers
+   `~/KingdomCreator/geoip-reader/GeoLite2-Country.mmdb`, par SFTP ou SCP.
+   La clé de licence MaxMind sert au téléchargement : ne l’ajoutez pas au dépôt
+   ni à une page accessible publiquement.
+2. Exécuter les commandes suivantes dans une session SSH **sur le serveur
+   Linux IONOS**. Composer doit y être disponible et utiliser PHP 8.5 :
+
+   ```sh
+   cd ~/KingdomCreator
+   mkdir -p geoip-reader
+   cd geoip-reader
+   composer require geoip2/geoip2
+   ```
+
+3. Vérifier que le lecteur et la base sont accessibles et que la base est
+   valide :
+
+   ```sh
+   cd ~/KingdomCreator/geoip-reader
+   test -r vendor/autoload.php
+   test -r GeoLite2-Country.mmdb
+   /usr/bin/php8.5-cli -r 'require "vendor/autoload.php"; new GeoIp2\Database\Reader("GeoLite2-Country.mmdb"); echo "GeoIP OK\n";'
+   ```
+
+Le script `bun run deploy:follow` ne transfère pas `geoip-reader` : cette
+dépendance et la base doivent être installées séparément sur IONOS. Le processus
+PHP doit pouvoir lire les deux fichiers et traverser leurs répertoires parents ;
+n’utilisez pas de permissions globales telles que `777`. Si le lecteur ou la
+base est absent, illisible ou invalide, l’API renvoie une erreur lors de la
+réception d’événements. Téléchargez périodiquement une version à jour de la base
+depuis MaxMind en respectant sa licence.
 
 ## Vérifier la réception des événements
 

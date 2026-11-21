@@ -97,11 +97,14 @@ export function randomizeSelectedCards(context: randomizerStoreState): Supply | 
   if (!isApproachingArmySelected && context.kingdom.supply.approachingArmyCard) {
     optionsBuilder.setApproachingArmyCardId(context.kingdom.supply.approachingArmyCard?.id ?? false)
   }
-  const supply = Randomizer.createSupplySafe(optionsBuilder.build(), randomizationTrackingData(context));
+  const supply = Randomizer.createSupplySafe(optionsBuilder.build(), randomizationTrackingData(context)); 
   if (supply) {
     EventTracker.trackEvent(EventType.RANDOMIZE_MULTIPLE_SUPPLY, randomizationTrackingData(context));
   } else {
-    EventTracker.trackError(EventType.RANDOMIZE_MULTIPLE_SUPPLY, randomizationTrackingData(context));
+    EventTracker.trackError(EventType.RANDOMIZE_MULTIPLE_SUPPLY, {
+      ...randomizationTrackingData(context),
+      message: "Failed to create supply: \nSee RANDOMIZE_CREATE_SUPPLY for details"
+    });
   }
   return supply;
 }

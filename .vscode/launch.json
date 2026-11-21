@@ -7,8 +7,15 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
+            "name": "Kingdom Creator (localhost:5173)",
             "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}"
+        },
+         {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Analytics Dashboard (localhost:5174)",
+            "url": "http://localhost:5174",
             "webRoot": "${workspaceFolder}"
         }
     ]

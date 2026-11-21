@@ -389,7 +389,10 @@ export const useRandomizerStore = defineStore(
           );
           return;
         } else {
-          EventTracker.trackError(EventType.LOAD_PARTIAL_KINGDOM_FROM_URL);
+          EventTracker.trackError(EventType.LOAD_PARTIAL_KINGDOM_FROM_URL,{
+            ...rA.randomizationTrackingData(this),
+            message: "Failed to create supply: \nSee RANDOMIZE_CREATE_SUPPLY for details" 
+          });
           //console.log("Error : LOAD_PARTIAL_KINGDOM_FROM_URL - no supplyCards selected")
         }
       }
@@ -469,7 +472,10 @@ export const useRandomizerStore = defineStore(
 
       const setIds = rA.getSelectedSetIds(this);
       if (!setIds.length) {
-        EventTracker.trackError(EventType.RANDOMIZE_FULL_KINGDOM, trackingData);
+        EventTracker.trackError(EventType.RANDOMIZE_FULL_KINGDOM, {
+          ...trackingData,
+          message: "Failed to create supply: \nNo sets selected"
+        });
         console.log("Error : RANDOMIZE_FULL_KINGDOM - no set selected")
         // this.settings= loadSettings()
         // console.log("forced FULL", this.settings)
@@ -495,12 +501,15 @@ export const useRandomizerStore = defineStore(
           console.log(`Failed to create supply: \n${error.toString()}`);
           EventTracker.trackError(EventType.RANDOMIZE_FULL_KINGDOM, {
             ...trackingData,
-            message: error.toString(),
+            message: `Failed to create supply: \n${error.toString()}`,
           });
           alert(`Failed to create supply: \n${error.toString()}`)
         } else
           console.log(`Failed to create supply: \n error is not an object`);
-          EventTracker.trackError(EventType.RANDOMIZE_FULL_KINGDOM, trackingData)
+          EventTracker.trackError(EventType.RANDOMIZE_FULL_KINGDOM, {
+            ...trackingData,
+            message: `Failed to create supply: \n error is not an object`
+          });
       }
     },
 
@@ -594,7 +603,10 @@ export const useRandomizerStore = defineStore(
         EventTracker.trackEvent(EventType.RANDOMIZE_SINGLE, rA.randomizationTrackingData(this));
         this.UPDATE_KINGDOM(kingdom, 'randomize_partial');
       } else {
-        EventTracker.trackError(EventType.RANDOMIZE_SINGLE, rA.randomizationTrackingData(this));
+        EventTracker.trackError(EventType.RANDOMIZE_SINGLE, {
+          ...rA.randomizationTrackingData(this),
+          message: "Failed to create supply: \nSee RANDOMIZE_CREATE_SUPPLY for details"
+        });
       }
     },
     REPLACE_SPECIFYING_CARD(selectedCard: SupplyCard) {

@@ -122,14 +122,18 @@ export class Randomizer {
     } catch (error) {
       if (typeof error === 'object' && error !== null) {
         console.log(`Failed to create supply: \n${error.toString()}`);
-        EventTracker.trackError(EventType.RANDOMIZE_MULTIPLE_SUPPLY, {
+        EventTracker.trackError(EventType.RANDOMIZE_CREATE_SUPPLY, {
           ...trackingData,
-          message: error.toString(),
+          message: `Failed to create supply: \n${error.toString()}`,
         });
         alert(`Failed to create supply: \n${error.toString()}`)
       }
       else
         console.log(`Failed to create supply: \n error is not an object`);
+        EventTracker.trackError(EventType.RANDOMIZE_CREATE_SUPPLY, {
+          ...trackingData,
+          message: `Failed to create supply: \n error is not an object`
+        });
       return null;
     }
   }

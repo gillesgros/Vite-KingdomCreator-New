@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suivi Avancé — Dominion Randomizer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font: 15px/1.5 system-ui, sans-serif;
+      color: #202735;
+      background: #f5f6f8;
+    }
+    * { box-sizing: border-box; }
+    body { width: 100%; max-width: 1800px; margin: 0 auto; padding: 1.5rem; }
+    h1 { margin: 0 0 .25rem; font-size: 1.7rem; }
+    h2 { margin: 0 0 1rem; font-size: 1.25rem; }
+    h3 { margin: 0 0 .6rem; font-size: 1rem; }
+    .muted { color: #667085; }
+    .panel { margin-top: 1rem; padding: 1rem; border: 1px solid #d8dde5; border-radius: .5rem; background: #fff; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; }
+    label { display: grid; flex: 1 1 200px; gap: .25rem; font-weight: 600; }
+    input, select, button { min-height: 2.4rem; padding: .4rem .65rem; border: 1px solid #c5ccd6; border-radius: .35rem; font: inherit; }
+    button { cursor: pointer; background: #f7f8fa; }
+    button:hover { background: #e9edf2; }
+    button.primary { border-color: #284f7c; color: #fff; background: #284f7c; }
+    button.primary:hover { background: #1c3e64; }
+    button:disabled, select:disabled { cursor: not-allowed; opacity: .55; }
+    #status { min-height: 1.5rem; margin: .75rem 0; }
+    .error { color: #b42318; }
+    .success { color: #16703c; }
+    [hidden] { display: none !important; }
+    .table-wrap { overflow-x: auto; max-height: 320px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: .6rem .7rem; border-bottom: 1px solid #e3e7ed; text-align: left; vertical-align: top; }
+    th { background: #f7f8fa; white-space: sticky; top: 0; z-index: 1; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-top: 1rem; }
+    .metric { padding: .8rem 1rem; border: 1px solid #e0e4ea; border-radius: .4rem; background: #fff; color: #596579; }
+    .metric strong { display: block; color: #172235; font-size: 1.65rem; }
+    .analytics-box { min-width: 0; padding: .9rem; border: 1px solid #e0e4ea; border-radius: .4rem; background: #fff; }
+    .interactive-table tbody tr { cursor: pointer; }
+    .interactive-table tbody tr:hover { background: #f1f5f9; }
+    .map-container { position: relative; height: 360px; background: #edf2f7; border-radius: .4rem; border: 1px solid #cbd5e1; z-index: 0; }
+    .breadcrumb { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; font-size: 0.95rem; }
+    .breadcrumb button { padding: .2rem .6rem; min-height: auto; font-size: 0.85rem; }
+    .badge { display: inline-block; padding: .15rem .45rem; border-radius: .25rem; font-size: .8rem; font-weight: 600; }
+    .badge-human { background: #dcfce7; color: #166534; }
+    .badge-bot { background: #fee2e2; color: #991b1b; }
+    pre { max-height: 10rem; overflow: auto; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: .8rem/1.4 ui-monospace, monospace; }
+    @media (max-width: 900px) {
+      .analytics-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+  <header>
+    <h1>Suivi Avancé — Dominion Randomizer</h1>
+    <p class="muted">Analyse hiérarchique du trafic (Type → Région → Pays → Subdivision), événements filtrés et statistiques d'extensions.</p>
+  </header>
+
+  <form class="toolbar panel" id="dashboard-form">
+    <label>Source
+      <select id="source" required></select>
+    </label>
+    <label>Jeton administrateur
+      <input id="token" type="password" autocomplete="current-password" required>
+    </label>
+    <button class="primary" type="submit">Charger le Dashboard</button>
+  </form>
+
+  <p id="status" role="status" aria-live="polite"></p>
+
+  <main id="dashboard" hidden>
+    <!-- 1. Analyse Hiérarchique du Trafic & Cartographie -->
+    <section class="panel" aria-labelledby="traffic-heading">
+      <h2 id="traffic-heading">Analyse Hiérarchique du Trafic & Géographie</h2>
+      <p class="muted">Navigation : Catégorie de trafic → Région du monde → Pays → Subdivision (US / CA). Cliquez sur une ligne pour progresser.</p>
+
+      <div class="metrics">
+        <div class="metric">Requêtes Totales<strong id="bot-total-req">0</strong></div>
+        <div class="metric" style="border-left: 4px solid #16703c;">Trafic Humain Légitime<strong id="bot-human-req" style="color: #16703c;">0</strong></div>
+        <div class="metric" style="border-left: 4px solid #b42318;">Trafic Robots / Suspects<strong id="bot-robot-req" style="color: #b42318;">0</strong></div>
+      </div>
+
+      <div class="analytics-grid" style="margin-top: 0;">
+        <div class="analytics-box">
+          <h3>Carte interactive (Filtrée selon la sélection)</h3>
+          <div id="world-map" class="map-container"></div>
+        </div>
+
+        <div class="analytics-box">
+          <div class="breadcrumb">
+            <strong id="traffic-view-title">Catégories de trafic</strong>
+            <button id="traffic-back-btn" class="primary" hidden type="button">← Retour</button>
+          </div>
+          <div class="table-wrap">
+            <table class="interactive-table">
+              <thead>
+                <tr><th id="traffic-col-header">Classification</th><th style="text-align:right;">Requêtes</th></tr>
+              </thead>
+              <tbody id="traffic-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Liste des événements et erreurs filtrés -->
+      <div class="analytics-box" style="margin-top: 1rem;">
+        <h3 id="filtered-logs-title">Événements et erreurs — Vue globale</h3>
+        <div class="table-wrap" style="max-height: 400px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Catégorie</th>
+                <th>Action (EventType)</th>
+                <th>Session ID</th>
+                <th>Type / Pays / Sub.</th>
+                <th>Navigateur</th>
+                <th>Paramètres</th>
+              </tr>
+            </thead>
+            <tbody id="filtered-logs-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Statistiques d'utilisation des extensions -->
+    <section class="panel" aria-labelledby="extensions-heading">
+      <h2 id="extensions-heading">Statistiques d'utilisation des extensions</h2>
+      <p class="muted">Fréquence d'utilisation des différentes extensions (Sets) de Dominion dans les configurations et randomisations.</p>
+      
+      <div class="analytics-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="analytics-box">
+          <h3>Extensions configurées (Royaumes)</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Extension (Set)</th><th style="text-align:right;">Utilisations</th></tr></thead>
+              <tbody id="sets-configured-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="analytics-box">
+          <h3>Extensions utilisées pour randomiser</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Extension (Set)</th><th style="text-align:right;">Appels</th></tr></thead>
+              <tbody id="sets-randomized-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const sourceSelect = document.getElementById('source');
+    const tokenInput = document.getElementById('token');
+    const status = document.getElementById('status');
+    const dashboard = document.getElementById('dashboard');
+
+    let mapInstance = null;
+    let mapMarkersLayer = null;
+    let globalLogsData = [];
+    let globalSummaryData = {};
+
+    // État de navigation hiérarchique : 'categories' -> 'regions' -> 'countries' -> 'subdivisions'
+    let navState = { level: 'categories', category: null, region: null, country: null, subdivision: null };
+
+    const regionNamesFr = new Intl.DisplayNames(['fr'], { type: 'region' });
+    function getCountryName(code) {
+      if (!code || code === 'unknown' || code === 'XX') return 'Inconnu';
+      try { return regionNamesFr.of(code.toUpperCase()) || code; } catch { return code; }
+    }
+
+    const isoToRegion = {
+      US: 'Amérique du Nord', CA: 'Amérique du Nord', MX: 'Amérique du Nord', GL: 'Amérique du Nord', BM: 'Amérique du Nord',
+      CR: 'Amérique Centrale & Caraïbes', PA: 'Amérique Centrale & Caraïbes', GT: 'Amérique Centrale & Caraïbes',
+      HN: 'Amérique Centrale & Caraïbes', SV: 'Amérique Centrale & Caraïbes', NI: 'Amérique Centrale & Caraïbes',
+      BZ: 'Amérique Centrale & Caraïbes', CU: 'Amérique Centrale & Caraïbes', DO: 'Amérique Centrale & Caraïbes',
+      PR: 'Amérique Centrale & Caraïbes', JM: 'Amérique Centrale & Caraïbes', HT: 'Amérique Centrale & Caraïbes',
+      TT: 'Amérique Centrale & Caraïbes', GP: 'Amérique Centrale & Caraïbes', MQ: 'Amérique Centrale & Caraïbes',
+      BR: 'Amérique du Sud', AR: 'Amérique du Sud', CL: 'Amérique du Sud', CO: 'Amérique du Sud',
+      PE: 'Amérique du Sud', VE: 'Amérique du Sud', EC: 'Amérique du Sud', UY: 'Amérique du Sud',
+      PY: 'Amérique du Sud', BO: 'Amérique du Sud', GF: 'Amérique du Sud',
+      FR: 'Europe de l’Ouest', DE: 'Europe de l’Ouest', GB: 'Europe de l’Ouest', NL: 'Europe de l’Ouest',
+      BE: 'Europe de l’Ouest', CH: 'Europe de l’Ouest', AT: 'Europe de l’Ouest', IE: 'Europe de l’Ouest',
+      LU: 'Europe de l’Ouest', MC: 'Europe de l’Ouest',
+      FI: 'Europe du Nord', SE: 'Europe du Nord', NO: 'Europe du Nord', DK: 'Europe du Nord',
+      IS: 'Europe du Nord', EE: 'Europe du Nord', LV: 'Europe du Nord', LT: 'Europe du Nord',
+      IT: 'Europe du Sud', ES: 'Europe du Sud', PT: 'Europe du Sud', GR: 'Europe du Sud',
+      HR: 'Europe du Sud', SI: 'Europe du Sud', RS: 'Europe du Sud', BA: 'Europe du Sud',
+      MT: 'Europe du Sud', CY: 'Europe du Sud', AL: 'Europe du Sud', MK: 'Europe du Sud', ME: 'Europe du Sud',
+      PL: 'Europe de l’Est', CZ: 'Europe de l’Est', SK: 'Europe de l’Est', HU: 'Europe de l’Est',
+      RO: 'Europe de l’Est', BG: 'Europe de l’Est', UA: 'Europe de l’Est', BY: 'Europe de l’Est',
+      MD: 'Europe de l’Est', RU: 'Europe de l’Est',
+      AE: 'Moyen-Orient', SA: 'Moyen-Orient', IL: 'Moyen-Orient', TR: 'Moyen-Orient',
+      QA: 'Moyen-Orient', KW: 'Moyen-Orient', BH: 'Moyen-Orient', OM: 'Moyen-Orient',
+      JO: 'Moyen-Orient', LB: 'Moyen-Orient', IQ: 'Moyen-Orient', IR: 'Moyen-Orient',
+      JP: 'Asie de l’Est', KR: 'Asie de l’Est', CN: 'Asie de l’Est', TW: 'Asie de l’Est',
+      HK: 'Asie de l’Est', MO: 'Asie de l’Est', MN: 'Asie de l’Est',
+      SG: 'Asie du Sud-Est', TH: 'Asie du Sud-Est', VN: 'Asie du Sud-Est', MY: 'Asie du Sud-Est',
+      ID: 'Asie du Sud-Est', PH: 'Asie du Sud-Est', KH: 'Asie du Sud-Est', LA: 'Asie du Sud-Est', MM: 'Asie du Sud-Est',
+      IN: 'Asie du Sud & Centrale', PK: 'Asie du Sud & Centrale', BD: 'Asie du Sud & Centrale',
+      LK: 'Asie du Sud & Centrale', NP: 'Asie du Sud & Centrale', KZ: 'Asie du Sud & Centrale', UZ: 'Asie du Sud & Centrale',
+      ZA: 'Afrique', MA: 'Afrique', DZ: 'Afrique', TN: 'Afrique', EG: 'Afrique',
+      NG: 'Afrique', KE: 'Afrique', GH: 'Afrique', SN: 'Afrique', CI: 'Afrique',
+      CM: 'Afrique', ET: 'Afrique', TZ: 'Afrique', UG: 'Afrique', MU: 'Afrique', RE: 'Afrique',
+      AU: 'Océanie', NZ: 'Océanie', FJ: 'Océanie', NC: 'Océanie', PF: 'Océanie'
+    };
+
+    const regionViews = {
+      'Amérique du Nord': [44.0, -100.0, 3], 'Amérique Centrale & Caraïbes': [18.0, -80.0, 4],
+      'Amérique du Sud': [-15.0, -60.0, 3], 'Europe de l’Ouest': [48.5, 4.0, 5],
+      'Europe du Nord': [61.0, 16.0, 4], 'Europe du Sud': [41.5, 14.0, 5],
+      'Europe de l’Est': [50.0, 26.0, 4], 'Moyen-Orient': [28.0, 45.0, 4],
+      'Asie de l’Est': [35.0, 120.0, 4], 'Asie du Sud-Est': [8.0, 108.0, 4],
+      'Asie du Sud & Centrale': [26.0, 76.0, 4], 'Afrique': [2.0, 20.0, 3],
+      'Océanie': [-25.0, 138.0, 4], 'Inconnu': [20.0, 0.0, 2]
+    };
+
+    const countryCoords = {
+      US: [39.8, -98.5, 4], CA: [56.1, -106.3, 3], FR: [46.6, 2.2, 5], DE: [51.1, 10.4, 5],
+      GB: [54.5, -2.5, 5], IT: [42.5, 12.5, 5], ES: [40.4, -3.7, 5], NL: [52.1, 5.3, 6],
+      BE: [50.5, 4.4, 7], CH: [46.8, 8.2, 7], AT: [47.5, 14.5, 6], FI: [62.5, 26.0, 5],
+      SE: [61.0, 15.0, 5], NO: [61.5, 8.5, 5], DK: [56.0, 10.0, 6], PL: [52.0, 19.0, 5],
+      SG: [1.35, 103.8, 10], KR: [36.5, 127.8, 6], JP: [36.2, 138.2, 5], CN: [35.8, 104.1, 4],
+      IN: [20.5, 78.9, 4], AU: [-25.2, 133.7, 4], NZ: [-41.0, 174.0, 5], ZA: [-29.0, 24.0, 5],
+      BR: [-14.2, -51.9, 4], AR: [-34.0, -64.0, 4], MX: [23.6, -102.5, 5]
+    };
+
+    function setStatus(message, kind = '') {
+      status.className = kind;
+      status.textContent = message;
+    }
+
+    async function apiFetch(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: { ...(options.headers || {}), 'X-Dashboard-Token': tokenInput.value },
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Erreur de chargement.');
+      return result;
+    }
+
+    function apiUrl(parameters) {
+      const query = new URLSearchParams({ source: sourceSelect.value, ...parameters });
+      return 'server.php?' + query;
+    }
+
+    async function loadSources() {
+      const response = await fetch('server.php?listSources=true');
+      if (!response.ok) throw new Error('Impossible de charger les sources.');
+      const sources = await response.json();
+      sourceSelect.replaceChildren();
+      sources.forEach(source => sourceSelect.add(new Option(source, source)));
+    }
+
+    function getLogRegion(code) {
+      if (!code || code === 'unknown') return 'Inconnu';
+      return isoToRegion[code.toUpperCase()] || 'Autres territoires';
+    }
+
+    function classifyLogTraffic(log) {
+      const browser = log._ctx.browser || '';
+      if (!log.sessionId) return 'Robot / Agent atypique (Sans Session ID)';
+      if (!browser || browser === 'Autre' || /bot|crawl|spider|curl|python|wget/i.test(browser)) {
+        return 'Robot / Agent atypique (Navigateur "Autre")';
+      }
+      if (log.eventOrError === 'error') return 'Trafic en erreur';
+      return 'Trafic Humain Légitime';
+    }
+
+    function updateMapMarkers(points) {
+      if (!mapInstance) return;
+      if (mapMarkersLayer) mapMarkersLayer.clearLayers();
+      else mapMarkersLayer = L.layerGroup().addTo(mapInstance);
+
+      points.forEach(pt => {
+        if (!pt.coords) return;
+        const radius = Math.min(28, Math.max(7, Math.sqrt(pt.count) * 2.2));
+        L.circleMarker([pt.coords[0], pt.coords[1]], {
+          radius,
+          color: '#1c3e64',
+          fillColor: '#284f7c',
+          fillOpacity: 0.6,
+          weight: 1.5
+        })
+        .bindPopup(`<strong>${pt.label}</strong><br>${pt.count} requête(s)`)
+        .addTo(mapMarkersLayer);
+      });
+    }
+
+    // --- FILTRAGE DES ÉVÉNEMENTS ---
+    function renderFilteredLogs() {
+      const tbody = document.getElementById('filtered-logs-body');
+      const titleEl = document.getElementById('filtered-logs-title');
+      tbody.replaceChildren();
+
+      let filtered = globalLogsData;
+      let scopeDesc = 'Vue globale';
+
+      if (navState.level !== 'categories') {
+        filtered = filtered.filter(log => classifyLogTraffic(log) === navState.category);
+        scopeDesc = `Catégorie : ${navState.category}`;
+      }
+      if (navState.level === 'countries' || navState.level === 'subdivisions') {
+        filtered = filtered.filter(log => getLogRegion(log._ctx.country) === navState.region);
+        scopeDesc += ` > Région : ${navState.region}`;
+      }
+      if (navState.level === 'subdivisions') {
+        filtered = filtered.filter(log => (log._ctx.country || '').toUpperCase() === navState.country);
+        scopeDesc += ` > Pays : ${getCountryName(navState.country)}`;
+      }
+
+      titleEl.textContent = `Événements et erreurs — ${scopeDesc} (${filtered.length} résultat(s))`;
+
+      if (!filtered.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="7" class="muted" style="text-align:center;">Aucun événement pour cette sélection.</td>`;
+        tbody.appendChild(tr);
+        return;
+      }
+
+      filtered.slice(0, 200).forEach(log => {
+        const tr = document.createElement('tr');
+        let paramsText = log.params;
+        try { paramsText = JSON.stringify(JSON.parse(log.params), null, 0); } catch {}
+
+        const isHuman = classifyLogTraffic(log) === 'Trafic Humain Légitime';
+        tr.innerHTML = `
+          <td>${log.date}</td>
+          <td><span class="badge ${isHuman ? 'badge-human' : 'badge-bot'}">${log.eventOrError}</span></td>
+          <td><strong>${log.eventType}</strong></td>
+          <td>${log.sessionId || '—'}</td>
+          <td>${log._ctx.country || '—'}${log._ctx.subdivision ? ' / ' + log._ctx.subdivision : ''}</td>
+          <td>${log._ctx.browser || '—'}</td>
+          <td><pre>${paramsText}</pre></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- NAVIGATION HIÉRARCHIQUE TRAFIC -> RÉGION -> PAYS -> SUBDIVISION ---
+    function renderTrafficTable() {
+      const tbody = document.getElementById('traffic-table-body');
+      const titleEl = document.getElementById('traffic-view-title');
+      const backBtn = document.getElementById('traffic-back-btn');
+      const colHeader = document.getElementById('traffic-col-header');
+      tbody.replaceChildren();
+
+      // NIVEAU 1 : CATÉGORIES DE TRAFIC
+      if (navState.level === 'categories') {
+        titleEl.textContent = 'Catégories de trafic';
+        backBtn.hidden = true;
+        colHeader.textContent = 'Classification';
+
+        const counts = {};
+        globalLogsData.forEach(log => {
+          const cat = classifyLogTraffic(log);
+          counts[cat] = (counts[cat] || 0) + 1;
+        });
+
+        const markers = [];
+        Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([cat, count]) => {
+          const tr = document.createElement('tr');
+          const isHuman = cat === 'Trafic Humain Légitime';
+          tr.innerHTML = `<td><span class="badge ${isHuman ? 'badge-human' : 'badge-bot'}">${cat}</span> ▸</td><td style="text-align:right;"><strong>${count}</strong></td>`;
+          tr.addEventListener('click', () => {
+            navState = { level: 'regions', category: cat, region: null, country: null, subdivision: null };
+            renderTrafficTable();
+            renderFilteredLogs();
+          });
+          tbody.appendChild(tr);
+        });
+
+        // Afficher tous les points sur la carte globale
+        globalLogsData.forEach(log => {
+          const code = log._ctx.country;
+          if (countryCoords[code]) markers.push({ label: getCountryName(code), count: 1, coords: countryCoords[code] });
+        });
+        updateMapMarkers(markers);
+      }
+
+      // NIVEAU 2 : RÉGIONS DU MONDE POUR CE TRAFIC
+      else if (navState.level === 'regions') {
+        titleEl.textContent = `Trafic : ${navState.category}`;
+        backBtn.hidden = false;
+        colHeader.textContent = 'Région du monde';
+
+        const counts = {};
+        globalLogsData.forEach(log => {
+          if (classifyLogTraffic(log) === navState.category) {
+            const reg = getLogRegion(log._ctx.country);
+            counts[reg] = (counts[reg] || 0) + 1;
+          }
+        });
+
+        const markers = [];
+        Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([reg, count]) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><strong>${reg}</strong> ▸</td><td style="text-align:right;">${count}</td>`;
+          tr.addEventListener('click', () => {
+            navState = { level: 'countries', category: navState.category, region: reg, country: null, subdivision: null };
+            renderTrafficTable();
+            renderFilteredLogs();
+            if (mapInstance && regionViews[reg]) mapInstance.setView([regionViews[reg][0], regionViews[reg][1]], regionViews[reg][2]);
+          });
+          tbody.appendChild(tr);
+          if (regionViews[reg]) markers.push({ label: reg, count, coords: regionViews[reg] });
+        });
+        updateMapMarkers(markers);
+      }
+
+      // NIVEAU 3 : PAYS DE LA RÉGION
+      else if (navState.level === 'countries') {
+        titleEl.textContent = `Région : ${navState.region}`;
+        backBtn.hidden = false;
+        colHeader.textContent = 'Pays';
+
+        const counts = {};
+        globalLogsData.forEach(log => {
+          if (classifyLogTraffic(log) === navState.category && getLogRegion(log._ctx.country) === navState.region) {
+            const code = (log._ctx.country || 'unknown').toUpperCase();
+            counts[code] = (counts[code] || 0) + 1;
+          }
+        });
+
+        const markers = [];
+        Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([code, count]) => {
+          const name = getCountryName(code);
+          const hasSubdivisions = (code === 'US' || code === 'CA');
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><strong>${name}</strong> <span class="muted">(${code})</span>${hasSubdivisions ? ' ▸' : ''}</td><td style="text-align:right;">${count}</td>`;
+          tr.addEventListener('click', () => {
+            if (hasSubdivisions) {
+              navState = { level: 'subdivisions', category: navState.category, region: navState.region, country: code, subdivision: null };
+              renderTrafficTable();
+            }
+            renderFilteredLogs();
+            if (mapInstance && countryCoords[code]) mapInstance.setView([countryCoords[code][0], countryCoords[code][1]], countryCoords[code][2]);
+          });
+          tbody.appendChild(tr);
+          if (countryCoords[code]) markers.push({ label: `${name} (${code})`, count, coords: countryCoords[code] });
+        });
+        updateMapMarkers(markers);
+      }
+
+      // NIVEAU 4 : SUBDIVISIONS (US / CA)
+      else if (navState.level === 'subdivisions') {
+        titleEl.textContent = `Pays : ${getCountryName(navState.country)}`;
+        backBtn.hidden = false;
+        colHeader.textContent = 'Subdivision / État';
+
+        const counts = {};
+        globalLogsData.forEach(log => {
+          if (classifyLogTraffic(log) === navState.category && (log._ctx.country || '').toUpperCase() === navState.country) {
+            const sub = log._ctx.subdivision || 'Non renseigné';
+            counts[sub] = (counts[sub] || 0) + 1;
+          }
+        });
+
+        Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([sub, count]) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><strong>${sub}</strong></td><td style="text-align:right;">${count}</td>`;
+          tr.addEventListener('click', () => {
+            navState.subdivision = sub;
+            renderFilteredLogs();
+          });
+          tbody.appendChild(tr);
+        });
+      }
+
+      renderFilteredLogs();
+    }
+
+    document.getElementById('traffic-back-btn').addEventListener('click', () => {
+      if (navState.level === 'subdivisions') {
+        navState = { level: 'countries', category: navState.category, region: navState.region, country: null, subdivision: null };
+      } else if (navState.level === 'countries') {
+        navState = { level: 'regions', category: navState.category, region: null, country: null, subdivision: null };
+        if (mapInstance && regionViews[navState.region]) mapInstance.setView([regionViews[navState.region][0], regionViews[navState.region][1]], regionViews[navState.region][2]);
+      } else {
+        navState = { level: 'categories', category: null, region: null, country: null, subdivision: null };
+        if (mapInstance) mapInstance.setView([22, 10], 2);
+      }
+      renderTrafficTable();
+    });
+
+    // --- STATISTIQUES DES EXTENSIONS ---
+    function renderExtensionStats() {
+      const configuredBody = document.getElementById('sets-configured-body');
+      const randomizedBody = document.getElementById('sets-randomized-body');
+      configuredBody.replaceChildren();
+      randomizedBody.replaceChildren();
+
+      const topSets = globalSummaryData.topSets || {};
+      const randomizationSets = globalSummaryData.randomizationSets || {};
+
+      Object.entries(topSets).forEach(([setId, count]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><strong>${setId}</strong></td><td style="text-align:right;">${count}</td>`;
+        configuredBody.appendChild(tr);
+      });
+
+      Object.entries(randomizationSets).forEach(([setId, count]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><strong>${setId}</strong></td><td style="text-align:right;">${count}</td>`;
+        randomizedBody.appendChild(tr);
+      });
+    }
+
+    async function refreshDashboard() {
+      setStatus('Chargement des données...');
+      dashboard.hidden = false;
+      try {
+        const [logsData, summaryData] = await Promise.all([
+          apiFetch(apiUrl({ logs: 'true', perPage: '1000' })),
+          apiFetch(apiUrl({ analytics: 'summary' }))
+        ]);
+
+        globalLogsData = (logsData.logs || []).map(log => {
+          let ctx = {};
+          try { ctx = JSON.parse(log.clientContext || '{}'); } catch {}
+          return { ...log, _ctx: ctx };
+        });
+        globalSummaryData = summaryData;
+
+        let total = globalLogsData.length;
+        let humanCount = 0;
+        globalLogsData.forEach(log => {
+          if (classifyLogTraffic(log) === 'Trafic Humain Légitime') humanCount++;
+        });
+
+        document.getElementById('bot-total-req').textContent = total;
+        document.getElementById('bot-human-req').textContent = humanCount;
+        document.getElementById('bot-robot-req').textContent = total - humanCount;
+
+        if (!mapInstance) {
+          mapInstance = L.map('world-map').setView([22, 10], 2);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 8, attribution: '© OpenStreetMap contributors'
+          }).addTo(mapInstance);
+        }
+
+        navState = { level: 'categories', category: null, region: null, country: null, subdivision: null };
+        renderTrafficTable();
+        renderExtensionStats();
+        setStatus(`Données chargées avec succès (${globalLogsData.length} événements analysés).`, 'success');
+      } catch (error) {
+        setStatus(error.message || 'Erreur lors du chargement.', 'error');
+      }
+    }
+
+    document.getElementById('dashboard-form').addEventListener('submit', event => {
+      event.preventDefault();
+      refreshDashboard();
+    });
+
+    loadSources().catch(error => setStatus(error.message, 'error'));
+  </script>
+</body>
+</html>

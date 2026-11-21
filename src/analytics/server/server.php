@@ -83,17 +83,23 @@ function incrementAnalyticsCount(&$counts, $label) {
     $counts[$label] = ($counts[$label] ?? 0) + 1;
 }
 
-function getRequestCountry() {
+
+function getRequestGeoData() {
     $remoteAddress = getRequestIp();
     if ($remoteAddress === null) {
-        return 'unknown';
+        return ['country' => 'unknown', 'subdivision' => null];
     }
 
     $geoIpDirectory = dirname(__DIR__, 2) . '/geoip-reader';
     $autoloadPath = $geoIpDirectory . '/vendor/autoload.php';
-    $databasePath = $geoIpDirectory . '/GeoLite2-Country.mmdb';
+    $cityDbPath = $geoIpDirectory . '/GeoLite2-City.mmdb';
+    $countryDbPath = $geoIpDirectory . '/GeoLite2-Country.mmdb';
+
+    $useCity = is_readable($cityDbPath);
+    $databasePath = $useCity ? $cityDbPath : $countryDbPath;
+
     if (!is_readable($autoloadPath) || !is_readable($databasePath)) {
-        error_log('GeoIP lookup unavailable: reader autoload or country database is missing.');
+        error_log('GeoIP lookup unavailable: reader autoload or database is missing.');
         respond(500, ['error' => 'La base GeoIP ou son lecteur est inaccessible.']);
     }
 
@@ -104,21 +110,29 @@ function getRequestCountry() {
         if ($reader === null) {
             $reader = new \GeoIp2\Database\Reader($databasePath);
         }
-        $countryCode = $reader->country($remoteAddress)->country->isoCode;
+        if ($useCity) {
+            $record = $reader->city($remoteAddress);
+            $countryCode = $record->country->isoCode;
+            $subdivision = $record->mostSpecificSubdivision->name;
+        } else {
+            $countryCode = $reader->country($remoteAddress)->country->isoCode;
+            $subdivision = null;
+        }
     } catch (\GeoIp2\Exception\AddressNotFoundException $e) {
-        return 'unknown';
-    } catch (\MaxMind\Db\Reader\InvalidDatabaseException |
-        \InvalidArgumentException |
-        \RuntimeException |
-        \UnexpectedValueException |
-        \BadMethodCallException $e) {
+        return ['country' => 'unknown', 'subdivision' => null];
+    } catch (\Exception $e) {
         error_log('GeoIP lookup failed: ' . $e->getMessage());
         respond(500, ['error' => 'La recherche GeoIP a échoué.']);
     }
 
-    return is_string($countryCode) && preg_match('/^[A-Z]{2}$/', $countryCode)
+    $validCountry = is_string($countryCode) && preg_match('/^[A-Z]{2}$/', $countryCode)
         ? $countryCode
         : 'unknown';
+
+    return [
+        'country' => $validCountry,
+        'subdivision' => is_string($subdivision) && $subdivision !== '' ? $subdivision : null,
+    ];
 }
 
 function decodeLegacyKingdom($serializedKingdom) {
@@ -332,10 +346,17 @@ if ($method === 'POST') {
         }
         unset($paramsData[$contextKey]);
     }
-    unset($clientContext['country'], $clientContext['ip']);
-    unset($paramsData['country'], $paramsData['ip']);
+
+    unset($clientContext['country'], $clientContext['subdivision'], $clientContext['ip']);
+    unset($paramsData['country'], $paramsData['subdivision'], $paramsData['ip']);
+    $geoData = getRequestGeoData();
     $clientContext['ip'] = getRequestIp();
-    $clientContext['country'] = getRequestCountry();
+    $clientContext['country'] = $geoData['country'];
+    //if ($geoData['subdivision'] !== null && in_array($geoData['country'], ['US', 'CA'], true)) {
+    if ($geoData['subdivision'] !== null) {
+
+    $clientContext['subdivision'] = $geoData['subdivision'];
+    }
 
     $params = json_encode($paramsData);
     if ($params === false) {
@@ -722,6 +743,15 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
         $params[':country'] = $country;
     }
 
+    $device = $_GET['device'] ?? '';
+    if (!is_string($device) || strlen($device) > 80) {
+        respond(400, ['error' => 'Le filtre appareil est invalide.']);
+    }
+    if ($device !== '') {
+        $filters[] = "json_extract(CASE WHEN json_valid(clientContext) THEN clientContext ELSE '{}' END, '$.device') = :device";
+        $params[':device'] = $device;
+    }
+
     $browser = $_GET['browser'] ?? '';
     if (!is_string($browser) || strlen($browser) > 80) {
         respond(400, ['error' => 'Le filtre navigateur est invalide.']);
@@ -764,6 +794,15 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
                 FROM RequestLog
             ) WHERE country IS NOT NULL AND country <> '' ORDER BY country"
         )->fetchAll(PDO::FETCH_COLUMN);
+        $devices = $db->query(
+            "SELECT DISTINCT device FROM (
+                SELECT json_extract(
+                    CASE WHEN json_valid(clientContext) THEN clientContext ELSE '{}' END,
+                    '$.device'
+                ) AS device
+                FROM RequestLog
+            ) WHERE device IS NOT NULL AND device <> '' ORDER BY device"
+        )->fetchAll(PDO::FETCH_COLUMN);
         $browsers = $db->query(
             "SELECT DISTINCT browser FROM (
                 SELECT json_extract(
@@ -794,6 +833,7 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
             'logs' => $stmt->fetchAll(PDO::FETCH_ASSOC),
             'eventTypes' => $eventTypes,
             'countries' => $countries,
+            'devices' => $devices,
             'browsers' => $browsers,
             'page' => $page,
             'perPage' => $perPage,

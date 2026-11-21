@@ -28,7 +28,8 @@ package-lock.json
 bun.lock
 src/i18n/locales/messages/
 
-# other files anf folders
+
+# other files and folders
 dist-ssr
 coverage
 *.local
@@ -43,4 +44,5 @@ coverage
 
 .DS_Store
 dist
+
 

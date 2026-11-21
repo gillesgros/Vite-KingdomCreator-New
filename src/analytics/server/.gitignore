@@ -1,0 +1,14 @@
+# Build et dépendances locales du sous-projet
+dist/
+node_modules/
+
+# Fichiers sensibles et clés SSH
+keys/
+server-config.php
+.env
+
+# Bases SQLite locales et sauvegardes
+databases/
+
+# Bases GeoIP volumineuses (téléchargeables sur le serveur)
+geoip-reader/*.mmdb

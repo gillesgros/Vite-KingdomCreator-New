@@ -10,6 +10,9 @@ As I became a maintainer for Kingdom Creator, https://www.dominionrandomizer.com
 Feel free to propose any improvements you see fit and send me a pull request!
 
 ## Changelog
+**2026/11/23 - 7.2.2** - Analytics heavy optimisation  
+>***Feat*** (see [Changelog.md](./Changelog.md))
+
 **2026/11/21 - 7.2.1** - Analytics switch to vue
 >***Feat*** (see [Changelog.md](./Changelog.md))
 

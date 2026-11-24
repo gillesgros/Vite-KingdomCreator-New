@@ -3,7 +3,7 @@ dist/
 node_modules/
 
 # Fichiers sensibles et clés SSH
-keys/
+/keys/
 server-config.php
 .env
 

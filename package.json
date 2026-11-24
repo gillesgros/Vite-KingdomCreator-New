@@ -2,7 +2,7 @@
   "author": "Gilles GROS",
   "name": "vite-kigndomcreator-new",
   "license": "MIT",
-  "version": "7.2.1",
+  "version": "7.2.2",
   "private": true,
   "type": "module",
   "repository": {
@@ -14,9 +14,13 @@
     "dev": "echo 'Build translation files from xlsx, and run vite' && vite",
     "build": "vite build",
     "preview": "vite preview",
-    "dev:follow": "bun --cwd src/analytics/server run dev",
-    "build:follow": "bun --cwd src/analytics/server run build",
-    "deploy:follow": "bun src/analytics/server/scripts/deploy-follow.mjs",
+
+    "dev:follow": "bun run --cwd src/analytics/server dev",
+    "build:follow": "bun run --cwd src/analytics/server build",
+    "preview:follow": "bun run --cwd src/analytics/server preview",
+    "lint:php:follow": "bun run --cwd src/analytics/server lint:php:ionos",
+    "deploy:follow": "bun run --cwd src/analytics/server deploy",
+    
     "type-check": "vue-tsc --noEmit",
     "get-tsconfig": "tsc --showConfig",
     "update-deps": "echo '\nAstuce : ajoute -- -u (maj package.json) ou -- -i (interactif)' && bunx npm-check-updates -p bun"
@@ -34,8 +38,8 @@
     "js-yaml": "^5.5.0",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
-    "@inquirer/checkbox": "^5.3.0",
-    "@inquirer/select": "^5.3.0",
+    "@inquirer/checkbox": "^5.3.1",
+    "@inquirer/select": "^5.3.1",
     "@intlify/unplugin-vue-i18n": "^11.2.8",
     "@types/file-saver": "^2.0.7",
     "@types/js-cookie": "^3.0.6",

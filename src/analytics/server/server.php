@@ -1,13 +1,86 @@
 <?php
+require_once __DIR__ . '/database-migration.php';
+
+$requestStartedAt = microtime(true);
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Dashboard-Token');
+header('Access-Control-Expose-Headers: Server-Timing');
 header('X-Content-Type-Options: nosniff');
 
-function respond($status, $data) {
+function requestAcceptsGzip() {
+    $headerValue = $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '';
+    if (!is_string($headerValue)) {
+        return false;
+    }
+
+    $qualities = [];
+    foreach (explode(',', $headerValue) as $encodingValue) {
+        $parts = explode(';', $encodingValue);
+        $encoding = strtolower(trim(array_shift($parts)));
+        if ($encoding === '') {
+            continue;
+        }
+
+        $quality = 1.0;
+        foreach ($parts as $parameter) {
+            if (preg_match('/^\s*q\s*=\s*(.+)\s*$/i', $parameter, $matches)) {
+                $quality = is_numeric($matches[1]) ? (float)$matches[1] : 0.0;
+                break;
+            }
+        }
+        $qualities[$encoding] = $quality >= 0 && $quality <= 1 ? $quality : 0.0;
+    }
+
+    $gzipQuality = array_key_exists('gzip', $qualities)
+        ? $qualities['gzip']
+        : ($qualities['*'] ?? 0.0);
+    return $gzipQuality > 0;
+}
+
+function respond($status, $data, $serverTimings = []) {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($data);
+    $serializationStartedAt = microtime(true);
+    $body = json_encode($data);
+    if ($serverTimings) {
+        $serverTimings['json_encode'] = (microtime(true) - $serializationStartedAt) * 1000;
+    }
+
+    if (strlen($body) >= 1024) {
+        header('Vary: Accept-Encoding');
+        if (requestAcceptsGzip()) {
+            if (function_exists('gzencode')) {
+                $compressionStartedAt = microtime(true);
+                $compressedBody = gzencode($body, 6);
+                if ($compressedBody !== false) {
+                    $body = $compressedBody;
+                    header('Content-Encoding: gzip');
+                    if ($serverTimings) {
+                        $serverTimings['gzip'] = (microtime(true) - $compressionStartedAt) * 1000;
+                    }
+                } else {
+                    error_log('Analytics response gzip compression failed.');
+                }
+            } else {
+                error_log('Analytics response gzip compression unavailable: gzencode is missing.');
+            }
+        }
+    }
+
+    if ($serverTimings) {
+        $metrics = [];
+        foreach ($serverTimings as $name => $duration) {
+            $metricName = preg_replace('/[^A-Za-z0-9_-]/', '', (string)$name);
+            if ($metricName !== '' && is_numeric($duration)) {
+                $metrics[] = $metricName . ';dur=' . number_format(max(0, (float)$duration), 2, '.', '');
+            }
+        }
+        if ($metrics) {
+            header('Server-Timing: ' . implode(', ', $metrics));
+        }
+    }
+    echo $body;
     exit;
 }
 
@@ -198,32 +271,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     requireDashboardAuth($adminToken);
 }
 
+$databaseSetupStartedAt = microtime(true);
+$metadataMigrationDurationMs = 0;
 try {
     $db = new PDO('sqlite:' . $databaseDirectory . '/' . $source . '.db');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS RequestLog (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            eventOrError TEXT NOT NULL,
-            eventType TEXT NOT NULL,
-            params TEXT,
-            sessionId TEXT,
-            clientContext TEXT,
-            clientDate TEXT
-        )
-    ");
-    $columns = $db->query('PRAGMA table_info(RequestLog)')->fetchAll(PDO::FETCH_COLUMN, 1);
-    if (!in_array('sessionId', $columns, true)) {
-        $db->exec('ALTER TABLE RequestLog ADD COLUMN sessionId TEXT');
-    }
-    if (!in_array('clientContext', $columns, true)) {
-        $db->exec('ALTER TABLE RequestLog ADD COLUMN clientContext TEXT');
-    }
-    if (!in_array('clientDate', $columns, true)) {
-        $db->exec('ALTER TABLE RequestLog ADD COLUMN clientDate TEXT');
-    }
-} catch (Exception $e) {
+    $db->exec('PRAGMA busy_timeout = 30000');
+    $metadataMigrationDurationMs = initializeAnalyticsDatabase($db);
+    $databaseSetupDurationMs = (microtime(true) - $databaseSetupStartedAt) * 1000;
+} catch (Throwable $e) {
     error_log('Analytics database connection failed: ' . $e->getMessage());
     respond(500, ['error' => 'Erreur de connexion à la base de données.']);
 }
@@ -369,8 +425,8 @@ if ($method === 'POST') {
 
     try {
         $stmt = $db->prepare(
-            'INSERT INTO RequestLog (date, eventOrError, eventType, params, sessionId, clientContext, clientDate) ' .
-            'VALUES (:date, :eventOrError, :eventType, :params, :sessionId, :clientContext, :clientDate)'
+            'INSERT INTO RequestLog (date, eventOrError, eventType, params, sessionId, clientContext, clientDate, country, device, browser) ' .
+            'VALUES (:date, :eventOrError, :eventType, :params, :sessionId, :clientContext, :clientDate, :country, :device, :browser)'
         );
         $stmt->execute([
             ':date' => (new DateTimeImmutable())->format('Y-m-d H:i:s.u'),
@@ -380,6 +436,9 @@ if ($method === 'POST') {
             ':sessionId' => $input['sessionId'] ?? null,
             ':clientContext' => $clientContextJson,
             ':clientDate' => $clientDate,
+            ':country' => $clientContext['country'] ?? null,
+            ':device' => $clientContext['device'] ?? null,
+            ':browser' => $clientContext['browser'] ?? null,
         ]);
         respond(200, ['message' => 'Requête enregistrée.']);
     } catch (Exception $e) {
@@ -696,7 +755,7 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
     }
     $page = max(1, (int)($_GET['page'] ?? 1));
     $perPage = $_GET['perPage'] ?? '25';
-    if (!is_string($perPage) || !in_array($perPage, ['10','25', '50', '100', '250', '500', '1000'], true)) {
+    if (!is_string($perPage) || !in_array($perPage, ['10','25', '50', '100', '250', '500', '1000', '5000', '10000', '20000'], true)) {
         respond(400, ['error' => 'Le nombre de lignes par page est invalide.']);
     }
     $perPage = (int)$perPage;
@@ -739,7 +798,7 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
         $country = strtoupper($country);
     }
     if ($country !== '') {
-        $filters[] = "json_extract(CASE WHEN json_valid(clientContext) THEN clientContext ELSE '{}' END, '$.country') = :country";
+        $filters[] = 'country = :country';
         $params[':country'] = $country;
     }
 
@@ -748,7 +807,7 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
         respond(400, ['error' => 'Le filtre appareil est invalide.']);
     }
     if ($device !== '') {
-        $filters[] = "json_extract(CASE WHEN json_valid(clientContext) THEN clientContext ELSE '{}' END, '$.device') = :device";
+        $filters[] = 'device = :device';
         $params[':device'] = $device;
     }
 
@@ -757,7 +816,7 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
         respond(400, ['error' => 'Le filtre navigateur est invalide.']);
     }
     if ($browser !== '') {
-        $filters[] = "json_extract(CASE WHEN json_valid(clientContext) THEN clientContext ELSE '{}' END, '$.browser') = :browser";
+        $filters[] = 'browser = :browser';
         $params[':browser'] = $browser;
     }
 
@@ -782,43 +841,49 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
     $where = $filters ? ' WHERE ' . implode(' AND ', $filters) : '';
 
     try {
+        $serverTimings = [
+            'php_prepare' => max(
+                0,
+                (microtime(true) - $requestStartedAt) * 1000 - $databaseSetupDurationMs
+            ),
+            'db_init' => $databaseSetupDurationMs,
+            'metadata_migration' => $metadataMigrationDurationMs,
+        ];
+
+        $queryStartedAt = microtime(true);
         $eventTypes = $db->query(
             'SELECT DISTINCT eventType FROM RequestLog ORDER BY eventType'
         )->fetchAll(PDO::FETCH_COLUMN);
+        $serverTimings['event_types'] = (microtime(true) - $queryStartedAt) * 1000;
+
+        $queryStartedAt = microtime(true);
         $countries = $db->query(
-            "SELECT DISTINCT country FROM (
-                SELECT json_extract(
-                    CASE WHEN json_valid(clientContext) THEN clientContext ELSE '{}' END,
-                    '$.country'
-                ) AS country
-                FROM RequestLog
-            ) WHERE country IS NOT NULL AND country <> '' ORDER BY country"
+            "SELECT DISTINCT country FROM RequestLog WHERE country IS NOT NULL AND country <> '' ORDER BY country"
         )->fetchAll(PDO::FETCH_COLUMN);
+        $serverTimings['countries'] = (microtime(true) - $queryStartedAt) * 1000;
+
+        $queryStartedAt = microtime(true);
         $devices = $db->query(
-            "SELECT DISTINCT device FROM (
-                SELECT json_extract(
-                    CASE WHEN json_valid(clientContext) THEN clientContext ELSE '{}' END,
-                    '$.device'
-                ) AS device
-                FROM RequestLog
-            ) WHERE device IS NOT NULL AND device <> '' ORDER BY device"
+            "SELECT DISTINCT device FROM RequestLog WHERE device IS NOT NULL AND device <> '' ORDER BY device"
         )->fetchAll(PDO::FETCH_COLUMN);
+        $serverTimings['devices'] = (microtime(true) - $queryStartedAt) * 1000;
+
+        $queryStartedAt = microtime(true);
         $browsers = $db->query(
-            "SELECT DISTINCT browser FROM (
-                SELECT json_extract(
-                    CASE WHEN json_valid(clientContext) THEN clientContext ELSE '{}' END,
-                    '$.browser'
-                ) AS browser
-                FROM RequestLog
-            ) WHERE browser IS NOT NULL AND browser <> '' ORDER BY browser"
+            "SELECT DISTINCT browser FROM RequestLog WHERE browser IS NOT NULL AND browser <> '' ORDER BY browser"
         )->fetchAll(PDO::FETCH_COLUMN);
+        $serverTimings['browsers'] = (microtime(true) - $queryStartedAt) * 1000;
+
+        $queryStartedAt = microtime(true);
         $countStmt = $db->prepare('SELECT COUNT(*) FROM RequestLog' . $where);
         foreach ($params as $key => $value) {
             $countStmt->bindValue($key, $value);
         }
         $countStmt->execute();
         $totalCount = (int)$countStmt->fetchColumn();
+        $serverTimings['count'] = (microtime(true) - $queryStartedAt) * 1000;
 
+        $queryStartedAt = microtime(true);
         $stmt = $db->prepare(
             'SELECT id, COALESCE(clientDate, date) AS date, date AS receivedAt, eventOrError, eventType, params, sessionId, clientContext FROM RequestLog' . $where .
             ' ORDER BY COALESCE(clientDate, date) DESC, id DESC LIMIT :limit OFFSET :offset'
@@ -829,8 +894,11 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
         $stmt->execute();
+        $pageLogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $serverTimings['page_query'] = (microtime(true) - $queryStartedAt) * 1000;
+        $serverTimings['php_before_response'] = (microtime(true) - $requestStartedAt) * 1000;
         respond(200, [
-            'logs' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'logs' => $pageLogs,
             'eventTypes' => $eventTypes,
             'countries' => $countries,
             'devices' => $devices,
@@ -838,10 +906,13 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
             'page' => $page,
             'perPage' => $perPage,
             'totalCount' => $totalCount,
-        ]);
+        ], $serverTimings);
     } catch (Exception $e) {
         error_log('Analytics logs retrieval failed: ' . $e->getMessage());
-        respond(500, ['error' => 'Erreur lors de la récupération des journaux.']);
+        if (isset($serverTimings)) {
+            $serverTimings['php_before_response'] = (microtime(true) - $requestStartedAt) * 1000;
+        }
+        respond(500, ['error' => 'Erreur lors de la récupération des journaux.'], $serverTimings ?? []);
     }
 }
 

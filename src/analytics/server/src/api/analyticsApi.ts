@@ -1,7 +1,7 @@
 import type {
   AnalyticsSummary,
   LogsFilters,
-  LogsPerPage,
+  LogsRequestPerPage,
   LogsResponse,
   MaintenanceAction,
   MaintenanceResponse,
@@ -10,8 +10,8 @@ import type {
 const API_BASE_URL =
   import.meta.env.VITE_API_URL?.trim() ||
   (import.meta.env.DEV
-    ? 'https://suivi.71yeti.fr/server.php'
-    : './server.php');
+    ? 'https://suivi.71yeti.fr/server.php'  // pour le dev on peut utiliser server-test.php
+    : 'https://suivi.71yeti.fr/server.php');  // pour la prod
 
 export class AnalyticsApiError extends Error {
   constructor(
@@ -94,8 +94,9 @@ async function requestJson<T>(
   return payload as T;
 }
 
-function isLogsPerPage(value: number): value is LogsPerPage {
-  return [10, 25, 50, 100, 250, 500, 1000].includes(value);
+function isLogsRequestPerPage(value: number): value is LogsRequestPerPage {
+  return [10, 25, 50, 100, 250, 500, 1000, 5000, 10000, 20000]
+    .some((size) => size === value);
 }
 
 export async function fetchSources(): Promise<string[]> {
@@ -125,8 +126,10 @@ export function fetchLogs(
   token: string,
   signal?: AbortSignal,
 ): Promise<LogsResponse> {
-  if (filters.perPage !== undefined && !isLogsPerPage(filters.perPage)) {
-    throw new RangeError('perPage doit être 10, 25, 50, 100, 250, 500 ou 1000.');
+  if (filters.perPage !== undefined && !isLogsRequestPerPage(filters.perPage)) {
+    throw new RangeError(
+      'perPage doit être 10, 25, 50, 100, 250, 500, 1000, 5000, 10000 ou 20000.',
+    );
   }
 
   return requestJson(

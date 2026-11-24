@@ -12,6 +12,11 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/11/23 - 7.2.2** - Analytics heavy optimisation
+>***Feat*** - read 20000 lines at once
+>***Feat*** - add indexes and scalar colums
+>***Feat*** - optimise deploy + distant lint script
+
 **2026/11/21 - 7.2.1** - Analytics switch to vue
 >***Feat*** - switch analytcis to a vue project  
 

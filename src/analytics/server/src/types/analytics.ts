@@ -56,6 +56,8 @@ export interface AnalyticsLogLocation {
 
 export type LogCategory = '' | 'event' | 'error';
 export type LogsPerPage = 10 | 25 | 50 | 100 | 250 | 500 | 1000;
+export type LogsBatchSize = 1000 | 5000 | 10000 | 20000;
+export type LogsRequestPerPage = LogsPerPage | LogsBatchSize;
 
 export interface LogsFilters {
   category?: LogCategory;
@@ -68,7 +70,7 @@ export interface LogsFilters {
   startDate?: string;
   endDate?: string;
   page?: number;
-  perPage?: LogsPerPage;
+  perPage?: LogsRequestPerPage;
 }
 
 export interface LogsResponse {
@@ -78,7 +80,7 @@ export interface LogsResponse {
   devices: string[];
   browsers: string[];
   page: number;
-  perPage: LogsPerPage;
+  perPage: LogsRequestPerPage;
   totalCount: number;
 }
 

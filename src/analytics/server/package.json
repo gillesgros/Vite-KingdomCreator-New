@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --port 5174",
     "build": "vite build",
-    "preview": "vite preview --port 5174"
+    "preview": "vite preview --port 5174",
+    "lint:php:ionos": "bun scripts/lint-php-ionos.mjs",
+    "deploy": "bun scripts/deploy-follow.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

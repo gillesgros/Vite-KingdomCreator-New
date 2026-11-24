@@ -9,6 +9,7 @@ import type {
   AnalyticsLog,
   AnalyticsLogLocation,
   LogCategory,
+  LogsBatchSize,
   LogsFilters,
   LogsPerPage,
   MaintenanceAction,
@@ -82,6 +83,8 @@ const filterKeys = [
 ] as const;
 
 const pageSizes: LogsPerPage[] = [10, 25, 50, 100, 250, 500, 1000];
+const batchSizes: LogsBatchSize[] = [1000, 5000, 10000, 20000];
+const isDevelopment = import.meta.env.DEV;
 const tableColumns: LogTableColumn[] = [
   { label: 'Sélection', className: 'selection-column', minWidth: 48 },
   { label: 'Date', className: 'date-column', minWidth: 100 },
@@ -112,6 +115,7 @@ function createDefaultFilters(): LogFilterState {
 }
 
 const filters = reactive<LogFilterState>(createDefaultFilters());
+const batchSize = ref<LogsBatchSize>(1000);
 const logs = ref<AnalyticsLog[]>([]);
 const loadedCount = ref(0);
 const eventTypes = ref<string[]>([]);
@@ -480,6 +484,10 @@ async function loadLogs(): Promise<void> {
     return;
   }
 
+  const loadStartedAt = performance.now();
+  const requestedBatchSize = batchSize.value;
+  let batchRequestCount = 0;
+  let batchRequestDurationMs = 0;
   loading.value = true;
   emit('loading-change', true);
   logs.value = [];
@@ -489,9 +497,33 @@ async function loadLogs(): Promise<void> {
     const requestFilters: LogsFilters = {
       ...filters,
       page: 1,
-      perPage: 1000,
+      perPage: requestedBatchSize,
     };
-    const firstPage = await fetchLogs(source, requestFilters, token, controller.signal);
+    const fetchBatch = async (page: number) => {
+      const batchStartedAt = performance.now();
+      batchRequestCount++;
+      try {
+        const result = await fetchLogs(
+          source,
+          { ...requestFilters, page, perPage: requestedBatchSize },
+          token,
+          controller.signal,
+        );
+        console.log('[Analytics] Lot de journaux récupéré', {
+          source,
+          page,
+          requestedCount: requestedBatchSize,
+          receivedCount: result.logs.length,
+          totalCount: result.totalCount,
+          durationMs: Number((performance.now() - batchStartedAt).toFixed(1)),
+        });
+        return result;
+      } finally {
+        batchRequestDurationMs += performance.now() - batchStartedAt;
+      }
+    };
+
+    const firstPage = await fetchBatch(1);
     if (currentRequest !== requestVersion) return;
 
     eventTypes.value = firstPage.eventTypes;
@@ -508,13 +540,8 @@ async function loadLogs(): Promise<void> {
     totalCount.value = expectedCount;
     let page = 2;
     loadedCount.value = allLogs.size;
-    while ((page - 1) * 1000 < expectedCount) {
-      const result = await fetchLogs(
-        source,
-        { ...requestFilters, page },
-        token,
-        controller.signal,
-      );
+    while ((page - 1) * requestedBatchSize < expectedCount) {
+      const result = await fetchBatch(page);
       if (currentRequest !== requestVersion) return;
 
       expectedCount = Math.max(expectedCount, result.totalCount);
@@ -547,6 +574,20 @@ async function loadLogs(): Promise<void> {
     }
   } finally {
     if (currentRequest === requestVersion) {
+      const totalDurationMs = performance.now() - loadStartedAt;
+      console.log('[Analytics] Chargement des journaux terminé', {
+        source,
+        batchSize: requestedBatchSize,
+        requestCount: batchRequestCount,
+        requestDurationMs: Number(batchRequestDurationMs.toFixed(1)),
+        clientProcessingDurationMs: Number(
+          Math.max(0, totalDurationMs - batchRequestDurationMs).toFixed(1),
+        ),
+        durationMs: Number(totalDurationMs.toFixed(1)),
+        logsLoaded: logs.value.length,
+        totalCount: totalCount.value,
+        status: errorMessage.value ? 'error' : 'success',
+      });
       loading.value = false;
       activeRequest = undefined;
       emit('loading-change', false);
@@ -622,12 +663,13 @@ function scheduleLoad(): void {
 }
 
 watch(
-  () => [props.source, props.token, props.refreshKey, { ...filters }] as const,
+  () => [props.source, props.token, props.refreshKey, { ...filters }, batchSize.value] as const,
   (next, previous) => {
     if (previous) {
       const filterChanged = filterKeys.some((key) => next[3][key] !== previous[3][key]);
       const sourceOrTokenChanged = next[0] !== previous[0] || next[1] !== previous[1];
       const refreshRequested = next[2] !== previous[2];
+      const batchSizeChanged = next[4] !== previous[4];
       if (filterChanged || sourceOrTokenChanged) {
         selectedIds.value = new Set();
         trafficLevel.value = 'categories';
@@ -638,7 +680,7 @@ watch(
       if ((filterChanged || sourceOrTokenChanged) && filters.page !== 1) {
         filters.page = 1;
       }
-      if (!filterChanged && !sourceOrTokenChanged && !refreshRequested) return;
+      if (!filterChanged && !sourceOrTokenChanged && !refreshRequested && !batchSizeChanged) return;
     }
     scheduleLoad();
   },
@@ -655,6 +697,15 @@ function updatePageSize(event: Event): void {
   const pageSize = pageSizes.find((size) => size === value);
   if (pageSize !== undefined) {
     filters.perPage = pageSize;
+  }
+}
+
+function updateBatchSize(event: Event): void {
+  if (!(event.currentTarget instanceof HTMLSelectElement)) return;
+  const value = Number(event.currentTarget.value);
+  const nextSize = batchSizes.find((size) => size === value);
+  if (nextSize !== undefined) {
+    batchSize.value = nextSize;
   }
 }
 
@@ -996,6 +1047,14 @@ onBeforeUnmount(() => {
           Lignes par page
           <select :value="filters.perPage" @change="updatePageSize">
             <option v-for="size in pageSizes" :key="size" :value="size">{{ size }}</option>
+          </select>
+        </label>
+        <label v-if="isDevelopment">
+          Lot API (développement)
+          <select :value="batchSize" @change="updateBatchSize">
+            <option v-for="size in batchSizes" :key="size" :value="size">
+              {{ size.toLocaleString('fr-FR') }}
+            </option>
           </select>
         </label>
         <button

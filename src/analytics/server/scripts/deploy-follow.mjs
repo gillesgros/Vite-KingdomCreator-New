@@ -7,14 +7,14 @@ import { stdin as input, stdout as output } from "node:process";
 // --- Valeurs par défaut configurables en tête de script ---
 const DEFAULT_REMOTE_DIR = "~/KingdomCreator/Follow";
 const DEFAULT_PHP_CLI = "/usr/bin/php8.5-cli";
-const DEFAULT_KEYS_SUBDIR = "src/analytics/server/keys";
+const DEFAULT_KEYS_SUBDIR = "keys";
 const DEFAULT_ENV_FILENAME = ".env.do_not_commit";
 
 const dashboardDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repositoryRoot = resolve(dashboardDirectory, "..", "..", "..");
 const keysDir = join(dashboardDirectory, "keys");
 const envPath = join(keysDir, DEFAULT_ENV_FILENAME);
-const gitignorePath = resolve(repositoryRoot, ".gitignore");
+const gitignorePath = resolve(dashboardDirectory, ".gitignore");
 
 async function run(executable, args, label, inheritStdin = true, cwd = repositoryRoot) {
   console.log(`➡️ ${label}`);
@@ -188,7 +188,14 @@ if (!sshUser || !sshHost || !sshKey || !existsSync(sshKey)) {
 await run(process.execPath, ["run", "build"], "Construction du dashboard Vue", false, dashboardDirectory);
 
 const sourceDirectory = dashboardDirectory;
-const files = ["server.php", "dist"];
+const files = [
+  "server.php",
+  "database-migration.php",
+  "scripts/prepare-database-v7.2.php",
+  "scripts/import-database-v7.2.php",
+  "scripts/migrate-remaining-databases-v7.2.php",
+  "dist",
+];
 const localFiles = files.map((file) => join(sourceDirectory, file));
 for (const file of localFiles) {
   if (!existsSync(file)) fail(`Fichier local introuvable : ${file}`);
@@ -248,7 +255,7 @@ async function execStep(executable, args, label) {
     "set -eu",
     `destination="$HOME/${remoteRelativeDirectory}"`,
     `stage="$HOME/${remoteRelativeDirectory}/.deploy-${releaseId}"`,
-    `rm -f -- "$stage/server.php" "$destination/.server.php.${releaseId}" "$destination/.index.html.${releaseId}"`,
+    `rm -f -- "$stage/server.php" "$stage/database-migration.php" "$stage/prepare-database-v7.2.php" "$stage/import-database-v7.2.php" "$stage/migrate-remaining-databases-v7.2.php" "$destination/.server.php.${releaseId}" "$destination/.database-migration.php.${releaseId}" "$destination/scripts/.prepare-database-v7.2.php.${releaseId}" "$destination/scripts/.import-database-v7.2.php.${releaseId}" "$destination/scripts/.migrate-remaining-databases-v7.2.php.${releaseId}" "$destination/.index.html.${releaseId}"`,
     'rm -rf -- "$stage/dist"',
     `rmdir -- "$stage"`,
   ].join("\n");
@@ -268,14 +275,38 @@ const installCommand = [
   `stage="$destination/.deploy-${releaseId}"`,
   `phpCli="${phpCli}"`,
   'test -f "$stage/server.php"',
+  'test -f "$stage/database-migration.php"',
+  'test -f "$stage/prepare-database-v7.2.php"',
+  'test -f "$stage/import-database-v7.2.php"',
+  'test -f "$stage/migrate-remaining-databases-v7.2.php"',
   'test -f "$stage/dist/index.html"',
   '"$phpCli" -l "$stage/server.php"',
+  '"$phpCli" -l "$stage/database-migration.php"',
+  '"$phpCli" -l "$stage/prepare-database-v7.2.php"',
+  '"$phpCli" -l "$stage/import-database-v7.2.php"',
+  '"$phpCli" -l "$stage/migrate-remaining-databases-v7.2.php"',
+  'mkdir -p -- "$destination/scripts"',
+  `install -m 0644 -- "$stage/database-migration.php" "$destination/.database-migration.php.${releaseId}"`,
+  `mv -f -- "$destination/.database-migration.php.${releaseId}" "$destination/database-migration.php"`,
+  `install -m 0644 -- "$stage/prepare-database-v7.2.php" "$destination/scripts/.prepare-database-v7.2.php.${releaseId}"`,
+  `mv -f -- "$destination/scripts/.prepare-database-v7.2.php.${releaseId}" "$destination/scripts/prepare-database-v7.2.php"`,
+  `install -m 0644 -- "$stage/import-database-v7.2.php" "$destination/scripts/.import-database-v7.2.php.${releaseId}"`,
+  `mv -f -- "$destination/scripts/.import-database-v7.2.php.${releaseId}" "$destination/scripts/import-database-v7.2.php"`,
+  `install -m 0644 -- "$stage/migrate-remaining-databases-v7.2.php" "$destination/scripts/.migrate-remaining-databases-v7.2.php.${releaseId}"`,
+  `mv -f -- "$destination/scripts/.migrate-remaining-databases-v7.2.php.${releaseId}" "$destination/scripts/migrate-remaining-databases-v7.2.php"`,
+  `pausedServer="$destination/.server.php.paused.${releaseId}"`,
+  'restore_server() { if [ -f "$pausedServer" ] && [ ! -f "$destination/server.php" ]; then mv -- "$pausedServer" "$destination/server.php"; fi; }',
+  'trap restore_server EXIT',
+  'if [ -f "$destination/server.php" ]; then mv -- "$destination/server.php" "$pausedServer"; fi',
+  `"$phpCli" "$destination/scripts/prepare-database-v7.2.php" dominionrandomizer.com`,
   `install -m 0644 -- "$stage/server.php" "$destination/.server.php.${releaseId}"`,
   `mv -f -- "$destination/.server.php.${releaseId}" "$destination/server.php"`,
+  `"$phpCli" "$destination/scripts/import-database-v7.2.php" dominionrandomizer.com`,
   'if [ -d "$stage/dist/assets" ]; then mkdir -p -- "$destination/assets"; cp -R -- "$stage/dist/assets/." "$destination/assets/"; fi',
   `install -m 0644 -- "$stage/dist/index.html" "$destination/.index.html.${releaseId}"`,
   `mv -f -- "$destination/.index.html.${releaseId}" "$destination/index.html"`,
-  'rm -f -- "$stage/server.php"',
+  'rm -f -- "$pausedServer"',
+  'rm -f -- "$stage/server.php" "$stage/database-migration.php" "$stage/prepare-database-v7.2.php" "$stage/import-database-v7.2.php" "$stage/migrate-remaining-databases-v7.2.php"',
   'rm -rf -- "$stage/dist"',
   'rmdir -- "$stage"',
   "printf '%s\\n' 'Déploiement terminé.'",
@@ -286,8 +317,8 @@ let stageCreated = false;
 try {
   await execStep(sshExecutable, [...connectionArgs, destination, createStageCommand], "Vérification / création des dossiers distants et préparation du dépôt temporaire…");
   stageCreated = true;
-  await execStep(scpExecutable, ["-r", ...connectionArgs, ...localFiles, `${destination}:${remoteStage}/`], "Transfert de server.php et du build dist/…");
-  await execStep(sshExecutable, [...connectionArgs, destination, installCommand], "Validation PHP puis installation de server.php et du dashboard…");
+  await execStep(scpExecutable, ["-r", ...connectionArgs, ...localFiles, `${destination}:${remoteStage}/`], "Transfert de l’API, des migrations et du build dist/…");
+  await execStep(sshExecutable, [...connectionArgs, destination, installCommand], "Validation PHP, sauvegarde/migration SQLite et installation du dashboard…");
 } catch (error) {
   if (stageCreated) {
     try { 

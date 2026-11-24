@@ -37,6 +37,17 @@ Depuis la racine du dépôt, lancer :
 bun run deploy:follow
 ```
 
+Pour vérifier uniquement la syntaxe des fichiers PHP sur IONOS, sans déployer,
+lancer :
+
+```sh
+bun run lint:php:follow
+```
+
+Cette commande transfère temporairement `server.php`, le helper et les trois
+scripts de migration dans un dossier privé sous le compte SSH, exécute
+`/usr/bin/php8.5-cli -l` sur chacun, puis supprime les copies temporaires.
+
 Au premier lancement sur un poste, l’assistant demande l’utilisateur et l’hôte
 SSH IONOS. Il requiert `ssh` et `ssh-keygen` dans le `PATH` pour cette
 initialisation. Il génère une clé Ed25519 sans passphrase dans
@@ -62,13 +73,27 @@ Pour les déploiements, `IONOS_SSH_EXE` et `IONOS_SCP_EXE` peuvent remplacer les
 exécutables `ssh` et `scp` trouvés dans le `PATH`.
 
 Le déploiement construit d’abord le dashboard Vue dans `src/analytics/server/`,
-puis transfère `server.php` et le contenu de `dist/` dans le répertoire web
-IONOS. Il prépare un dossier temporaire distant et vérifie la syntaxe de
-`server.php` avant installation. Les assets sont copiés avant le nouvel
-`index.html` afin que la page publiée ne référence pas des fichiers pas encore
-transférés. Les anciens assets portant un nom hashé ne sont pas supprimés.
-Le script crée `databases/` s’il n’existe pas, mais ne transfère ni ne supprime
-les bases SQLite, `server-config.php` ou `index-2.html`.
+puis transfère `server.php`, le helper de migration, les commandes CLI et le
+contenu de `dist/` dans le répertoire web IONOS. Il vérifie la syntaxe PHP avant
+installation. Il installe d’abord le helper et les scripts, puis retire
+brièvement `server.php` du chemin pour empêcher de nouvelles écritures pendant
+le déplacement de la base principale. Les requêtes reçues pendant cette courte
+interruption ne sont pas mises en file. Le script déplace
+`databases/dominionrandomizer.com.db` vers
+`<répertoire-web>-backups/dominionrandomizer.com-v7.2-moved.db`, crée et initialise
+la base active, installe le nouveau `server.php`, puis importe les anciennes
+lignes sans écraser celles éventuellement déjà reçues dans la base active.
+Enfin, il publie le dashboard. Les autres bases ne sont ni déplacées ni migrées
+par `deploy:follow`.
+
+L’opération peut être relancée : le déplacement n’écrase jamais une archive
+`-v7.2-moved.db` existante et le manifeste dans la base active empêche un second
+import. Les anciennes archives `<source>-v7.2.db` ne sont pas écrasées. Si une
+étape échoue après le déplacement, le script restaure l’ancien `server.php` si
+le nouveau n’a pas encore été installé ; l’archive est conservée pour reprendre
+la préparation ou l’import. Les anciens assets portant un nom hashé ne sont pas
+supprimés. Le déploiement ne transfère ni ne supprime `server-config.php` ou
+`index-2.html`.
 
 Pour simuler le déploiement après l’initialisation, définir
 `IONOS_DEPLOY_DRY_RUN=1` dans l’environnement du terminal avant de lancer la
@@ -76,6 +101,49 @@ commande. Sur un clone non initialisé, le premier lancement configure quand
 même l’accès SSH avant d’effectuer la simulation.
 
 ## Gestion des données
+
+### Migration et performances SQLite
+
+Chaque source reste stockée dans son propre fichier `databases/<source>.db`.
+Les nouvelles bases créent `RequestLog` avec les colonnes scalaires `country`,
+`device` et `browser`, en plus du JSON `clientContext` conservé pour compatibilité.
+La base principale est déplacée réellement (et non copiée) dans le répertoire
+frère privé `<répertoire-web>-backups/` avant l’installation de `server.php`.
+Elle est ensuite importée dans le nouveau fichier actif, avec préservation des
+identifiants historiques sauf collision. Le helper partagé applique les colonnes
+historiques/scalaires, le remplissage depuis `clientContext` et les six index.
+Le serveur et les scripts CLI utilisent le même helper pour éviter toute
+divergence. Une source sans fichier `.db` est créée avec le nouveau schéma à sa
+première requête vers `server.php` ; elle n’apparaîtra dans `listSources` qu’après
+cette création.
+
+Les autres bases, supposées sans trafic, sont reportées. Quand vous déciderez
+de les traiter, exécutez sur IONOS, après déploiement, et seulement lorsque ces
+sources ne reçoivent pas de requêtes :
+
+```sh
+/usr/bin/php8.5-cli ~/KingdomCreator/Follow/scripts/migrate-remaining-databases-v7.2.php
+```
+
+Cette commande exclut `dominionrandomizer.com`, déplace chaque autre base vers
+son archive `-v7.2-moved.db` puis l’importe dans son fichier actif. Elle conserve
+les archives hors du répertoire web ; ne renommez pas manuellement les bases
+avant de lancer `deploy:follow`. Les anciennes archives `<source>-v7.2.db` ne
+sont pas écrasées.
+
+La sauvegarde d'une base déjà archivée n'est pas écrasée lors d'une nouvelle
+tentative de déploiement. Les archives sont hors du répertoire web et sont
+créées avec des permissions privées. Le serveur attend
+jusqu'à 30 secondes un verrou SQLite pendant l'initialisation/migration ; une
+première requête sur une grande base peut donc attendre et sera plus lente. Le
+temps de migration déclenché par le serveur apparaît dans `Server-Timing` sous
+`metadata_migration`.
+
+Le tableau de bord demande par défaut les journaux par lots de 20 000. Les
+réponses JSON de plus de 1 Ko sont gzipées si le navigateur annonce accepter
+gzip ; vérifier `Content-Encoding: gzip` dans l’onglet Network pour confirmer.
+Les temps de préparation, de migration, de requête, d’encodage et de compression
+sont exposés dans `Server-Timing`.
 
 Depuis la section des données brutes, les actions de maintenance permettent :
 

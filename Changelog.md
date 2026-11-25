@@ -12,10 +12,19 @@ Feel free to propose any improvements you see fit and send me a pull request!
 it uses vue 3, vite.js, Pinia, vue-i18n and node.js v24 or bun
 
 ### Changelog
+**2026/11/24 - 7.2.3** - Analytics - dynamic rendering  
+>***Feat*** - progressively load analytics logs and fetch only newer rows on refresh  
+>***Feat*** - add weekly/monthly set, card and event trends with distinct kingdom counts  
+>***Fix*** - prevent the Leaflet map from zooming out beyond its initial world view  
+>***Fix*** - make database migration opt-in and persist its completed version  
+>***Fix*** - clean up temporary deployment scripts and stale dashboard assets  
+>***Feat*** - clean events statss, set stats and cards stats to make them consistent  
+
+
 **2026/11/23 - 7.2.2** - Analytics heavy optimisation
->***Feat*** - read 20000 lines at once
->***Feat*** - add indexes and scalar colums
->***Feat*** - optimise deploy + distant lint script
+>***Feat*** - read 20000 lines at once  
+>***Feat*** - add indexes and scalar colums  
+>***Feat*** - optimise deploy + distant lint script  
 
 **2026/11/21 - 7.2.1** - Analytics switch to vue
 >***Feat*** - switch analytcis to a vue project  

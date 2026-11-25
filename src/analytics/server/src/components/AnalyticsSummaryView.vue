@@ -37,9 +37,14 @@
 
     <template v-if="summary">
       <div class="extension-grid">
-        <CountTable title="Extensions configurées (Royaumes)" :counts="summary.topSets" />
-        <CountTable title="Extensions utilisées pour randomiser" :counts="summary.randomizationSets" />
+        <CountTable title="Extensions présentes dans les royaumes" :counts="topKingdomSets" />
+        <CountTable title="Extensions utilisées lors du « Randomize »" :counts="summary.sets" />
       </div>
+      <UsageTrends
+        :logs="logs"
+        :loading="logsLoading"
+        @usage-counts-change="updateKingdomUsageCounts"
+      />
 
       <details class="other-statistics">
         <summary>Autres statistiques détaillées</summary>
@@ -59,7 +64,10 @@
         </div>
 
         <div class="summary-grid">
-          <CountTable title="Cartes et addons les plus utilisés (top 20)" :counts="summary.topCards" />
+          <CountTable
+            title="Cartes et addons présents dans les royaumes (top 20)"
+            :counts="topKingdomCards"
+          />
           <CountTable
             v-for="table in countTables"
             :key="table.key"
@@ -116,15 +124,19 @@ import {
 } from '../api/analyticsApi';
 import type {
   AnalyticsCountMap,
+  AnalyticsLog,
   AnalyticsSummary,
 } from '../types/analytics';
 import CountTable from './CountTable.vue';
 import SettingsBreakdown from './SettingsBreakdown.vue';
+import UsageTrends from './UsageTrends.vue';
 
 const props = defineProps<{
   source: string;
   token: string;
   refreshKey: number;
+  logs: AnalyticsLog[];
+  logsLoading: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -133,6 +145,8 @@ const emit = defineEmits<{
 }>();
 
 const summary = ref<AnalyticsSummary | null>(null);
+const kingdomSetCounts = ref<AnalyticsCountMap>({});
+const kingdomCardCounts = ref<AnalyticsCountMap>({});
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
 const errorStatus = ref<number | null>(null);
@@ -159,11 +173,32 @@ const recentKingdoms = computed<RecentKingdomDisplay[]>(() =>
   })),
 );
 
+const topKingdomSets = computed(() => topCounts(kingdomSetCounts.value, 45));
+const topKingdomCards = computed(() => topCounts(kingdomCardCounts.value, 20));
+
+function updateKingdomUsageCounts(counts: {
+  setCounts: AnalyticsCountMap;
+  cardCounts: AnalyticsCountMap;
+}): void {
+  kingdomSetCounts.value = counts.setCounts;
+  kingdomCardCounts.value = counts.cardCounts;
+}
+
+function topCounts(counts: AnalyticsCountMap, limit: number): AnalyticsCountMap {
+  return Object.fromEntries(
+    Object.entries(counts)
+      .sort(([leftLabel, leftCount], [rightLabel, rightCount]) =>
+        rightCount - leftCount || leftLabel.localeCompare(rightLabel),
+      )
+      .slice(0, limit),
+  );
+}
+
 const countTables = computed(() => {
   if (!summary.value) return [];
   return [
     { key: 'activity-sources', title: 'Origine des royaumes', counts: summary.value.sources },
-    { key: 'randomization-sets', title: 'Sets utilisés pour randomiser', counts: summary.value.randomizationSets },
+    { key: 'randomization-sets', title: 'Sets utilisés lors du « Randomize »', counts: summary.value.sets },
     { key: 'event-types', title: 'Actions (EventType)', counts: summary.value.eventTypes },
     { key: 'pages', title: 'Pages consultées', counts: summary.value.pages },
     { key: 'page-languages', title: 'Langues des règles', counts: summary.value.pageLanguages },

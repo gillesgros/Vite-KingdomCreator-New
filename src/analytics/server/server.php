@@ -703,8 +703,8 @@ if (isset($_GET['analytics']) && $_GET['analytics'] === 'summary') {
         arsort($summary['randomizationTypes']);
         arsort($summary['randomizationSets']);
         arsort($summary['randomizationAdjustedElements']);
-        $summary['topSets'] = array_slice($summary['sets'], 0, 15, true);
-        $summary['topCards'] = array_slice($summary['cards'], 0, 20, true);
+        $summary['topSets'] = array_slice($summary['sets'], 0, 45, true);
+        $summary['topCards'] = array_slice($summary['cards'], 0, 500, true);
 
         $recent = $db->query(
             "SELECT COALESCE(clientDate, date) AS date, date AS receivedAt, params, sessionId FROM RequestLog WHERE eventType = 'KINGDOM_ACTIVITY' ORDER BY COALESCE(clientDate, date) DESC, id DESC LIMIT 50"
@@ -759,6 +759,20 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
         respond(400, ['error' => 'Le nombre de lignes par page est invalide.']);
     }
     $perPage = (int)$perPage;
+    $afterIdValue = $_GET['afterId'] ?? null;
+    $throughIdValue = $_GET['throughId'] ?? null;
+    $cursorPagination = $afterIdValue !== null;
+    if (($cursorPagination && (!is_string($afterIdValue) || !preg_match('/^\d+$/D', $afterIdValue))) ||
+        ($throughIdValue !== null && (!is_string($throughIdValue) || !preg_match('/^\d+$/D', $throughIdValue))) ||
+        (!$cursorPagination && $throughIdValue !== null)) {
+        respond(400, ['error' => 'Le curseur des journaux est invalide.']);
+    }
+    $afterId = $cursorPagination ? (int)$afterIdValue : null;
+    $throughId = $throughIdValue === null ? null : (int)$throughIdValue;
+    if (($afterId !== null && $afterId < 0) ||
+        ($throughId !== null && ($throughId < 0 || $throughId < $afterId))) {
+        respond(400, ['error' => 'Le curseur des journaux est invalide.']);
+    }
     $sessionId = $_GET['sessionId'] ?? '';
     if (!is_string($sessionId) || strlen($sessionId) > 64 ||
         ($sessionId !== '' && !preg_match('/^[A-Fa-f0-9*?-]+$/', $sessionId))) {
@@ -838,6 +852,21 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
         $filters[] = 'COALESCE(clientDate, date) < :endDate';
         $params[':endDate'] = $endDate->modify('+1 minute')->format('Y-m-d H:i:s.u');
     }
+    $highWaterId = null;
+    if ($cursorPagination) {
+        if ($throughId === null) {
+            $highWaterId = (int)$db->query(
+                'SELECT COALESCE(MAX(id), 0) FROM RequestLog'
+            )->fetchColumn();
+            $throughId = $highWaterId;
+        } else {
+            $highWaterId = $throughId;
+        }
+        $filters[] = 'id > :afterId';
+        $params[':afterId'] = $afterId;
+        $filters[] = 'id <= :throughId';
+        $params[':throughId'] = $throughId;
+    }
     $where = $filters ? ' WHERE ' . implode(' AND ', $filters) : '';
 
     try {
@@ -884,15 +913,20 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
         $serverTimings['count'] = (microtime(true) - $queryStartedAt) * 1000;
 
         $queryStartedAt = microtime(true);
+        $orderBy = $cursorPagination
+            ? ' ORDER BY id ASC LIMIT :limit'
+            : ' ORDER BY COALESCE(clientDate, date) DESC, id DESC LIMIT :limit OFFSET :offset';
         $stmt = $db->prepare(
-            'SELECT id, COALESCE(clientDate, date) AS date, date AS receivedAt, eventOrError, eventType, params, sessionId, clientContext FROM RequestLog' . $where .
-            ' ORDER BY COALESCE(clientDate, date) DESC, id DESC LIMIT :limit OFFSET :offset'
+            'SELECT id, COALESCE(clientDate, date) AS date, date AS receivedAt, eventOrError, eventType, params, sessionId, clientContext, country, device, browser FROM RequestLog' . $where .
+            $orderBy
         );
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
+        if (!$cursorPagination) {
+            $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
+        }
         $stmt->execute();
         $pageLogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $serverTimings['page_query'] = (microtime(true) - $queryStartedAt) * 1000;
@@ -906,6 +940,7 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
             'page' => $page,
             'perPage' => $perPage,
             'totalCount' => $totalCount,
+            'highWaterId' => $highWaterId,
         ], $serverTimings);
     } catch (Exception $e) {
         error_log('Analytics logs retrieval failed: ' . $e->getMessage());

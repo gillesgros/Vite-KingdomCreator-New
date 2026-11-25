@@ -12,6 +12,7 @@
       v-model:source="source"
       v-model:token="token"
       :summary-loading="logsLoading || summaryLoading"
+      :loaded-source="loadedSource"
       :auth-error="authError"
       @refresh="refreshDashboard"
     />
@@ -40,25 +41,45 @@
       >
         Synthèse — statistiques d’utilisation des extensions
       </button>
+      <button
+        type="button"
+        :aria-pressed="activeView === 'events'"
+        :class="{ active: activeView === 'events' }"
+        @click="activeView = 'events'"
+      >
+        Événements dans le temps
+      </button>
     </nav>
 
     <LogsExplorerView
-      v-if="source && token && activeView === 'logs'"
+      v-if="source && token"
+      v-show="activeView === 'logs'"
       :source="source"
       :token="token"
       :refresh-key="refreshKey"
+      @logs-change="logs = $event"
+      @dashboard-loaded="markSourceLoaded"
       @loading-change="logsLoading = $event"
       @maintenance-complete="refreshDashboard"
       @auth-error="showAuthError"
     />
 
     <AnalyticsSummaryView
-      v-if="source && token && activeView === 'summary'"
+      v-if="source && token"
+      v-show="activeView === 'summary'"
       :source="source"
       :token="token"
       :refresh-key="refreshKey"
+      :logs="logs"
+      :logs-loading="logsLoading"
       @loading-change="summaryLoading = $event"
       @auth-error="showAuthError"
+    />
+
+    <AnalyticsEventsView
+      v-if="source && token && activeView === 'events'"
+      :logs="logs"
+      :loading="logsLoading"
     />
 
   </main>
@@ -67,16 +88,20 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import AnalyticsSummaryView from './components/AnalyticsSummaryView.vue';
+import AnalyticsEventsView from './components/AnalyticsEventsView.vue';
 import DashboardToolbar from './components/DashboardToolbar.vue';
 import LogsExplorerView from './components/LogsExplorerView.vue';
+import type { AnalyticsLog } from './types/analytics';
 
 const source = ref('');
 const token = ref('');
 const refreshKey = ref(0);
+const logs = ref<AnalyticsLog[]>([]);
+const loadedSource = ref('');
 const logsLoading = ref(false);
 const summaryLoading = ref(false);
 const authError = ref<{ status: number; message: string } | null>(null);
-const activeView = ref<'summary' | 'logs'>('logs');
+const activeView = ref<'summary' | 'logs' | 'events'>('logs');
 
 function refreshDashboard(): void {
   authError.value = null;
@@ -87,8 +112,16 @@ function showAuthError(error: { status: number; message: string }): void {
   authError.value = error;
 }
 
+function markSourceLoaded(completedSource: string): void {
+  if (source.value === completedSource) {
+    loadedSource.value = source.value;
+  }
+}
+
 watch(source, () => {
   authError.value = null;
+  logs.value = [];
+  loadedSource.value = '';
 });
 </script>
 
@@ -168,7 +201,7 @@ select:disabled {
   border-radius: .4rem .4rem 0 0;
   background: transparent;
   color: #52627a;
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.2;
 }

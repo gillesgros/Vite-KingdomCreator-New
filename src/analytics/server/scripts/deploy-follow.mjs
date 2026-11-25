@@ -9,6 +9,33 @@ const DEFAULT_REMOTE_DIR = "~/KingdomCreator/Follow";
 const DEFAULT_PHP_CLI = "/usr/bin/php8.5-cli";
 const DEFAULT_KEYS_SUBDIR = "keys";
 const DEFAULT_ENV_FILENAME = ".env.do_not_commit";
+const migrationArguments = process.argv.slice(2);
+const migrationArgumentSet = new Set(migrationArguments);
+const migrationOptions = [
+  "--migrate-database",
+  "--skip-database-migration",
+  "--migrate-remaining-databases",
+];
+const migrationChoiceOptions = [
+  "--migrate-database",
+  "--skip-database-migration",
+];
+if (
+  migrationArguments.some((argument) => !migrationOptions.includes(argument)) ||
+  migrationArguments.length !== migrationArgumentSet.size ||
+  migrationChoiceOptions.every((argument) => migrationArgumentSet.has(argument))
+) {
+  console.error(
+    "Usage: bun run deploy:follow [--migrate-database | --skip-database-migration] [--migrate-remaining-databases]",
+  );
+  process.exit(2);
+}
+const requestedMigration = migrationArgumentSet.has("--migrate-database")
+  ? true
+  : migrationArgumentSet.has("--skip-database-migration")
+    ? false
+    : null;
+const migrateRemainingDatabases = migrationArgumentSet.has("--migrate-remaining-databases");
 
 const dashboardDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repositoryRoot = resolve(dashboardDirectory, "..", "..", "..");
@@ -185,7 +212,7 @@ if (!sshUser || !sshHost || !sshKey || !existsSync(sshKey)) {
   fail("Paramètres de connexion invalides ou manquants.", true);
 }
 
-await run(process.execPath, ["run", "build"], "Construction du dashboard Vue", false, dashboardDirectory);
+await run(process.execPath, ["run", "build"], "   Construction du dashboard Vue", false, dashboardDirectory);
 
 const sourceDirectory = dashboardDirectory;
 const files = [
@@ -223,31 +250,63 @@ if (!sshExecutable || !scpExecutable) {
   fail("ssh ou scp est introuvable sur le système.");
 }
 
-async function execStep(executable, args, label) {
-  console.log(`➡️ ${label}`);
+async function execStep(executable, args, label, captureStdout = false) {
+  console.log(`➡️  ${label}`);
   const proc = Bun.spawn([executable, ...args], {
     stdin: "inherit",
-    stdout: "inherit",
+    stdout: captureStdout ? "pipe" : "inherit",
     stderr: "pipe",
   });
   let stderrOutput = "";
-  const decoder = new TextDecoder(); 
+  let stdoutOutput = "";
+  const stdoutDecoder = new TextDecoder();
+  const stderrDecoder = new TextDecoder();
+  const readStdout = async () => {
+    if (!captureStdout || !proc.stdout) return;
+    for await (const chunk of proc.stdout) {
+      stdoutOutput += stdoutDecoder.decode(chunk, { stream: true });
+    }
+    stdoutOutput += stdoutDecoder.decode();
+  };
   // Lecture asynchrone du flux d'erreur pour l'afficher en direct ET le stocker
   const readStderr = async () => {
     for await (const chunk of proc.stderr) {
-      const text = decoder.decode(chunk, { stream: true });
+      const text = stderrDecoder.decode(chunk, { stream: true });
       stderrOutput += text;
       process.stderr.write(text); // Affiche à l'écran en temps réel
     }
   };
 
+  const stdoutPromise = readStdout();
   const stderrPromise = readStderr();
   const exitCode = await proc.exited;
+  await stdoutPromise;
   await stderrPromise; // On s'assure que tout le flux est bien lu
   if (exitCode !== 0) {
     // stderrOutput contient maintenant toute l'erreur exacte (ex: Could not resolve hostname...)
     const fullErrorMsg = stderrOutput.trim();
     throw new Error(`${label} a échoué (code ${exitCode}).\nDétails : ${fullErrorMsg}`);
+  }
+  return stdoutOutput.trim();
+}
+
+async function askForMigration() {
+  if (requestedMigration !== null) return requestedMigration;
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    console.log(
+      "Session non interactive : migration ignorée. Utilisez --migrate-database pour la demander explicitement.",
+    );
+    return false;
+  }
+
+  const rl = readline.createInterface({ input, output });
+  try {
+    const answer = (await rl.question(
+      "La base principale doit être migrée. Exécuter cette migration maintenant ? (o/N) ",
+    )).trim();
+    return /^o(ui)?$/i.test(answer);
+  } finally {
+    rl.close();
   }
 }
 
@@ -269,7 +328,7 @@ const createStageCommand = [
   `mkdir -m 700 -- "$destination/.deploy-${releaseId}"`,
 ].join("\n");
 
-const installCommand = [
+const installToolsCommand = [
   "set -eu",
   `destination="$HOME/${remoteRelativeDirectory}"`,
   `stage="$destination/.deploy-${releaseId}"`,
@@ -294,35 +353,103 @@ const installCommand = [
   `mv -f -- "$destination/scripts/.import-database-v7.2.php.${releaseId}" "$destination/scripts/import-database-v7.2.php"`,
   `install -m 0644 -- "$stage/migrate-remaining-databases-v7.2.php" "$destination/scripts/.migrate-remaining-databases-v7.2.php.${releaseId}"`,
   `mv -f -- "$destination/scripts/.migrate-remaining-databases-v7.2.php.${releaseId}" "$destination/scripts/migrate-remaining-databases-v7.2.php"`,
-  `pausedServer="$destination/.server.php.paused.${releaseId}"`,
-  'restore_server() { if [ -f "$pausedServer" ] && [ ! -f "$destination/server.php" ]; then mv -- "$pausedServer" "$destination/server.php"; fi; }',
-  'trap restore_server EXIT',
-  'if [ -f "$destination/server.php" ]; then mv -- "$destination/server.php" "$pausedServer"; fi',
-  `"$phpCli" "$destination/scripts/prepare-database-v7.2.php" dominionrandomizer.com`,
-  `install -m 0644 -- "$stage/server.php" "$destination/.server.php.${releaseId}"`,
-  `mv -f -- "$destination/.server.php.${releaseId}" "$destination/server.php"`,
-  `"$phpCli" "$destination/scripts/import-database-v7.2.php" dominionrandomizer.com`,
-  'if [ -d "$stage/dist/assets" ]; then mkdir -p -- "$destination/assets"; cp -R -- "$stage/dist/assets/." "$destination/assets/"; fi',
-  `install -m 0644 -- "$stage/dist/index.html" "$destination/.index.html.${releaseId}"`,
-  `mv -f -- "$destination/.index.html.${releaseId}" "$destination/index.html"`,
-  'rm -f -- "$pausedServer"',
-  'rm -f -- "$stage/server.php" "$stage/database-migration.php" "$stage/prepare-database-v7.2.php" "$stage/import-database-v7.2.php" "$stage/migrate-remaining-databases-v7.2.php"',
-  'rm -rf -- "$stage/dist"',
-  'rmdir -- "$stage"',
-  "printf '%s\\n' 'Déploiement terminé.'",
 ].join("\n");
+
+const migrationStatusCommand = [
+  "set -eu",
+  `destination="$HOME/${remoteRelativeDirectory}"`,
+  `phpCli="${phpCli}"`,
+  `"$phpCli" "$destination/scripts/import-database-v7.2.php" --status dominionrandomizer.com`,
+].join("\n");
+
+function createInstallCommand(migrateDatabase, migrateRemaining) {
+  const migrationSteps = migrateDatabase
+    ? [
+      `pausedServer="$destination/.server.php.paused.${releaseId}"`,
+      'restore_server() { if [ -f "$pausedServer" ] && [ ! -f "$destination/server.php" ]; then mv -- "$pausedServer" "$destination/server.php"; fi; }',
+      'trap restore_server EXIT',
+      'if [ -f "$destination/server.php" ]; then mv -- "$destination/server.php" "$pausedServer"; fi',
+      `"$phpCli" "$destination/scripts/prepare-database-v7.2.php" dominionrandomizer.com`,
+    ]
+    : [];
+  const importSteps = migrateDatabase
+    ? [`"$phpCli" "$destination/scripts/import-database-v7.2.php" dominionrandomizer.com`]
+    : [];
+  const remainingMigrationSteps = migrateRemaining
+    ? [`"$phpCli" "$destination/scripts/migrate-remaining-databases-v7.2.php"`]
+    : [];
+  const cleanupMigrationScripts = [
+    'rm -f -- "$destination/scripts/prepare-database-v7.2.php" "$destination/scripts/import-database-v7.2.php" "$destination/scripts/migrate-remaining-databases-v7.2.php" "$destination/scripts/backup-databases-v7.2.php" "$destination/scripts/migrate-databases-v7.2.php"',
+  ];
+  return [
+    "set -eu",
+    `destination="$HOME/${remoteRelativeDirectory}"`,
+    `stage="$destination/.deploy-${releaseId}"`,
+    `phpCli="${phpCli}"`,
+    ...migrationSteps,
+    `install -m 0644 -- "$stage/server.php" "$destination/.server.php.${releaseId}"`,
+    `mv -f -- "$destination/.server.php.${releaseId}" "$destination/server.php"`,
+    ...importSteps,
+    ...remainingMigrationSteps,
+    'if [ -d "$stage/dist/assets" ]; then mkdir -p -- "$destination/assets"; cp -R -- "$stage/dist/assets/." "$destination/assets/"; fi',
+    `install -m 0644 -- "$stage/dist/index.html" "$destination/.index.html.${releaseId}"`,
+    `mv -f -- "$destination/.index.html.${releaseId}" "$destination/index.html"`,
+    'if [ -d "$stage/dist/assets" ] && [ -d "$destination/assets" ]; then find "$destination/assets" -type f -print | while IFS= read -r oldAsset; do relativeAsset=${oldAsset#"$destination/assets/"}; if [ ! -f "$stage/dist/assets/$relativeAsset" ]; then rm -f -- "$oldAsset"; fi; done; fi',
+    ...cleanupMigrationScripts,
+    'if [ -d "$destination/scripts" ] && [ -z "$(find "$destination/scripts" -mindepth 1 -maxdepth 1 -print -quit)" ]; then rmdir -- "$destination/scripts"; fi',
+    ...(migrateDatabase ? ['rm -f -- "$pausedServer"'] : []),
+    'rm -f -- "$stage/server.php" "$stage/database-migration.php" "$stage/prepare-database-v7.2.php" "$stage/import-database-v7.2.php" "$stage/migrate-remaining-databases-v7.2.php"',
+    'rm -rf -- "$stage/dist"',
+    'rmdir -- "$stage"',
+    "printf '%s\\n' 'Déploiement terminé.'",
+  ].join("\n");
+}
 
 let stageCreated = false;
 
 try {
-  await execStep(sshExecutable, [...connectionArgs, destination, createStageCommand], "Vérification / création des dossiers distants et préparation du dépôt temporaire…");
+  await execStep(sshExecutable, [...connectionArgs, destination, createStageCommand], "  Vérification / création des dossiers distants et préparation du dépôt temporaire…");
   stageCreated = true;
-  await execStep(scpExecutable, ["-r", ...connectionArgs, ...localFiles, `${destination}:${remoteStage}/`], "Transfert de l’API, des migrations et du build dist/…");
-  await execStep(sshExecutable, [...connectionArgs, destination, installCommand], "Validation PHP, sauvegarde/migration SQLite et installation du dashboard…");
+  await execStep(scpExecutable, ["-r", ...connectionArgs, ...localFiles, `${destination}:${remoteStage}/`], "  Transfert de l’API, des migrations et du build dist/…");
+  await execStep(sshExecutable, [...connectionArgs, destination, installToolsCommand], "  Validation PHP et installation des outils de migration…");
+
+  const statusOutput = await execStep(
+    sshExecutable,
+    [...connectionArgs, destination, migrationStatusCommand],
+    "  Vérification de la version de migration de la base principale…",
+    true,
+  );
+  const migrationStatus = statusOutput.match(
+    /migration-status=(complete|pending|not-needed);database-version=(\d+)/,
+  );
+  if (!migrationStatus) {
+    throw new Error(`Réponse de statut de migration IONOS invalide : ${statusOutput}`);
+  }
+
+  const [, databaseStatus, databaseVersion] = migrationStatus;
+  let migrateDatabase = false;
+  if (databaseStatus === "complete") {
+    console.log(`La base principale est déjà migrée (version ${databaseVersion}) : aucune migration ne sera relancée.`);
+  } else if (databaseStatus === "not-needed") {
+    console.log("Aucune base ni archive existante : migration non nécessaire.");
+  } else {
+    migrateDatabase = await askForMigration();
+    console.log(migrateDatabase
+      ? "  La migration de la base principale est demandée."
+      : "  Migration ignorée ; les données existantes ne seront pas déplacées ni importées.");
+  }
+
+  await execStep(
+    sshExecutable,
+    [...connectionArgs, destination, createInstallCommand(migrateDatabase, migrateRemainingDatabases)],
+    migrateDatabase || migrateRemainingDatabases
+      ? "Migration demandée, nettoyage des scripts temporaires et installation du dashboard…"
+      : "Installation du serveur et du dashboard sans migration de base…",
+  );
 } catch (error) {
   if (stageCreated) {
     try { 
-		await execStep(sshExecutable, [...connectionArgs, destination, cleanupRemoteStageCommand], "Nettoyage du dossier temporaire distant…");
+		await execStep(sshExecutable, [...connectionArgs, destination, cleanupRemoteStageCommand], "  Nettoyage du dossier temporaire distant…");
 	} catch (e) {}
   }
   console.error(error instanceof Error ? error.message : error);

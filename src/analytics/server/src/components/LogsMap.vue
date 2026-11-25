@@ -128,8 +128,9 @@ onMounted(() => {
   const element = mapElement.value;
   if (!element) return;
 
-  mapInstance = L.map(element).setView([22, 10], 2);
+  mapInstance = L.map(element, { minZoom: 1.5 }).setView([22, 10], 2);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    minZoom: 1.5,
     maxZoom: 8,
     attribution: '© OpenStreetMap contributors',
   }).addTo(mapInstance);
@@ -158,7 +159,7 @@ onBeforeUnmount(() => {
 
 .map {
   z-index: 0;
-  height: 360px;
+  height: 550px;
   border: 1px solid #cbd5e1;
   border-radius: .4rem;
   background: #edf2f7;

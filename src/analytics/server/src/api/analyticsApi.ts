@@ -147,6 +147,8 @@ export function fetchLogs(
       endDate: filters.endDate,
       page: filters.page,
       perPage: filters.perPage,
+      afterId: filters.afterId,
+      throughId: filters.throughId,
     }),
     token,
     { signal },

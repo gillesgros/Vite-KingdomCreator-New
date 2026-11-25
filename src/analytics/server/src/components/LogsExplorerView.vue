@@ -24,6 +24,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'loading-change': [loading: boolean];
+  'logs-change': [logs: AnalyticsLog[]];
+  'dashboard-loaded': [source: string];
   'maintenance-complete': [];
   'auth-error': [error: { status: number; message: string }];
 }>();
@@ -115,7 +117,7 @@ function createDefaultFilters(): LogFilterState {
 }
 
 const filters = reactive<LogFilterState>(createDefaultFilters());
-const batchSize = ref<LogsBatchSize>(1000);
+const batchSize = ref<LogsBatchSize>(20000);
 const logs = ref<AnalyticsLog[]>([]);
 const loadedCount = ref(0);
 const eventTypes = ref<string[]>([]);
@@ -142,6 +144,8 @@ let requestVersion = 0;
 let loadTimer: number | undefined;
 let activeRequest: AbortController | undefined;
 let columnResizeState: ColumnResizeState | null = null;
+let cursorId = 0;
+let cursorInitialized = false;
 
 const maximumSelection = 1000;
 
@@ -211,15 +215,15 @@ function formatLogDetails(log: AnalyticsLog): string {
 const rows = computed<LogRow[]>(() =>
   logs.value.map((log) => {
     const context = parseContext(log.clientContext);
-    const country = readString(context, 'country');
+    const country = readString(context, 'country') || log.country || '';
     const subdivision = readString(context, 'subdivision');
     const city = readString(context, 'city');
 
     return {
       log,
       country: country || '—',
-      device: readString(context, 'device') || '—',
-      browser: readString(context, 'browser') || '—',
+      device: readString(context, 'device') || log.device || '—',
+      browser: readString(context, 'browser') || log.browser || '—',
       paramsText: formatJson(log.params),
       location: {
         country,
@@ -229,8 +233,29 @@ const rows = computed<LogRow[]>(() =>
         longitude: readCoordinate(context, ['longitude', 'lng', 'lon']),
       },
     };
+  }).filter((row) => {
+    if (filters.category && row.log.eventOrError !== filters.category) return false;
+    if (filters.eventType && row.log.eventType !== filters.eventType) return false;
+    if (filters.sessionId && !matchesSessionFilter(row.log.sessionId ?? '', filters.sessionId)) return false;
+    if (filters.paramsSearch && !(row.log.params ?? '').includes(filters.paramsSearch)) return false;
+    if (filters.country && row.location.country.toLowerCase() !== filters.country.toLowerCase()) return false;
+    if (filters.device && row.device !== filters.device) return false;
+    if (filters.browser && row.browser !== filters.browser) return false;
+    if (filters.startDate && row.log.date.slice(0, 16) < filters.startDate.replace('T', ' ')) return false;
+    if (filters.endDate && row.log.date.slice(0, 16) > filters.endDate.replace('T', ' ')) return false;
+    return true;
   }),
 );
+
+function matchesSessionFilter(sessionId: string, filter: string): boolean {
+  let pattern = '.*';
+  for (const character of filter) {
+    if (character === '*') pattern += '.*';
+    else if (character === '?') pattern += '.';
+    else pattern += character.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp(`${pattern}.*`, 'i').test(sessionId);
+}
 
 const mapLocations = computed(() =>
   trafficRows.value.map((row) => row.location),
@@ -460,7 +485,13 @@ function goBackTraffic(): void {
   }
 }
 
-async function loadLogs(): Promise<void> {
+function sortLogsByDate(logItems: Iterable<AnalyticsLog>): AnalyticsLog[] {
+  return [...logItems].sort((left, right) =>
+    right.date.localeCompare(left.date) || right.id - left.id,
+  );
+}
+
+async function loadLogs(forceFullReload = false): Promise<void> {
   const currentRequest = ++requestVersion;
   activeRequest?.abort();
   const controller = new AbortController();
@@ -478,6 +509,9 @@ async function loadLogs(): Promise<void> {
     countries.value = [];
     devices.value = [];
     browsers.value = [];
+    cursorId = 0;
+    cursorInitialized = false;
+    emit('logs-change', []);
     loading.value = false;
     activeRequest = undefined;
     emit('loading-change', false);
@@ -488,30 +522,33 @@ async function loadLogs(): Promise<void> {
   const requestedBatchSize = batchSize.value;
   let batchRequestCount = 0;
   let batchRequestDurationMs = 0;
+  const initialLoad = forceFullReload || !cursorInitialized;
   loading.value = true;
   emit('loading-change', true);
-  logs.value = [];
-  loadedCount.value = 0;
-  totalCount.value = 0;
+  if (initialLoad) {
+    logs.value = [];
+    loadedCount.value = 0;
+    totalCount.value = 0;
+    cursorId = 0;
+    cursorInitialized = false;
+    emit('logs-change', []);
+  }
   try {
-    const requestFilters: LogsFilters = {
-      ...filters,
-      page: 1,
-      perPage: requestedBatchSize,
-    };
-    const fetchBatch = async (page: number) => {
+    const requestFilters: LogsFilters = { perPage: requestedBatchSize };
+    const fetchBatch = async (afterId: number, throughId?: number) => {
       const batchStartedAt = performance.now();
       batchRequestCount++;
       try {
         const result = await fetchLogs(
           source,
-          { ...requestFilters, page, perPage: requestedBatchSize },
+          { ...requestFilters, afterId, throughId },
           token,
           controller.signal,
         );
         console.log('[Analytics] Lot de journaux récupéré', {
           source,
-          page,
+          afterId,
+          throughId: throughId ?? result.highWaterId,
           requestedCount: requestedBatchSize,
           receivedCount: result.logs.length,
           totalCount: result.totalCount,
@@ -523,46 +560,58 @@ async function loadLogs(): Promise<void> {
       }
     };
 
-    const firstPage = await fetchBatch(1);
+    const firstBatch = await fetchBatch(cursorId);
     if (currentRequest !== requestVersion) return;
 
-    eventTypes.value = firstPage.eventTypes;
-    countries.value = firstPage.countries;
-    devices.value = firstPage.devices;
-    browsers.value = firstPage.browsers;
+    eventTypes.value = firstBatch.eventTypes;
+    countries.value = firstBatch.countries;
+    devices.value = firstBatch.devices;
+    browsers.value = firstBatch.browsers;
 
-    const allLogs = new Map<number, AnalyticsLog>();
-    let expectedCount = firstPage.totalCount;
-    for (const log of firstPage.logs) {
-      allLogs.set(log.id, log);
-    }
+    const throughId = firstBatch.highWaterId ?? Math.max(
+      cursorId,
+      ...firstBatch.logs.map((log) => log.id),
+    );
+    const expectedNewCount = firstBatch.totalCount;
+    let fetchedCount = 0;
+    const allLogs = new Map(logs.value.map((log) => [log.id, log]));
+    let currentBatch: typeof firstBatch | null = firstBatch;
 
-    totalCount.value = expectedCount;
-    let page = 2;
-    loadedCount.value = allLogs.size;
-    while ((page - 1) * requestedBatchSize < expectedCount) {
-      const result = await fetchBatch(page);
+    while (currentBatch) {
+      const result = currentBatch;
+      currentBatch = null;
       if (currentRequest !== requestVersion) return;
 
-      expectedCount = Math.max(expectedCount, result.totalCount);
-      totalCount.value = expectedCount;
       for (const log of result.logs) {
         allLogs.set(log.id, log);
       }
+      fetchedCount += result.logs.length;
+      if (result.logs.length > 0) {
+        cursorId = result.logs[result.logs.length - 1].id;
+      }
+      cursorInitialized = true;
+      logs.value = sortLogsByDate(allLogs.values());
       loadedCount.value = allLogs.size;
-      page++;
+      totalCount.value = initialLoad
+        ? Math.max(expectedNewCount, loadedCount.value)
+        : allLogs.size + Math.max(0, expectedNewCount - fetchedCount);
+      emit('logs-change', logs.value);
+
       if (result.logs.length === 0) break;
+      if (fetchedCount >= expectedNewCount) {
+        cursorId = throughId;
+        break;
+      }
+      currentBatch = await fetchBatch(cursorId, throughId);
     }
 
-    logs.value = [...allLogs.values()];
-    totalCount.value = logs.value.length;
+    cursorId = Math.max(cursorId, throughId);
+    totalCount.value = allLogs.size;
     const pageCount = Math.max(1, Math.ceil(trafficRows.value.length / filters.perPage));
     if (filters.page > pageCount) filters.page = pageCount;
+    emit('dashboard-loaded', source);
   } catch (error) {
     if (currentRequest === requestVersion) {
-      logs.value = [];
-      loadedCount.value = 0;
-      totalCount.value = 0;
       const message = error instanceof Error
         ? error.message
         : 'Impossible de charger les journaux.';
@@ -607,6 +656,12 @@ async function performMaintenance(
   try {
     const result = await runMaintenanceAction(props.source, props.token, action);
     selectedIds.value = new Set();
+    logs.value = [];
+    loadedCount.value = 0;
+    totalCount.value = 0;
+    cursorId = 0;
+    cursorInitialized = false;
+    emit('logs-change', []);
     maintenanceMessage.value = `${result.message} (${result.deletedCount || 0} ligne(s) supprimée(s)).`;
     emit('maintenance-complete');
   } catch (error) {
@@ -650,41 +705,52 @@ function purgeLogs(): Promise<void> {
   );
 }
 
-function scheduleLoad(): void {
-  requestVersion++;
-  activeRequest?.abort();
-  if (loadTimer !== undefined) {
-    window.clearTimeout(loadTimer);
-  }
-  loadTimer = window.setTimeout(() => {
-    loadTimer = undefined;
-    void loadLogs();
-  }, 250);
-}
-
 watch(
-  () => [props.source, props.token, props.refreshKey, { ...filters }, batchSize.value] as const,
+  () => [props.source, props.token, props.refreshKey] as const,
   (next, previous) => {
+    let forceFullReload = !cursorInitialized;
     if (previous) {
-      const filterChanged = filterKeys.some((key) => next[3][key] !== previous[3][key]);
       const sourceOrTokenChanged = next[0] !== previous[0] || next[1] !== previous[1];
       const refreshRequested = next[2] !== previous[2];
-      const batchSizeChanged = next[4] !== previous[4];
-      if (filterChanged || sourceOrTokenChanged) {
+      if (sourceOrTokenChanged) {
+        forceFullReload = true;
+        cursorInitialized = false;
+        cursorId = 0;
         selectedIds.value = new Set();
         trafficLevel.value = 'categories';
         trafficCategory.value = '';
         trafficRegion.value = '';
         trafficCountry.value = '';
       }
-      if ((filterChanged || sourceOrTokenChanged) && filters.page !== 1) {
+      if (sourceOrTokenChanged && filters.page !== 1) {
         filters.page = 1;
       }
-      if (!filterChanged && !sourceOrTokenChanged && !refreshRequested && !batchSizeChanged) return;
+      if (!sourceOrTokenChanged && !refreshRequested) return;
+      if (refreshRequested && !sourceOrTokenChanged) {
+        forceFullReload = !cursorInitialized;
+      }
     }
-    scheduleLoad();
+    requestVersion++;
+    activeRequest?.abort();
+    if (loadTimer !== undefined) window.clearTimeout(loadTimer);
+    loadTimer = window.setTimeout(() => {
+      loadTimer = undefined;
+      void loadLogs(forceFullReload);
+    }, 250);
   },
   { immediate: true },
+);
+
+watch(
+  () => filterKeys.map((key) => filters[key]),
+  () => {
+    selectedIds.value = new Set();
+    trafficLevel.value = 'categories';
+    trafficCategory.value = '';
+    trafficRegion.value = '';
+    trafficCountry.value = '';
+    filters.page = 1;
+  },
 );
 
 function resetFilters(): void {

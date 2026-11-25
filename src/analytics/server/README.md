@@ -25,7 +25,11 @@ fonctionne, mais les lectures du tableau de bord renvoient une erreur.
 
 Ouvrir `https://suivi.71yeti.fr/` pour le tableau de bord, sélectionner la source
 du site et saisir le jeton. Les données brutes s’affichent d’abord avec un filtre
-par `EventType` et une pagination ; la vue analytique est présentée en dessous.
+par `EventType` et une pagination ; les statistiques sont réparties entre les
+onglets de synthèse et d’événements.
+Le bouton indique « Charger le dashboard » avant le premier chargement réussi
+d’une source, puis « Mettre à jour le dashboard ». Changer de source non encore
+chargée rétablit le libellé de chargement.
 Les colonnes des tableaux de données brutes et des royaumes récents sont
 redimensionnables ; leurs largeurs sont conservées dans le navigateur.
 
@@ -36,6 +40,21 @@ Depuis la racine du dépôt, lancer :
 ```sh
 bun run deploy:follow
 ```
+
+Quand la base principale nécessite la migration, le script demande confirmation
+avant de déplacer ou d’importer des données. Pour choisir sans invite :
+
+```sh
+bun run deploy:follow -- --migrate-database
+bun run deploy:follow -- --skip-database-migration
+bun run deploy:follow -- --migrate-remaining-databases
+```
+
+Sans TTY, la migration est ignorée par défaut ; passez explicitement
+`--migrate-database` pour l’exécuter. Une base déjà migrée est détectée et la
+migration n’est pas relancée, même avec cette option. L’option
+`--migrate-remaining-databases` déplace et importe aussi les autres sources ;
+ne l’utiliser que lorsqu’elles ne reçoivent pas de requêtes.
 
 Pour vérifier uniquement la syntaxe des fichiers PHP sur IONOS, sans déployer,
 lancer :
@@ -76,24 +95,32 @@ Le déploiement construit d’abord le dashboard Vue dans `src/analytics/server/
 puis transfère `server.php`, le helper de migration, les commandes CLI et le
 contenu de `dist/` dans le répertoire web IONOS. Il vérifie la syntaxe PHP avant
 installation. Il installe d’abord le helper et les scripts, puis retire
-brièvement `server.php` du chemin pour empêcher de nouvelles écritures pendant
-le déplacement de la base principale. Les requêtes reçues pendant cette courte
-interruption ne sont pas mises en file. Le script déplace
-`databases/dominionrandomizer.com.db` vers
+brièvement `server.php` du chemin uniquement si la migration a été confirmée,
+afin d’empêcher de nouvelles écritures pendant le déplacement de la base
+principale. Les requêtes reçues pendant cette courte interruption ne sont pas
+mises en file. La migration déplace `databases/dominionrandomizer.com.db` vers
 `<répertoire-web>-backups/dominionrandomizer.com-v7.2-moved.db`, crée et initialise
 la base active, installe le nouveau `server.php`, puis importe les anciennes
-lignes sans écraser celles éventuellement déjà reçues dans la base active.
-Enfin, il publie le dashboard. Les autres bases ne sont ni déplacées ni migrées
-par `deploy:follow`.
+lignes sans écraser celles éventuellement déjà reçues dans la base active. Sans
+migration, le déploiement ne déplace ni n’importe les bases et archives ; le
+nouveau serveur conserve toutefois sa migration automatique de schéma à la
+première requête si une base historique en a encore besoin. Enfin, il publie le
+dashboard. Les autres bases ne sont ni déplacées ni migrées par `deploy:follow`,
+sauf avec `--migrate-remaining-databases`.
 
 L’opération peut être relancée : le déplacement n’écrase jamais une archive
-`-v7.2-moved.db` existante et le manifeste dans la base active empêche un second
-import. Les anciennes archives `<source>-v7.2.db` ne sont pas écrasées. Si une
-étape échoue après le déplacement, le script restaure l’ancien `server.php` si
-le nouveau n’a pas encore été installé ; l’archive est conservée pour reprendre
-la préparation ou l’import. Les anciens assets portant un nom hashé ne sont pas
-supprimés. Le déploiement ne transfère ni ne supprime `server-config.php` ou
-`index-2.html`.
+`-v7.2-moved.db` existante. Après l’import, `PRAGMA user_version` de la base
+active vaut `1` et le manifeste conserve aussi la trace de l’archive importée.
+Pour les bases importées avant l’ajout de cette version, le manifeste existant
+permet au déploiement d’inscrire `user_version=1` sans réimporter les données.
+Si une étape échoue après le déplacement, le script restaure l’ancien
+`server.php` si le nouveau n’a pas encore été installé ; l’archive est conservée
+pour reprendre la préparation ou l’import. Après la publication de `index.html`,
+les anciens fichiers de `assets/` absents du nouveau build sont supprimés. Les
+scripts CLI temporaires de migration sont retirés de `scripts/` à la fin, puis
+ce répertoire est supprimé s’il est vide. Seul `database-migration.php`, requis
+par `server.php`, reste à la racine. Le déploiement ne transfère ni ne supprime
+`server-config.php` ou `index-2.html`.
 
 Pour simuler le déploiement après l’initialisation, définir
 `IONOS_DEPLOY_DRY_RUN=1` dans l’environnement du terminal avant de lancer la
@@ -117,19 +144,14 @@ divergence. Une source sans fichier `.db` est créée avec le nouveau schéma à
 première requête vers `server.php` ; elle n’apparaîtra dans `listSources` qu’après
 cette création.
 
-Les autres bases, supposées sans trafic, sont reportées. Quand vous déciderez
-de les traiter, exécutez sur IONOS, après déploiement, et seulement lorsque ces
-sources ne reçoivent pas de requêtes :
-
-```sh
-/usr/bin/php8.5-cli ~/KingdomCreator/Follow/scripts/migrate-remaining-databases-v7.2.php
-```
-
-Cette commande exclut `dominionrandomizer.com`, déplace chaque autre base vers
-son archive `-v7.2-moved.db` puis l’importe dans son fichier actif. Elle conserve
-les archives hors du répertoire web ; ne renommez pas manuellement les bases
-avant de lancer `deploy:follow`. Les anciennes archives `<source>-v7.2.db` ne
-sont pas écrasées.
+Les autres bases, supposées sans trafic, sont reportées par défaut. Quand vous
+déciderez de les traiter, lancez `bun run deploy:follow -- --migrate-remaining-databases`
+et confirmez aussi la migration principale si celle-ci est encore en attente.
+Cette option exclut `dominionrandomizer.com`, déplace chaque autre base vers son
+archive `-v7.2-moved.db` puis l’importe dans son fichier actif. Les scripts
+temporaires sont supprimés après le déploiement ; ne renommez pas manuellement
+les bases avant de lancer cette commande. Les anciennes archives
+`<source>-v7.2.db` ne sont pas écrasées.
 
 La sauvegarde d'une base déjà archivée n'est pas écrasée lors d'une nouvelle
 tentative de déploiement. Les archives sont hors du répertoire web et sont
@@ -139,8 +161,17 @@ première requête sur une grande base peut donc attendre et sera plus lente. Le
 temps de migration déclenché par le serveur apparaît dans `Server-Timing` sous
 `metadata_migration`.
 
-Le tableau de bord demande par défaut les journaux par lots de 20 000. Les
-réponses JSON de plus de 1 Ko sont gzipées si le navigateur annonce accepter
+Le tableau de bord demande par défaut les journaux par lots de 20 000 et actualise
+les graphiques à chaque lot reçu. Les filtres des journaux sont appliqués côté
+navigateur après le chargement complet. Une mise à jour envoie un curseur d’ID
+et ne récupère que les lignes ajoutées depuis la dernière lecture ; une borne
+d’ID stabilise le chargement initial pendant l’arrivée de nouveaux événements.
+Les statistiques des sets et cartes montrent les usages par semaine ou par mois.
+Le nombre de jeux distincts correspond aux compositions distinctes de cartes
+observées dans les royaumes chargés. L’onglet « Événements dans le temps » détaille
+les types d’événements et leur évolution temporelle.
+
+Les réponses JSON de plus de 1 Ko sont gzipées si le navigateur annonce accepter
 gzip ; vérifier `Content-Encoding: gzip` dans l’onglet Network pour confirmer.
 Les temps de préparation, de migration, de requête, d’encodage et de compression
 sont exposés dans `Server-Timing`.

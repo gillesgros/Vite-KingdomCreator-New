@@ -33,7 +33,7 @@
     </div>
 
     <button class="primary" type="submit" :disabled="sourcesLoading || summaryLoading">
-      Charger le Dashboard
+      {{ loadedSource === draftSource ? 'Mettre à jour le dashboard' : 'Charger le dashboard' }}
     </button>
   </form>
 
@@ -51,6 +51,7 @@ const props = defineProps<{
   source: string;
   token: string;
   summaryLoading: boolean;
+  loadedSource: string;
   authError: { status: number; message: string } | null;
 }>();
 

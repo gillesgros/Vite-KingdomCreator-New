@@ -44,6 +44,9 @@ export interface AnalyticsLog {
   params: string | null;
   sessionId: string | null;
   clientContext: string | null;
+  country?: string | null;
+  device?: string | null;
+  browser?: string | null;
 }
 
 export interface AnalyticsLogLocation {
@@ -71,6 +74,8 @@ export interface LogsFilters {
   endDate?: string;
   page?: number;
   perPage?: LogsRequestPerPage;
+  afterId?: number;
+  throughId?: number;
 }
 
 export interface LogsResponse {
@@ -82,6 +87,7 @@ export interface LogsResponse {
   page: number;
   perPage: LogsRequestPerPage;
   totalCount: number;
+  highWaterId?: number | null;
 }
 
 export type MaintenanceAction =

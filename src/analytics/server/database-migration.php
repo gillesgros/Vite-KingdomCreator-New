@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('ANALYTICS_DATA_MIGRATION_VERSION')) {
+    define('ANALYTICS_DATA_MIGRATION_VERSION', 1);
+}
+
 function initializeAnalyticsDatabase(PDO $db)
 {
     $db->exec("
@@ -132,6 +136,59 @@ function analyticsSetRequestLogSequence(PDO $db, $minimumId)
             'UPDATE sqlite_sequence SET seq = :sequence WHERE name = :name'
         );
         $statement->execute([':name' => 'RequestLog', ':sequence' => $requiredSequence]);
+    }
+}
+
+function analyticsDataMigrationStatus($source, $databaseDirectory, $backupDirectory)
+{
+    if (!preg_match('/^[A-Za-z0-9._-]{1,253}$/D', $source) || $source === '.' || $source === '..') {
+        throw new InvalidArgumentException('Invalid analytics source name.');
+    }
+
+    $databasePath = $databaseDirectory . DIRECTORY_SEPARATOR . $source . '.db';
+    $archivePath = $backupDirectory . DIRECTORY_SEPARATOR . $source . '-v7.2-moved.db';
+    if (is_link($databasePath) || is_link($archivePath)) {
+        throw new RuntimeException('Refusing to inspect a symbolic-link database path.');
+    }
+    if (!is_file($databasePath)) {
+        return [
+            'status' => is_file($archivePath) ? 'pending' : 'not-needed',
+            'version' => 0,
+        ];
+    }
+
+    $db = new PDO('sqlite:' . $databasePath);
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $version = (int)$db->query('PRAGMA user_version')->fetchColumn();
+    if ($version >= ANALYTICS_DATA_MIGRATION_VERSION) {
+        return ['status' => 'complete', 'version' => $version];
+    }
+
+    $manifestExists = $db->query(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'AnalyticsMigrationManifest'"
+    )->fetchColumn();
+    if ($manifestExists !== false) {
+        $statement = $db->prepare(
+            'SELECT 1 FROM AnalyticsMigrationManifest WHERE archiveName = :archiveName'
+        );
+        $statement->execute([':archiveName' => basename($archivePath)]);
+        if ($statement->fetchColumn() !== false) {
+            analyticsMarkDataMigrationComplete($db);
+            return [
+                'status' => 'complete',
+                'version' => (int)$db->query('PRAGMA user_version')->fetchColumn(),
+            ];
+        }
+    }
+
+    return ['status' => 'pending', 'version' => $version];
+}
+
+function analyticsMarkDataMigrationComplete(PDO $db)
+{
+    $version = (int)$db->query('PRAGMA user_version')->fetchColumn();
+    if ($version < ANALYTICS_DATA_MIGRATION_VERSION) {
+        $db->exec('PRAGMA user_version = ' . ANALYTICS_DATA_MIGRATION_VERSION);
     }
 }
 
@@ -271,6 +328,7 @@ function importAnalyticsSourceArchive($source, $databaseDirectory, $backupDirect
         $manifest->execute([':archiveName' => $archiveName]);
         $previousImport = $manifest->fetchColumn();
         if ($previousImport !== false) {
+            analyticsMarkDataMigrationComplete($db);
             $db->exec('COMMIT');
             $transactionStarted = false;
             $db->exec('DETACH DATABASE migration_archive');
@@ -330,6 +388,7 @@ function importAnalyticsSourceArchive($source, $databaseDirectory, $backupDirect
             ':importedRows' => $insertedRows,
             ':importedAt' => gmdate('c'),
         ]);
+        analyticsMarkDataMigrationComplete($db);
         $db->exec('COMMIT');
         $transactionStarted = false;
         $db->exec('DETACH DATABASE migration_archive');

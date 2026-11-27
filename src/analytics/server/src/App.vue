@@ -57,7 +57,8 @@
       :source="source"
       :token="token"
       :refresh-key="refreshKey"
-      @logs-change="logs = $event"
+      :analytics-summary="analyticsSummary"
+      :summary-loading="summaryLoading"
       @dashboard-loaded="markSourceLoaded"
       @loading-change="logsLoading = $event"
       @maintenance-complete="refreshDashboard"
@@ -70,16 +71,15 @@
       :source="source"
       :token="token"
       :refresh-key="refreshKey"
-      :logs="logs"
-      :logs-loading="logsLoading"
       @loading-change="summaryLoading = $event"
       @auth-error="showAuthError"
+      @summary-change="analyticsSummary = $event"
     />
 
     <AnalyticsEventsView
       v-if="source && token && activeView === 'events'"
-      :logs="logs"
-      :loading="logsLoading"
+      :summary="analyticsSummary"
+      :loading="summaryLoading"
     />
 
   </main>
@@ -91,12 +91,12 @@ import AnalyticsSummaryView from './components/AnalyticsSummaryView.vue';
 import AnalyticsEventsView from './components/AnalyticsEventsView.vue';
 import DashboardToolbar from './components/DashboardToolbar.vue';
 import LogsExplorerView from './components/LogsExplorerView.vue';
-import type { AnalyticsLog } from './types/analytics';
+import type { AnalyticsSummary } from './types/analytics';
 
 const source = ref('');
 const token = ref('');
 const refreshKey = ref(0);
-const logs = ref<AnalyticsLog[]>([]);
+const analyticsSummary = ref<AnalyticsSummary | null>(null);
 const loadedSource = ref('');
 const logsLoading = ref(false);
 const summaryLoading = ref(false);
@@ -120,7 +120,7 @@ function markSourceLoaded(completedSource: string): void {
 
 watch(source, () => {
   authError.value = null;
-  logs.value = [];
+  analyticsSummary.value = null;
   loadedSource.value = '';
 });
 </script>

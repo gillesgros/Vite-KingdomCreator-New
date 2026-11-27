@@ -145,9 +145,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import type { AnalyticsLog } from '../types/analytics';
+import type { AnalyticsEventTrends, TimeBucket } from '../types/analytics';
 import {
-  buildEventTrends,
   categorizeEventType,
   EVENT_CATEGORY_LABELS,
   type AnalyticsEventCategory,
@@ -155,21 +154,42 @@ import {
 } from '../utils/analyticsTrends';
 import EventHistogram from './EventHistogram.vue';
 
-const props = defineProps<{ logs: AnalyticsLog[] }>();
+const props = defineProps<{
+  eventTypes: string[];
+  eventTrends: AnalyticsEventTrends | undefined;
+}>();
 const overviewGrouping = ref<TimeGrouping>('week');
 const detailGrouping = ref<TimeGrouping>('week');
 const errorGrouping = ref<TimeGrouping>('week');
 const detailCategory = ref<AnalyticsEventCategory>('actions');
 const selectionMode = ref<'top' | 'all' | 'custom'>('top');
 const customTypes = ref(new Set<string>());
-const successfulLogs = computed(() => props.logs.filter((log) => log.eventOrError === 'event'));
-const errorLogs = computed(() => props.logs.filter((log) => log.eventOrError === 'error'));
+function groupEventBuckets(buckets: TimeBucket[]): TimeBucket[] {
+  return buckets.map((bucket) => {
+    const counts: Record<string, number> = {};
+    for (const [eventType, count] of Object.entries(bucket.counts)) {
+      const category = categorizeEventType(eventType);
+      if (category) {
+        const label = EVENT_CATEGORY_LABELS[category];
+        counts[label] = (counts[label] ?? 0) + count;
+      }
+    }
+    return { ...bucket, counts };
+  });
+}
+
+function sumBucketCounts(buckets: TimeBucket[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const bucket of buckets) {
+    for (const [label, count] of Object.entries(bucket.counts)) {
+      counts[label] = (counts[label] ?? 0) + count;
+    }
+  }
+  return counts;
+}
 
 const overviewBuckets = computed(() =>
-  buildEventTrends(successfulLogs.value, overviewGrouping.value, (log) => {
-    const category = categorizeEventType(log.eventType);
-    return category ? EVENT_CATEGORY_LABELS[category] : null;
-  }),
+  groupEventBuckets(props.eventTrends?.[overviewGrouping.value]?.events ?? []),
 );
 const overviewSeries = computed(() =>
   Object.values(EVENT_CATEGORY_LABELS).filter((label) =>
@@ -183,19 +203,20 @@ const categoryColors: Record<string, string> = {
   [EVENT_CATEGORY_LABELS.other]: '#7b8494',
 };
 
-const detailLogs = computed(() => successfulLogs.value.filter(
-  (log) => categorizeEventType(log.eventType) === detailCategory.value,
-));
-const eventCounts = computed(() => {
-  const counts = new Map<string, number>();
-  for (const log of detailLogs.value) {
-    const eventType = log.eventType || 'Inconnu';
-    counts.set(eventType, (counts.get(eventType) ?? 0) + 1);
-  }
-  return counts;
+const detailBuckets = computed(() => {
+  const buckets = props.eventTrends?.[detailGrouping.value]?.events ?? [];
+  return buckets.map((bucket) => ({
+    ...bucket,
+    counts: Object.fromEntries(
+      Object.entries(bucket.counts).filter(([eventType]) =>
+        categorizeEventType(eventType) === detailCategory.value,
+      ),
+    ),
+  }));
 });
-const eventTypes = computed(() => [...eventCounts.value.keys()].sort((left, right) => left.localeCompare(right)));
-const rankedEventTypes = computed(() => [...eventCounts.value.entries()]
+const eventCounts = computed(() => sumBucketCounts(detailBuckets.value));
+const eventTypes = computed(() => Object.keys(eventCounts.value).sort((left, right) => left.localeCompare(right)));
+const rankedEventTypes = computed(() => Object.entries(eventCounts.value)
   .sort(([leftType, leftCount], [rightType, rightCount]) =>
     rightCount - leftCount || leftType.localeCompare(rightType),
   )
@@ -212,34 +233,14 @@ const allSelected = computed(() =>
   eventTypes.value.length > 0 && visibleTypes.value.length === eventTypes.value.length,
 );
 const someSelected = computed(() => visibleTypes.value.length > 0 && !allSelected.value);
-const detailBuckets = computed(() => buildEventTrends(detailLogs.value, detailGrouping.value));
-
-const errorCounts = computed(() => {
-  const counts = new Map<string, number>();
-  for (const log of errorLogs.value) {
-    const eventType = log.eventType || 'Inconnu';
-    counts.set(eventType, (counts.get(eventType) ?? 0) + 1);
-  }
-  return counts;
-});
-const errorTypes = computed(() => [...errorCounts.value.entries()]
+const errorBuckets = computed(() => props.eventTrends?.[errorGrouping.value]?.errors ?? []);
+const errorTypes = computed(() => Object.entries(sumBucketCounts(errorBuckets.value))
   .sort(([leftType, leftCount], [rightType, rightCount]) =>
     rightCount - leftCount || leftType.localeCompare(rightType),
   )
   .map(([eventType]) => eventType));
-const errorBuckets = computed(() => buildEventTrends(errorLogs.value, errorGrouping.value));
-
 const eventColors = computed(() => {
-  const counts = new Map<string, number>();
-  for (const log of props.logs) {
-    const eventType = log.eventType || 'Inconnu';
-    counts.set(eventType, (counts.get(eventType) ?? 0) + 1);
-  }
-  const rankedTypes = [...counts.entries()]
-    .sort(([leftType, leftCount], [rightType, rightCount]) =>
-      rightCount - leftCount || leftType.localeCompare(rightType),
-    )
-    .map(([eventType]) => eventType);
+  const rankedTypes = [...props.eventTypes].sort((left, right) => left.localeCompare(right));
   return Object.fromEntries(rankedTypes.map((eventType, index) => [
     eventType,
     `hsl(${Math.round((index * 137.508) % 360)} 55% 40%)`,

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/analytics-reporting.php';
+
 $requestStartedAt = microtime(true);
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -140,20 +142,6 @@ function getRequestIp() {
 
     return $remoteAddress;
 }
-
-function incrementAnalyticsCount(&$counts, $label) {
-    if (is_bool($label)) {
-        $label = $label ? 'Oui' : 'Non';
-    } elseif (is_int($label) || is_float($label)) {
-        $label = (string)$label;
-    }
-
-    if (!is_string($label) || $label === '') {
-        return;
-    }
-    $counts[$label] = ($counts[$label] ?? 0) + 1;
-}
-
 
 function getRequestGeoData() {
     $remoteAddress = getRequestIp();
@@ -473,7 +461,27 @@ if (isset($_GET['analytics']) && $_GET['analytics'] === 'summary') {
             'randomizationConfiguration' => [],
             'randomizationAdjustedElements' => [],
             'randomizationSettings' => [],
+            'eventTrends' => [],
+            'activityUsage' => [
+                'kingdomEvents' => 0,
+                'distinctGames' => 0,
+                'setCounts' => [],
+                'cardCounts' => [],
+                'trends' => [],
+            ],
         ];
+        $latestDate = $db->query(
+            'SELECT COALESCE(clientDate, date) FROM RequestLog ORDER BY COALESCE(clientDate, date) DESC, id DESC LIMIT 1'
+        )->fetchColumn();
+        $trendGroupings = ['hour', 'day', 'week', 'month'];
+        $trendWindowStarts = [];
+        foreach ($trendGroupings as $grouping) {
+            $trendWindowStarts[$grouping] = is_string($latestDate) && $latestDate !== ''
+                ? analyticsTrendWindowStart($latestDate, $grouping)
+                : null;
+        }
+        $eventTrendCounts = ['events' => [], 'errors' => []];
+        $activityTrendCounts = ['week' => [], 'month' => []];
         $eventTypeRows = $db->query(
             'SELECT eventType, COUNT(*) AS count FROM RequestLog GROUP BY eventType ORDER BY count DESC'
         );
@@ -482,7 +490,7 @@ if (isset($_GET['analytics']) && $_GET['analytics'] === 'summary') {
         }
 
         $trackedRows = $db->query(
-            "SELECT eventType, eventOrError, params FROM RequestLog WHERE eventType <> 'KINGDOM_ACTIVITY'"
+            "SELECT eventType, eventOrError, params, COALESCE(clientDate, date) AS date FROM RequestLog WHERE eventType <> 'KINGDOM_ACTIVITY'"
         );
         $pageEventNames = [
             'RANDOMIZER_VIEW' => 'randomizer',
@@ -495,6 +503,21 @@ if (isset($_GET['analytics']) && $_GET['analytics'] === 'summary') {
         ];
         while ($row = $trackedRows->fetch(PDO::FETCH_ASSOC)) {
             $eventType = $row['eventType'];
+            if (in_array($row['eventOrError'], ['event', 'error'], true)) {
+                foreach ($trendGroupings as $grouping) {
+                    if ($trendWindowStarts[$grouping] === null) {
+                        continue;
+                    }
+                    $series = $row['eventOrError'] === 'error' ? 'errors' : 'events';
+                    incrementAnalyticsTrend(
+                        $eventTrendCounts[$series],
+                        $row['date'],
+                        $grouping,
+                        $trendWindowStarts[$grouping],
+                        $eventType
+                    );
+                }
+            }
             $data = json_decode($row['params'], true);
             if (!is_array($data)) {
                 $data = [];
@@ -594,9 +617,31 @@ if (isset($_GET['analytics']) && $_GET['analytics'] === 'summary') {
             }
         }
 
-        $stmt = $db->query("SELECT params FROM RequestLog WHERE eventType = 'KINGDOM_ACTIVITY'");
+        $db->exec('PRAGMA temp_store = FILE');
+        $db->exec('CREATE TEMP TABLE AnalyticsDistinctKingdoms (signature TEXT PRIMARY KEY)');
+        $distinctKingdomInsert = $db->prepare(
+            'INSERT OR IGNORE INTO AnalyticsDistinctKingdoms (signature) VALUES (:signature)'
+        );
+        $stmt = $db->query(
+            "SELECT params, eventOrError, COALESCE(clientDate, date) AS date FROM RequestLog WHERE eventType = 'KINGDOM_ACTIVITY'"
+        );
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (in_array($row['eventOrError'], ['event', 'error'], true)) {
+                foreach ($trendGroupings as $grouping) {
+                    if ($trendWindowStarts[$grouping] === null) {
+                        continue;
+                    }
+                    $series = $row['eventOrError'] === 'error' ? 'errors' : 'events';
+                    incrementAnalyticsTrend(
+                        $eventTrendCounts[$series],
+                        $row['date'],
+                        $grouping,
+                        $trendWindowStarts[$grouping],
+                        'KINGDOM_ACTIVITY'
+                    );
+                }
+            }
             $activity = json_decode($row['params'], true);
             if (!is_array($activity)) {
                 continue;
@@ -629,6 +674,56 @@ if (isset($_GET['analytics']) && $_GET['analytics'] === 'summary') {
             }
 
             $kingdom = $activity['kingdom'] ?? [];
+            if ($row['eventOrError'] === 'event') {
+                $activityCards = analyticsKingdomCards($kingdom);
+                $activitySets = [];
+                foreach ($activityCards as $cardId) {
+                    incrementAnalyticsCount($summary['activityUsage']['cardCounts'], $cardId);
+                    $separator = strpos($cardId, '_');
+                    if ($separator !== false && $separator > 0) {
+                        $activitySets[substr($cardId, 0, $separator)] = true;
+                    }
+                }
+                foreach (array_keys($activitySets) as $setId) {
+                    incrementAnalyticsCount($summary['activityUsage']['setCounts'], $setId);
+                }
+
+                if (is_array($kingdom) && is_string($row['date'])) {
+                    try {
+                        $activityDate = new DateTimeImmutable($row['date']);
+                        $distinctKingdomInsert->execute([
+                            ':signature' => analyticsKingdomSignature($kingdom),
+                        ]);
+                        foreach (['week', 'month'] as $grouping) {
+                            if ($trendWindowStarts[$grouping] === null ||
+                                $activityDate < $trendWindowStarts[$grouping]) {
+                                continue;
+                            }
+                            foreach (array_keys($activitySets) as $setId) {
+                                incrementAnalyticsTrend(
+                                    $activityTrendCounts[$grouping]['sets'],
+                                    $row['date'],
+                                    $grouping,
+                                    $trendWindowStarts[$grouping],
+                                    $setId
+                                );
+                            }
+                            foreach ($activityCards as $cardId) {
+                                incrementAnalyticsTrend(
+                                    $activityTrendCounts[$grouping]['cards'],
+                                    $row['date'],
+                                    $grouping,
+                                    $trendWindowStarts[$grouping],
+                                    $cardId
+                                );
+                            }
+                        }
+                    } catch (Exception $e) {
+                        error_log('Analytics activity date parsing failed: ' . $e->getMessage());
+                    }
+                }
+            }
+
             foreach (['supply', 'events', 'landmarks', 'projects', 'ways', 'boons', 'traits'] as $category) {
                 foreach (($kingdom[$category] ?? []) as $cardId) {
                     if (is_string($cardId)) {
@@ -650,6 +745,41 @@ if (isset($_GET['analytics']) && $_GET['analytics'] === 'summary') {
                     }
                 }
             }
+        }
+        $summary['activityUsage']['kingdomEvents'] = (int)$db->query(
+            "SELECT COUNT(*) FROM RequestLog WHERE eventType = 'KINGDOM_ACTIVITY' AND eventOrError = 'event'"
+        )->fetchColumn();
+        $summary['activityUsage']['distinctGames'] = (int)$db->query(
+            'SELECT COUNT(*) FROM AnalyticsDistinctKingdoms'
+        )->fetchColumn();
+        $db->exec('DROP TABLE AnalyticsDistinctKingdoms');
+        foreach (['week', 'month'] as $grouping) {
+            $summary['activityUsage']['trends'][$grouping] = [
+                'setBuckets' => buildAnalyticsTrendBuckets(
+                    $activityTrendCounts[$grouping]['sets'] ?? [],
+                    $grouping,
+                    $latestDate
+                ),
+                'cardBuckets' => buildAnalyticsTrendBuckets(
+                    $activityTrendCounts[$grouping]['cards'] ?? [],
+                    $grouping,
+                    $latestDate
+                ),
+            ];
+        }
+        foreach ($trendGroupings as $grouping) {
+            $summary['eventTrends'][$grouping] = [
+                'events' => buildAnalyticsTrendBuckets(
+                    $eventTrendCounts['events'],
+                    $grouping,
+                    $latestDate
+                ),
+                'errors' => buildAnalyticsTrendBuckets(
+                    $eventTrendCounts['errors'],
+                    $grouping,
+                    $latestDate
+                ),
+            ];
         }
 
         $activityEventCount = $summary['kingdomEvents'];
@@ -736,6 +866,7 @@ if (isset($_GET['analytics']) && $_GET['analytics'] === 'summary') {
                 }
             }
         }
+        $summary['traffic'] = analyticsTrafficSummary($db);
         respond(200, $summary);
     } catch (Exception $e) {
         respond(500, ['error' => 'Erreur lors de la préparation des statistiques.']);
@@ -753,7 +884,7 @@ if (isset($_GET['logs']) && $_GET['logs'] === 'true') {
     }
     $page = max(1, (int)($_GET['page'] ?? 1));
     $perPage = $_GET['perPage'] ?? '25';
-    if (!is_string($perPage) || !in_array($perPage, ['10', '25', '50', '100', '250', '500', '1000', '5000', '10000', '20000'], true)) {
+    if (!is_string($perPage) || !in_array($perPage, ['10', '25', '50', '100', '250', '500', '1000'], true)) {
         respond(400, ['error' => 'Le nombre de lignes par page est invalide.']);
     }
     $perPage = (int)$perPage;
@@ -976,6 +1107,7 @@ try {
     $countStmt = $db->prepare('SELECT COUNT(*) FROM RequestLog' . $whereSql);
     $countStmt->execute($params);
     $totalCount = (int)$countStmt->fetchColumn();
+    $page = min($page, max(1, (int)ceil($totalCount / $perPage)));
 
     if (isset($_GET['download']) && $_GET['download'] === 'csv') {
         $stmt = $db->prepare(

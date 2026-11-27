@@ -33,6 +33,70 @@ export interface AnalyticsSummary {
   randomizationConfiguration: AnalyticsValueCounts;
   randomizationAdjustedElements: AnalyticsCountMap;
   randomizationSettings: AnalyticsSettingsCounts;
+  eventTrends?: AnalyticsEventTrends;
+  activityUsage?: AnalyticsActivityUsage;
+  traffic?: AnalyticsTrafficSummary;
+}
+
+export type AnalyticsEventGrouping = 'hour' | 'day' | 'week' | 'month';
+
+export interface AnalyticsEventTrendSeries {
+  events: TimeBucket[];
+  errors: TimeBucket[];
+}
+
+export type AnalyticsEventTrends = Partial<Record<AnalyticsEventGrouping, AnalyticsEventTrendSeries>>;
+
+export interface TimeBucket {
+  key: string;
+  label: string;
+  counts: AnalyticsCountMap;
+}
+
+export interface AnalyticsActivityUsage {
+  kingdomEvents: number;
+  distinctGames: number;
+  setCounts: AnalyticsCountMap;
+  cardCounts: AnalyticsCountMap;
+  trends: Record<'week' | 'month', {
+    setBuckets: TimeBucket[];
+    cardBuckets: TimeBucket[];
+  }>;
+}
+
+export interface AnalyticsTrafficEntry {
+  category: string;
+  country: string;
+  subdivision: string;
+  count: number;
+}
+
+export interface AnalyticsTrafficLocation extends AnalyticsLogLocation {
+  category: string;
+  count: number;
+}
+
+export interface AnalyticsTrafficSummary {
+  totals: {
+    totalCount: number;
+    humanCount: number;
+    robotCount: number;
+    errorCount: number;
+    distinctSessionCount: number;
+  };
+  entries: AnalyticsTrafficEntry[];
+  locations?: AnalyticsTrafficLocation[];
+}
+
+export interface AnalyticsTrafficLocationsPage {
+  locations: AnalyticsTrafficLocation[];
+  page: number;
+  perPage: number;
+  pageEventCount: number;
+  hasMore: boolean;
+  snapshotId: number;
+  nextCursor: number | null;
+  totalCount: number | null;
 }
 
 export interface AnalyticsLog {
@@ -58,12 +122,13 @@ export interface AnalyticsLogLocation {
 }
 
 export type LogCategory = '' | 'event' | 'error';
+export type TrafficCategoryFilter = 'human' | 'robot-no-session' | 'robot-browser' | 'error';
 export type LogsPerPage = 10 | 25 | 50 | 100 | 250 | 500 | 1000;
-export type LogsBatchSize = 1000 | 5000 | 10000 | 20000;
-export type LogsRequestPerPage = LogsPerPage | LogsBatchSize;
+export type LogsRequestPerPage = LogsPerPage;
 
 export interface LogsFilters {
   category?: LogCategory;
+  trafficCategory?: TrafficCategoryFilter;
   eventType?: string;
   sessionId?: string;
   paramsSearch?: string;
@@ -74,8 +139,6 @@ export interface LogsFilters {
   endDate?: string;
   page?: number;
   perPage?: LogsRequestPerPage;
-  afterId?: number;
-  throughId?: number;
 }
 
 export interface LogsResponse {
@@ -87,7 +150,6 @@ export interface LogsResponse {
   page: number;
   perPage: LogsRequestPerPage;
   totalCount: number;
-  highWaterId?: number | null;
 }
 
 export type MaintenanceAction =

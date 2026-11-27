@@ -7,24 +7,18 @@ const dashboardDirectory = resolve(dirname(fileURLToPath(import.meta.url)), ".."
 const envPath = join(dashboardDirectory, "keys", ".env.do_not_commit");
 const phpFiles = [
   { localPath: "server.php", remoteName: "server.php" },
+  { localPath: "dashboard.php", remoteName: "dashboard.php" },
+  { localPath: "analytics-common.php", remoteName: "analytics-common.php" },
+  { localPath: "analytics-reporting.php", remoteName: "analytics-reporting.php" },
   { localPath: "database-migration.php", remoteName: "database-migration.php" },
-  {
-    localPath: "scripts/prepare-database-v7.2.php",
-    remoteName: "prepare-database-v7.2.php",
-  },
-  {
-    localPath: "scripts/import-database-v7.2.php",
-    remoteName: "import-database-v7.2.php",
-  },
-  {
-    localPath: "scripts/migrate-remaining-databases-v7.2.php",
-    remoteName: "migrate-remaining-databases-v7.2.php",
-  },
+  { localPath: "scripts/prepare-database-v7.2.php", remoteName: "prepare-database-v7.2.php" },
+  { localPath: "scripts/import-database-v7.2.php", remoteName: "import-database-v7.2.php" },
+  { localPath: "scripts/migrate-remaining-databases-v7.2.php", remoteName: "migrate-remaining-databases-v7.2.php" },
 ];
 
 function loadDeploymentEnvironment() {
   if (!existsSync(envPath)) {
-    throw new Error(`Configuration IONOS introuvable : ${envPath}`);
+    return false;
   }
 
   for (const line of readFileSync(envPath, "utf8").split(/\r?\n/)) {
@@ -44,18 +38,20 @@ function loadDeploymentEnvironment() {
     }
     if (value) process.env[key] = value;
   }
+  return true;
 }
 
 function shellQuote(value) {
   return `'${value.replace(/'/g, "'\\''")}'`;
 }
 
-async function run(executable, args, label) {
+async function run(executable, args, label, env) {
   console.log(`➡️ ${label}`);
   const processHandle = Bun.spawn([executable, ...args], {
     stdin: "inherit",
     stdout: "inherit",
     stderr: "inherit",
+    ...(env ? { env } : {}),
   });
   const exitCode = await processHandle.exited;
   if (exitCode !== 0) {
@@ -64,7 +60,28 @@ async function run(executable, args, label) {
 }
 
 async function main() {
-  loadDeploymentEnvironment();
+  const hasDeploymentEnvironment = loadDeploymentEnvironment();
+  const hasSshKey = hasDeploymentEnvironment &&
+    process.env.IONOS_SSH_USER &&
+    process.env.IONOS_SSH_HOST &&
+    process.env.IONOS_SSH_KEY &&
+    existsSync(process.env.IONOS_SSH_KEY);
+  if (!hasSshKey) {
+    console.log("Clé SSH IONOS absente ou configuration incomplète ; lancement de l'initialisation en simulation.");
+    await run(
+      process.execPath,
+      [join(dashboardDirectory, "scripts", "deploy-follow.mjs")],
+      "Initialisation SSH IONOS sans déploiement",
+      {
+        ...process.env,
+        IONOS_DEPLOY_DRY_RUN: "1",
+        IONOS_DEPLOY_SETUP_ONLY: "1",
+      },
+    );
+    if (!loadDeploymentEnvironment()) {
+      throw new Error(`Configuration IONOS introuvable après initialisation : ${envPath}`);
+    }
+  }
 
   const sshUser = process.env.IONOS_SSH_USER;
   const sshHost = process.env.IONOS_SSH_HOST;

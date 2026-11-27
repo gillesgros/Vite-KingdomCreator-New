@@ -1,6 +1,10 @@
 <template>
   <div class="map-panel" aria-label="Carte géographique des journaux filtrés">
     <div ref="mapElement" class="map" />
+    <p class="map-note">
+      Affichage limité à 2 000 localisations. Les points des pays et subdivisions sont indicatifs.
+      <span v-if="approximate">Les comptes sont estimatifs lorsque la limite est dépassée.</span>
+    </p>
     <p v-if="mappedLogCount === 0" class="map-note">
       Aucune position connue pour les événements affichés.
     </p>
@@ -10,7 +14,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import * as L from 'leaflet';
-import type { AnalyticsLogLocation } from '../types/analytics';
+import type { AnalyticsLogLocation, AnalyticsTrafficLocation } from '../types/analytics';
+import {
+  countryCenters,
+  countryNames,
+  getSubdivisionCenter,
+  getSubdivisionKey,
+} from '../mapGeography';
 
 interface MapPoint {
   key: string;
@@ -22,20 +32,25 @@ interface MapPoint {
 }
 
 const props = defineProps<{
-  locations: AnalyticsLogLocation[];
+  locations: AnalyticsTrafficLocation[];
+  approximate?: boolean;
+  subdivisionMode?: boolean;
 }>();
 
-const countryCenters: Record<string, [number, number, number]> = {
-  US: [39.8, -98.5, 4], CA: [56.1, -106.3, 3], FR: [46.6, 2.2, 5], DE: [51.1, 10.4, 5],
-  GB: [54.5, -2.5, 5], IT: [42.5, 12.5, 5], ES: [40.4, -3.7, 5], NL: [52.1, 5.3, 6],
-  BE: [50.5, 4.4, 7], CH: [46.8, 8.2, 7], AT: [47.5, 14.5, 6], FI: [62.5, 26.0, 5],
-  SE: [61.0, 15.0, 5], NO: [61.5, 8.5, 5], DK: [56.0, 10.0, 6], PL: [52.0, 19.0, 5],
-  SG: [1.35, 103.8, 10], KR: [36.5, 127.8, 6], JP: [36.2, 138.2, 5], CN: [35.8, 104.1, 4],
-  IN: [20.5, 78.9, 4], AU: [-25.2, 133.7, 4], NZ: [-41.0, 174.0, 5], ZA: [-29.0, 24.0, 5],
-  BR: [-14.2, -51.9, 4], AR: [-34.0, -64.0, 4], MX: [23.6, -102.5, 5],
-};
-
 function getPosition(location: AnalyticsLogLocation): Omit<MapPoint, 'label' | 'count'> | null {
+  const countryCode = location.country.toUpperCase();
+  if (props.subdivisionMode && location.subdivision) {
+    const subdivisionCenter = getSubdivisionCenter(countryCode, location.subdivision);
+    if (subdivisionCenter) {
+      return {
+        key: `subdivision:${getSubdivisionKey(countryCode, location.subdivision)}`,
+        latitude: subdivisionCenter[0],
+        longitude: subdivisionCenter[1],
+        zoom: subdivisionCenter[2],
+      };
+    }
+  }
+
   const { latitude, longitude } = location;
   if (
     latitude !== null &&
@@ -53,7 +68,6 @@ function getPosition(location: AnalyticsLogLocation): Omit<MapPoint, 'label' | '
     };
   }
 
-  const countryCode = location.country.toUpperCase();
   const center = countryCenters[countryCode];
   if (!center) return null;
   return {
@@ -71,17 +85,18 @@ const points = computed<MapPoint[]>(() => {
     const position = getPosition(location);
     if (!position) continue;
 
+    const countryCode = location.country.toUpperCase();
     const label = [
       location.city,
       location.subdivision,
-      location.country,
+      countryNames[countryCode] ?? location.country,
     ].filter(Boolean).join(' / ') || 'Localisation inconnue';
     const existing = grouped.get(position.key);
 
     if (existing) {
-      existing.count++;
+      existing.count += location.count;
     } else {
-      grouped.set(position.key, { ...position, label, count: 1 });
+      grouped.set(position.key, { ...position, label, count: location.count });
     }
   }
 

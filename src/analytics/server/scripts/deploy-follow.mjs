@@ -151,7 +151,7 @@ async function runSetup() {
     }
   }
 
-  console.log(`✅ Configuration enregistrée dans ${DEFAULT_KEYS_SUBDIR}/${DEFAULT_ENV_FILENAME}. Lancement du déploiement...\n`);
+  console.log(`✅ Configuration enregistrée dans ${DEFAULT_KEYS_SUBDIR}/${DEFAULT_ENV_FILENAME}.\n`);
 }
 
 // --- Étape de vérification initiale avant exécution ---
@@ -198,6 +198,7 @@ const remoteDirectory = process.env.IONOS_REMOTE_DIR || DEFAULT_REMOTE_DIR;
 const sshKey = process.env.IONOS_SSH_KEY;
 const phpCli = process.env.IONOS_PHP_CLI || DEFAULT_PHP_CLI;
 const dryRun = process.env.IONOS_DEPLOY_DRY_RUN === "1";
+const setupOnly = process.env.IONOS_DEPLOY_SETUP_ONLY === "1";
 
 function fail(message, resetConfig = false) {
   console.error(`Déploiement annulé : ${message}`);
@@ -212,11 +213,19 @@ if (!sshUser || !sshHost || !sshKey || !existsSync(sshKey)) {
   fail("Paramètres de connexion invalides ou manquants.", true);
 }
 
+if (dryRun && setupOnly) {
+  console.log("Initialisation terminée en simulation — aucun build ni déploiement effectué.");
+  process.exit(0);
+}
+
 await run(process.execPath, ["run", "build"], "   Construction du dashboard Vue", false, dashboardDirectory);
 
 const sourceDirectory = dashboardDirectory;
 const files = [
   "server.php",
+  "dashboard.php",
+  "analytics-common.php",
+  "analytics-reporting.php",
   "database-migration.php",
   "scripts/prepare-database-v7.2.php",
   "scripts/import-database-v7.2.php",
@@ -314,7 +323,7 @@ async function askForMigration() {
     "set -eu",
     `destination="$HOME/${remoteRelativeDirectory}"`,
     `stage="$HOME/${remoteRelativeDirectory}/.deploy-${releaseId}"`,
-    `rm -f -- "$stage/server.php" "$stage/database-migration.php" "$stage/prepare-database-v7.2.php" "$stage/import-database-v7.2.php" "$stage/migrate-remaining-databases-v7.2.php" "$destination/.server.php.${releaseId}" "$destination/.database-migration.php.${releaseId}" "$destination/scripts/.prepare-database-v7.2.php.${releaseId}" "$destination/scripts/.import-database-v7.2.php.${releaseId}" "$destination/scripts/.migrate-remaining-databases-v7.2.php.${releaseId}" "$destination/.index.html.${releaseId}"`,
+    `rm -f -- "$stage/server.php" "$stage/dashboard.php" "$stage/analytics-common.php" "$stage/analytics-reporting.php" "$stage/database-migration.php" "$stage/prepare-database-v7.2.php" "$stage/import-database-v7.2.php" "$stage/migrate-remaining-databases-v7.2.php" "$destination/.server.php.${releaseId}" "$destination/.dashboard.php.${releaseId}" "$destination/.analytics-common.php.${releaseId}" "$destination/.analytics-reporting.php.${releaseId}" "$destination/.database-migration.php.${releaseId}" "$destination/scripts/.prepare-database-v7.2.php.${releaseId}" "$destination/scripts/.import-database-v7.2.php.${releaseId}" "$destination/scripts/.migrate-remaining-databases-v7.2.php.${releaseId}" "$destination/.index.html.${releaseId}"`,
     'rm -rf -- "$stage/dist"',
     `rmdir -- "$stage"`,
   ].join("\n");
@@ -334,17 +343,27 @@ const installToolsCommand = [
   `stage="$destination/.deploy-${releaseId}"`,
   `phpCli="${phpCli}"`,
   'test -f "$stage/server.php"',
+  'test -f "$stage/dashboard.php"',
+  'test -f "$stage/analytics-common.php"',
+  'test -f "$stage/analytics-reporting.php"',
   'test -f "$stage/database-migration.php"',
   'test -f "$stage/prepare-database-v7.2.php"',
   'test -f "$stage/import-database-v7.2.php"',
   'test -f "$stage/migrate-remaining-databases-v7.2.php"',
   'test -f "$stage/dist/index.html"',
   '"$phpCli" -l "$stage/server.php"',
+  '"$phpCli" -l "$stage/dashboard.php"',
+  '"$phpCli" -l "$stage/analytics-common.php"',
+  '"$phpCli" -l "$stage/analytics-reporting.php"',
   '"$phpCli" -l "$stage/database-migration.php"',
   '"$phpCli" -l "$stage/prepare-database-v7.2.php"',
   '"$phpCli" -l "$stage/import-database-v7.2.php"',
   '"$phpCli" -l "$stage/migrate-remaining-databases-v7.2.php"',
   'mkdir -p -- "$destination/scripts"',
+  `install -m 0644 -- "$stage/analytics-common.php" "$destination/.analytics-common.php.${releaseId}"`,
+  `mv -f -- "$destination/.analytics-common.php.${releaseId}" "$destination/analytics-common.php"`,
+  `install -m 0644 -- "$stage/analytics-reporting.php" "$destination/.analytics-reporting.php.${releaseId}"`,
+  `mv -f -- "$destination/.analytics-reporting.php.${releaseId}" "$destination/analytics-reporting.php"`,
   `install -m 0644 -- "$stage/database-migration.php" "$destination/.database-migration.php.${releaseId}"`,
   `mv -f -- "$destination/.database-migration.php.${releaseId}" "$destination/database-migration.php"`,
   `install -m 0644 -- "$stage/prepare-database-v7.2.php" "$destination/scripts/.prepare-database-v7.2.php.${releaseId}"`,
@@ -366,12 +385,22 @@ function createInstallCommand(migrateDatabase, migrateRemaining) {
   const migrationSteps = migrateDatabase
     ? [
       `pausedServer="$destination/.server.php.paused.${releaseId}"`,
-      'restore_server() { if [ -f "$pausedServer" ] && [ ! -f "$destination/server.php" ]; then mv -- "$pausedServer" "$destination/server.php"; fi; }',
-      'trap restore_server EXIT',
+      `pausedDashboard="$destination/.dashboard.php.paused.${releaseId}"`,
+      'restore_endpoints() { if [ -f "$pausedServer" ] && { [ ! -f "$destination/server.php" ] || [ ! -f "$destination/dashboard.php" ]; }; then rm -f -- "$destination/server.php" "$destination/dashboard.php"; mv -- "$pausedServer" "$destination/server.php"; if [ -f "$pausedDashboard" ]; then mv -- "$pausedDashboard" "$destination/dashboard.php"; fi; elif [ -f "$pausedDashboard" ] && [ ! -f "$destination/dashboard.php" ]; then mv -- "$pausedDashboard" "$destination/dashboard.php"; fi; }',
+      'trap restore_endpoints EXIT',
       'if [ -f "$destination/server.php" ]; then mv -- "$destination/server.php" "$pausedServer"; fi',
+      'if [ -f "$destination/dashboard.php" ]; then mv -- "$destination/dashboard.php" "$pausedDashboard"; fi',
       `"$phpCli" "$destination/scripts/prepare-database-v7.2.php" dominionrandomizer.com`,
     ]
     : [];
+  const installServer = [
+    `install -m 0644 -- "$stage/server.php" "$destination/.server.php.${releaseId}"`,
+    `mv -f -- "$destination/.server.php.${releaseId}" "$destination/server.php"`,
+  ];
+  const installDashboard = [
+    `install -m 0644 -- "$stage/dashboard.php" "$destination/.dashboard.php.${releaseId}"`,
+    `mv -f -- "$destination/.dashboard.php.${releaseId}" "$destination/dashboard.php"`,
+  ];
   const importSteps = migrateDatabase
     ? [`"$phpCli" "$destination/scripts/import-database-v7.2.php" dominionrandomizer.com`]
     : [];
@@ -387,18 +416,19 @@ function createInstallCommand(migrateDatabase, migrateRemaining) {
     `stage="$destination/.deploy-${releaseId}"`,
     `phpCli="${phpCli}"`,
     ...migrationSteps,
-    `install -m 0644 -- "$stage/server.php" "$destination/.server.php.${releaseId}"`,
-    `mv -f -- "$destination/.server.php.${releaseId}" "$destination/server.php"`,
+    ...(migrateDatabase ? [...installServer, ...installDashboard] : []),
     ...importSteps,
     ...remainingMigrationSteps,
+    ...(!migrateDatabase ? installDashboard : []),
     'if [ -d "$stage/dist/assets" ]; then mkdir -p -- "$destination/assets"; cp -R -- "$stage/dist/assets/." "$destination/assets/"; fi',
     `install -m 0644 -- "$stage/dist/index.html" "$destination/.index.html.${releaseId}"`,
     `mv -f -- "$destination/.index.html.${releaseId}" "$destination/index.html"`,
+    ...(!migrateDatabase ? installServer : []),
     'if [ -d "$stage/dist/assets" ] && [ -d "$destination/assets" ]; then find "$destination/assets" -type f -print | while IFS= read -r oldAsset; do relativeAsset=${oldAsset#"$destination/assets/"}; if [ ! -f "$stage/dist/assets/$relativeAsset" ]; then rm -f -- "$oldAsset"; fi; done; fi',
     ...cleanupMigrationScripts,
     'if [ -d "$destination/scripts" ] && [ -z "$(find "$destination/scripts" -mindepth 1 -maxdepth 1 -print -quit)" ]; then rmdir -- "$destination/scripts"; fi',
-    ...(migrateDatabase ? ['rm -f -- "$pausedServer"'] : []),
-    'rm -f -- "$stage/server.php" "$stage/database-migration.php" "$stage/prepare-database-v7.2.php" "$stage/import-database-v7.2.php" "$stage/migrate-remaining-databases-v7.2.php"',
+    ...(migrateDatabase ? ['rm -f -- "$pausedServer" "$pausedDashboard"'] : []),
+    'rm -f -- "$stage/server.php" "$stage/dashboard.php" "$stage/analytics-common.php" "$stage/analytics-reporting.php" "$stage/database-migration.php" "$stage/prepare-database-v7.2.php" "$stage/import-database-v7.2.php" "$stage/migrate-remaining-databases-v7.2.php"',
     'rm -rf -- "$stage/dist"',
     'rmdir -- "$stage"',
     "printf '%s\\n' 'Déploiement terminé.'",
@@ -443,8 +473,8 @@ try {
     sshExecutable,
     [...connectionArgs, destination, createInstallCommand(migrateDatabase, migrateRemainingDatabases)],
     migrateDatabase || migrateRemainingDatabases
-      ? "Migration demandée, nettoyage des scripts temporaires et installation du dashboard…"
-      : "Installation du serveur et du dashboard sans migration de base…",
+      ? "  Migration demandée, nettoyage des scripts temporaires et installation du dashboard…"
+      : "  Installation du serveur et du dashboard sans migration de base…",
   );
 } catch (error) {
   if (stageCreated) {

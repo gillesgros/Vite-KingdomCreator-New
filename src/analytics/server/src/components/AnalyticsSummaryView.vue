@@ -41,9 +41,7 @@
         <CountTable title="Extensions utilisées lors du « Randomize »" :counts="summary.sets" />
       </div>
       <UsageTrends
-        :logs="logs"
-        :loading="logsLoading"
-        @usage-counts-change="updateKingdomUsageCounts"
+        :usage="summary.activityUsage"
       />
 
       <details class="other-statistics">
@@ -124,7 +122,6 @@ import {
 } from '../api/analyticsApi';
 import type {
   AnalyticsCountMap,
-  AnalyticsLog,
   AnalyticsSummary,
 } from '../types/analytics';
 import CountTable from './CountTable.vue';
@@ -135,18 +132,15 @@ const props = defineProps<{
   source: string;
   token: string;
   refreshKey: number;
-  logs: AnalyticsLog[];
-  logsLoading: boolean;
 }>();
 
 const emit = defineEmits<{
   'loading-change': [loading: boolean];
   'auth-error': [error: { status: number; message: string }];
+  'summary-change': [summary: AnalyticsSummary | null];
 }>();
 
 const summary = ref<AnalyticsSummary | null>(null);
-const kingdomSetCounts = ref<AnalyticsCountMap>({});
-const kingdomCardCounts = ref<AnalyticsCountMap>({});
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
 const errorStatus = ref<number | null>(null);
@@ -173,16 +167,8 @@ const recentKingdoms = computed<RecentKingdomDisplay[]>(() =>
   })),
 );
 
-const topKingdomSets = computed(() => topCounts(kingdomSetCounts.value, 45));
-const topKingdomCards = computed(() => topCounts(kingdomCardCounts.value, 20));
-
-function updateKingdomUsageCounts(counts: {
-  setCounts: AnalyticsCountMap;
-  cardCounts: AnalyticsCountMap;
-}): void {
-  kingdomSetCounts.value = counts.setCounts;
-  kingdomCardCounts.value = counts.cardCounts;
-}
+const topKingdomSets = computed(() => topCounts(summary.value?.activityUsage?.setCounts ?? {}, 45));
+const topKingdomCards = computed(() => topCounts(summary.value?.activityUsage?.cardCounts ?? {}, 20));
 
 function topCounts(counts: AnalyticsCountMap, limit: number): AnalyticsCountMap {
   return Object.fromEntries(
@@ -226,6 +212,7 @@ async function loadSummary(): Promise<void> {
 
   if (!props.source) {
     summary.value = null;
+    emit('summary-change', null);
     displayedSource = '';
     loading.value = false;
     emit('loading-change', false);
@@ -234,6 +221,7 @@ async function loadSummary(): Promise<void> {
 
   if (displayedSource !== props.source) {
     summary.value = null;
+    emit('summary-change', null);
   }
   loading.value = true;
   emit('loading-change', true);
@@ -242,11 +230,13 @@ async function loadSummary(): Promise<void> {
     const result = await fetchAnalyticsSummary(props.source, props.token);
     if (currentRequest === requestVersion) {
       summary.value = result;
+      emit('summary-change', result);
       displayedSource = props.source;
     }
   } catch (error) {
     if (currentRequest === requestVersion) {
       summary.value = null;
+      emit('summary-change', null);
       const message = error instanceof Error
         ? error.message
         : 'Impossible de charger les statistiques.';

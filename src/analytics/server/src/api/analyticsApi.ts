@@ -1,5 +1,6 @@
 import type {
   AnalyticsSummary,
+  AnalyticsTrafficLocationsPage,
   LogsFilters,
   LogsRequestPerPage,
   LogsResponse,
@@ -9,9 +10,7 @@ import type {
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL?.trim() ||
-  (import.meta.env.DEV
-    ? 'https://suivi.71yeti.fr/server.php'  // pour le dev on peut utiliser server-test.php
-    : 'https://suivi.71yeti.fr/server.php');  // pour la prod
+  'https://suivi.71yeti.fr/dashboard.php';
 
 export class AnalyticsApiError extends Error {
   constructor(
@@ -95,7 +94,7 @@ async function requestJson<T>(
 }
 
 function isLogsRequestPerPage(value: number): value is LogsRequestPerPage {
-  return [10, 25, 50, 100, 250, 500, 1000, 5000, 10000, 20000]
+  return [10, 25, 50, 100, 250, 500, 1000]
     .some((size) => size === value);
 }
 
@@ -120,6 +119,26 @@ export function fetchAnalyticsSummary(
   );
 }
 
+export function fetchAnalyticsTrafficLocationsPage(
+  source: string,
+  page: number,
+  token: string,
+  cursor?: { snapshotId: number; cursor: number },
+  signal?: AbortSignal,
+): Promise<AnalyticsTrafficLocationsPage> {
+  return requestJson(
+    buildUrl({
+      source,
+      trafficLocations: 'true',
+      page,
+      snapshotId: cursor?.snapshotId,
+      cursor: cursor?.cursor,
+    }),
+    token,
+    { signal },
+  );
+}
+
 export function fetchLogs(
   source: string,
   filters: LogsFilters,
@@ -128,7 +147,7 @@ export function fetchLogs(
 ): Promise<LogsResponse> {
   if (filters.perPage !== undefined && !isLogsRequestPerPage(filters.perPage)) {
     throw new RangeError(
-      'perPage doit être 10, 25, 50, 100, 250, 500, 1000, 5000, 10000 ou 20000.',
+      'perPage doit être 10, 25, 50, 100, 250, 500 ou 1000.',
     );
   }
 
@@ -137,6 +156,7 @@ export function fetchLogs(
       source,
       logs: 'true',
       category: filters.category,
+      trafficCategory: filters.trafficCategory,
       eventType: filters.eventType,
       sessionId: filters.sessionId,
       paramsSearch: filters.paramsSearch,
@@ -147,8 +167,6 @@ export function fetchLogs(
       endDate: filters.endDate,
       page: filters.page,
       perPage: filters.perPage,
-      afterId: filters.afterId,
-      throughId: filters.throughId,
     }),
     token,
     { signal },

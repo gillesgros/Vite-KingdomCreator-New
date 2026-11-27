@@ -10,6 +10,9 @@ As I became a maintainer for Kingdom Creator, https://www.dominionrandomizer.com
 Feel free to propose any improvements you see fit and send me a pull request!
 
 ## Changelog
+**2026/11/27 - 7.2.4** - Analytics - Extend volume handling  
+>***Fix & Feat*** (see [Changelog.md](./Changelog.md))
+
 **2026/11/24 - 7.2.3** - Analytics - dynamic rendering  
 >***Fix & Feat*** (see [Changelog.md](./Changelog.md))
 

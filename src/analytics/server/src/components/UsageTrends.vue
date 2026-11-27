@@ -17,12 +17,9 @@
       </label>
     </header>
 
-    <p v-if="loading" class="loading-note" role="status">
-      Chargement progressif des journaux — {{ logs.length.toLocaleString('fr-FR') }} ligne(s) reçue(s).
-    </p>
     <div class="game-metrics">
       <article class="game-metric">
-        <span>Événements KINGDOM_ACTIVITY chargés</span>
+        <span>Événements KINGDOM_ACTIVITY</span>
         <strong>{{ trends.kingdomEvents.toLocaleString('fr-FR') }}</strong>
       </article>
       <article class="game-metric">
@@ -36,36 +33,35 @@
       <TrendChart title="Cartes présentes dans les royaumes" :buckets="trends.cardBuckets" />
     </div>
     <div class="trend-grid">
-      <CountTable title="Extensions présentes (journaux chargés)" :counts="topSets" />
-      <CountTable title="Cartes les plus utilisées (journaux chargés)" :counts="topCards" />
+      <CountTable title="Extensions présentes dans les royaumes" :counts="topSets" />
+      <CountTable title="Cartes les plus utilisées dans les royaumes" :counts="topCards" />
     </div>
-    <p v-if="logs.length === 0" class="empty">
-      Chargez les journaux pour afficher leur évolution temporelle.
-    </p>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import type { AnalyticsCountMap, AnalyticsLog } from '../types/analytics';
-import { buildUsageTrends, type TimeGrouping } from '../utils/analyticsTrends';
+import { computed, ref } from 'vue';
+import type { AnalyticsActivityUsage, AnalyticsCountMap } from '../types/analytics';
+import type { TimeGrouping } from '../utils/analyticsTrends';
 import CountTable from './CountTable.vue';
 import TrendChart from './TrendChart.vue';
 
-const props = defineProps<{ logs: AnalyticsLog[]; loading: boolean }>();
-const emit = defineEmits<{
-  'usage-counts-change': [counts: { setCounts: AnalyticsCountMap; cardCounts: AnalyticsCountMap }];
-}>();
+const props = defineProps<{ usage: AnalyticsActivityUsage | undefined }>();
 const grouping = ref<TimeGrouping>('week');
-const trends = computed(() => buildUsageTrends(props.logs, grouping.value));
+const trends = computed(() => {
+  const usage = props.usage;
+  const groupedTrends = usage?.trends[grouping.value as 'week' | 'month'];
+  return {
+    kingdomEvents: usage?.kingdomEvents ?? 0,
+    distinctGames: usage?.distinctGames ?? 0,
+    setCounts: usage?.setCounts ?? {},
+    cardCounts: usage?.cardCounts ?? {},
+    setBuckets: groupedTrends?.setBuckets ?? [],
+    cardBuckets: groupedTrends?.cardBuckets ?? [],
+  };
+});
 const topSets = computed(() => topCounts(trends.value.setCounts));
 const topCards = computed(() => topCounts(trends.value.cardCounts));
-
-watch(
-  trends,
-  ({ setCounts, cardCounts }) => emit('usage-counts-change', { setCounts, cardCounts }),
-  { immediate: true },
-);
 
 function topCounts(counts: Record<string, number>): Record<string, number> {
   return Object.fromEntries(

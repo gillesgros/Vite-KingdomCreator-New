@@ -7,16 +7,14 @@
       </div>
     </header>
 
-    <p v-if="loading" class="loading-note" role="status">
-      Chargement progressif des journaux — {{ logs.length.toLocaleString('fr-FR') }} ligne(s) reçue(s).
-    </p>
+    <p v-if="loading" class="loading-note" role="status">Calcul des tendances côté serveur…</p>
     <div class="event-kpis">
       <article>
-        <span>Événements chargés</span>
-        <strong>{{ logs.length.toLocaleString('fr-FR') }}</strong>
+        <span>Événements enregistrés</span>
+        <strong>{{ eventCount.toLocaleString('fr-FR') }}</strong>
       </article>
       <article>
-        <span>Types observés</span>
+        <span>Types d’événements</span>
         <strong>{{ eventTypes.length.toLocaleString('fr-FR') }}</strong>
       </article>
       <article>
@@ -25,11 +23,14 @@
       </article>
     </div>
 
-    <EventTrendsPanel :logs="logs" />
+    <EventTrendsPanel
+      :event-types="eventTypes"
+      :event-trends="summary?.eventTrends"
+    />
 
     <section class="event-table panel">
       <h3>Événements observés</h3>
-      <p v-if="eventRows.length === 0" class="empty">Aucun événement chargé.</p>
+      <p v-if="eventRows.length === 0" class="empty">Aucun événement enregistré.</p>
       <div v-else class="table-wrap">
         <table>
           <thead><tr><th>Type</th><th>Événements</th><th>Erreurs</th></tr></thead>
@@ -48,24 +49,21 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { AnalyticsLog } from '../types/analytics';
+import type { AnalyticsSummary } from '../types/analytics';
 import EventTrendsPanel from './EventTrendsPanel.vue';
 
-const props = defineProps<{ logs: AnalyticsLog[]; loading: boolean }>();
-const eventTypes = computed(() => [...new Set(props.logs.map((log) => log.eventType || 'Inconnu'))].sort());
-const errorCount = computed(() =>
-  props.logs.filter((log) => log.eventOrError === 'error').length,
-);
+const props = defineProps<{ summary: AnalyticsSummary | null; loading: boolean }>();
+const eventCounts = computed(() => props.summary?.eventTypes ?? {});
+const errors = computed(() => props.summary?.errors ?? {});
+const eventTypes = computed(() => Object.keys(eventCounts.value).sort());
+const eventCount = computed(() => Object.values(eventCounts.value).reduce((total, count) => total + count, 0));
+const errorCount = computed(() => Object.values(errors.value).reduce((total, count) => total + count, 0));
 const eventRows = computed(() => {
-  const rows = new Map<string, { type: string; count: number; errors: number }>();
-  for (const log of props.logs) {
-    const type = log.eventType || 'Inconnu';
-    const row = rows.get(type) ?? { type, count: 0, errors: 0 };
-    row.count++;
-    if (log.eventOrError === 'error') row.errors++;
-    rows.set(type, row);
-  }
-  return [...rows.values()].sort((left, right) =>
+  return Object.entries(eventCounts.value).map(([type, count]) => ({
+    type,
+    count,
+    errors: errors.value[type] ?? 0,
+  })).sort((left, right) =>
     right.count - left.count || left.type.localeCompare(right.type),
   );
 });

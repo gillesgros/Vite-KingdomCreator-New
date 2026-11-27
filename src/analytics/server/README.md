@@ -2,12 +2,14 @@
 
 ## Installation
 
-Le déploiement publie le build Vue (`dist/`) et `server.php` à la racine du
-répertoire web de `suivi.71yeti.fr`. Le serveur doit disposer de PHP avec PDO
-SQLite (`pdo_sqlite`) et pouvoir créer un répertoire `databases` accessible en
-écriture à côté de `server.php`. Il faut également installer le lecteur GeoIP
-et la base GeoLite2 décrits ci-dessous ; ils doivent rester hors du répertoire
-web.
+Le déploiement publie le build Vue (`dist/`), `server.php` et `dashboard.php` à
+la racine du répertoire web de `suivi.71yeti.fr`. `server.php` est le point
+d’entrée de collecte utilisé par les clients ; `dashboard.php` sert le reporting
+et la maintenance. Ils partagent `analytics-common.php`, le schéma SQLite et le
+répertoire `databases/`. Le serveur doit disposer de PHP avec PDO SQLite
+(`pdo_sqlite`) et pouvoir créer ce répertoire accessible en écriture. Il faut
+également installer le lecteur GeoIP et la base GeoLite2 décrits ci-dessous ;
+ils doivent rester hors du répertoire web.
 
 Configurer une variable d’environnement serveur `ANALYTICS_DASHBOARD_TOKEN` avec
 un jeton administrateur long et aléatoire. Si l’hébergeur ne permet pas de
@@ -19,9 +21,9 @@ dépôt) un fichier `server-config.php` à côté de `server.php` :
 return ['dashboardToken' => 'REMPLACER_PAR_UN_JETON_LONG_ET_ALEATOIRE'];
 ```
 
-Le jeton protège la lecture des statistiques et des journaux ; il n’est jamais
-inclus dans les événements. Sans jeton configuré, l’écriture des événements
-fonctionne, mais les lectures du tableau de bord renvoient une erreur.
+Le jeton protège les statistiques, les journaux et les opérations de maintenance ;
+il n’est jamais inclus dans les événements. Sans jeton configuré, la collecte
+des événements fonctionne, mais les lectures du tableau de bord renvoient une erreur.
 
 Ouvrir `https://suivi.71yeti.fr/` pour le tableau de bord, sélectionner la source
 du site et saisir le jeton. Les données brutes s’affichent d’abord avec un filtre
@@ -63,13 +65,18 @@ lancer :
 bun run lint:php:follow
 ```
 
-Cette commande transfère temporairement `server.php`, le helper et les trois
-scripts de migration dans un dossier privé sous le compte SSH, exécute
-`/usr/bin/php8.5-cli -l` sur chacun, puis supprime les copies temporaires.
+Cette commande transfère temporairement les deux fichiers serveur, les helpers
+et les trois scripts de migration dans un dossier privé sous le compte SSH,
+exécute `/usr/bin/php8.5-cli -l` sur chacun, puis supprime les copies
+temporaires.
+Si la clé ou la configuration SSH manque, elle lance d’abord l’assistant de
+configuration en simulation : aucun build ni déploiement n’est effectué. Cette
+initialisation autorise toutefois la clé publique sur IONOS et remplace les
+entrées `authorized_keys` portant le commentaire `ionos-follow`.
 
-Au premier lancement sur un poste, l’assistant demande l’utilisateur et l’hôte
-SSH IONOS. Il requiert `ssh` et `ssh-keygen` dans le `PATH` pour cette
-initialisation. Il génère une clé Ed25519 sans passphrase dans
+Au premier lancement du lint ou du déploiement sur un poste, l’assistant demande
+l’utilisateur et l’hôte SSH IONOS. Il requiert `ssh` et `ssh-keygen` dans le
+`PATH` pour cette initialisation. Il génère une clé Ed25519 sans passphrase dans
 `src/analytics/server/keys/ionos_follow`, puis demande le mot de passe SSH pour
 ajouter la clé publique au compte IONOS. Le mot de passe n’est pas enregistré.
 La configuration locale est conservée dans
@@ -92,34 +99,35 @@ Pour les déploiements, `IONOS_SSH_EXE` et `IONOS_SCP_EXE` peuvent remplacer les
 exécutables `ssh` et `scp` trouvés dans le `PATH`.
 
 Le déploiement construit d’abord le dashboard Vue dans `src/analytics/server/`,
-puis transfère `server.php`, le helper de migration, les commandes CLI et le
+puis transfère les deux points d’entrée, leurs helpers, les commandes CLI et le
 contenu de `dist/` dans le répertoire web IONOS. Il vérifie la syntaxe PHP avant
-installation. Il installe d’abord le helper et les scripts, puis retire
-brièvement `server.php` du chemin uniquement si la migration a été confirmée,
-afin d’empêcher de nouvelles écritures pendant le déplacement de la base
-principale. Les requêtes reçues pendant cette courte interruption ne sont pas
-mises en file. La migration déplace `databases/dominionrandomizer.com.db` vers
+installation. Il installe d’abord les helpers et les scripts, puis retire
+brièvement `server.php` et `dashboard.php` du chemin uniquement si la migration
+a été confirmée, afin d’empêcher les écritures et lectures pendant le déplacement
+de la base principale. Les requêtes reçues pendant cette courte interruption ne
+sont pas mises en file. La migration déplace `databases/dominionrandomizer.com.db` vers
 `<répertoire-web>-backups/dominionrandomizer.com-v7.2-moved.db`, crée et initialise
-la base active, installe le nouveau `server.php`, puis importe les anciennes
-lignes sans écraser celles éventuellement déjà reçues dans la base active. Sans
-migration, le déploiement ne déplace ni n’importe les bases et archives ; le
-nouveau serveur conserve toutefois sa migration automatique de schéma à la
-première requête si une base historique en a encore besoin. Enfin, il publie le
-dashboard. Les autres bases ne sont ni déplacées ni migrées par `deploy:follow`,
-sauf avec `--migrate-remaining-databases`.
+la base active, installe les deux entrées, puis importe les anciennes lignes
+sans écraser celles éventuellement déjà reçues dans la base active. Sans
+migration, le déploiement ne déplace ni n’importe les bases et archives ; les
+entrées conservent toutefois leur migration automatique de schéma à la première
+requête si une base historique en a encore besoin. Enfin, il publie le dashboard.
+Les autres bases ne sont ni déplacées ni migrées par `deploy:follow`, sauf avec
+`--migrate-remaining-databases`.
 
 L’opération peut être relancée : le déplacement n’écrase jamais une archive
 `-v7.2-moved.db` existante. Après l’import, `PRAGMA user_version` de la base
 active vaut `1` et le manifeste conserve aussi la trace de l’archive importée.
 Pour les bases importées avant l’ajout de cette version, le manifeste existant
 permet au déploiement d’inscrire `user_version=1` sans réimporter les données.
-Si une étape échoue après le déplacement, le script restaure l’ancien
-`server.php` si le nouveau n’a pas encore été installé ; l’archive est conservée
-pour reprendre la préparation ou l’import. Après la publication de `index.html`,
+Si une étape échoue pendant la préparation de la migration, le script restaure
+les points d’entrée mis en pause lorsque leurs remplaçants ne sont pas installés ;
+l’archive est conservée pour reprendre la préparation ou l’import. Après la publication de `index.html`,
 les anciens fichiers de `assets/` absents du nouveau build sont supprimés. Les
 scripts CLI temporaires de migration sont retirés de `scripts/` à la fin, puis
-ce répertoire est supprimé s’il est vide. Seul `database-migration.php`, requis
-par `server.php`, reste à la racine. Le déploiement ne transfère ni ne supprime
+ce répertoire est supprimé s’il est vide. `database-migration.php` et
+`analytics-common.php` restent à la racine pour les deux entrées ; `dashboard.php`
+charge aussi `analytics-reporting.php`. Le déploiement ne transfère ni ne supprime
 `server-config.php` ou `index-2.html`.
 
 Pour simuler le déploiement après l’initialisation, définir
@@ -141,7 +149,7 @@ identifiants historiques sauf collision. Le helper partagé applique les colonne
 historiques/scalaires, le remplissage depuis `clientContext` et les six index.
 Le serveur et les scripts CLI utilisent le même helper pour éviter toute
 divergence. Une source sans fichier `.db` est créée avec le nouveau schéma à sa
-première requête vers `server.php` ; elle n’apparaîtra dans `listSources` qu’après
+première requête de collecte vers `server.php` ; elle n’apparaîtra dans `listSources` qu’après
 cette création.
 
 Les autres bases, supposées sans trafic, sont reportées par défaut. Quand vous
@@ -161,15 +169,21 @@ première requête sur une grande base peut donc attendre et sera plus lente. Le
 temps de migration déclenché par le serveur apparaît dans `Server-Timing` sous
 `metadata_migration`.
 
-Le tableau de bord demande par défaut les journaux par lots de 20 000 et actualise
-les graphiques à chaque lot reçu. Les filtres des journaux sont appliqués côté
-navigateur après le chargement complet. Une mise à jour envoie un curseur d’ID
-et ne récupère que les lignes ajoutées depuis la dernière lecture ; une borne
-d’ID stabilise le chargement initial pendant l’arrivée de nouveaux événements.
+Le tableau de bord ne charge que la page de journaux affichée (50 lignes par
+défaut, jusqu’à 1 000). Les filtres, le tri chronologique et le décompte des
+résultats sont calculés côté serveur SQLite ; changer de page ne conserve pas
+les pages précédentes en mémoire. La carte, les indicateurs de trafic, les
+statistiques d’utilisation et les courbes d’événements sont calculés en agrégats
+serveur, sans charger les lignes brutes dans le navigateur. Le chargement initial
+de la carte parcourt les journaux par lots de 1 000 entrées et actualise les
+points après chaque lot. Le navigateur conserve au maximum 2 000 localisations ;
+si la source en contient davantage, les comptes de la carte sont estimatifs afin
+de maintenir cette limite mémoire.
 Les statistiques des sets et cartes montrent les usages par semaine ou par mois.
-Le nombre de jeux distincts correspond aux compositions distinctes de cartes
-observées dans les royaumes chargés. L’onglet « Événements dans le temps » détaille
-les types d’événements et leur évolution temporelle.
+Le nombre de jeux distincts est calculé à partir des compositions de cartes de
+tous les royaumes, avec les signatures temporaires conservées dans SQLite plutôt
+que dans la mémoire PHP. L’onglet « Événements dans le temps » détaille les types
+d’événements et leur évolution temporelle.
 
 Les réponses JSON de plus de 1 Ko sont gzipées si le navigateur annonce accepter
 gzip ; vérifier `Content-Encoding: gzip` dans l’onglet Network pour confirmer.

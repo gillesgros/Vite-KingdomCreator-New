@@ -2,17 +2,20 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import {
   AnalyticsApiError,
+  fetchAnalyticsTrafficLocationsPage,
   fetchLogs,
   runMaintenanceAction,
 } from '../api/analyticsApi';
 import type {
   AnalyticsLog,
   AnalyticsLogLocation,
+  AnalyticsSummary,
+  AnalyticsTrafficLocation,
   LogCategory,
-  LogsBatchSize,
   LogsFilters,
   LogsPerPage,
   MaintenanceAction,
+  TrafficCategoryFilter,
 } from '../types/analytics';
 import LogsMap from './LogsMap.vue';
 
@@ -20,11 +23,12 @@ const props = defineProps<{
   source: string;
   token: string;
   refreshKey: number;
+  analyticsSummary: AnalyticsSummary | null;
+  summaryLoading: boolean;
 }>();
 
 const emit = defineEmits<{
   'loading-change': [loading: boolean];
-  'logs-change': [logs: AnalyticsLog[]];
   'dashboard-loaded': [source: string];
   'maintenance-complete': [];
   'auth-error': [error: { status: number; message: string }];
@@ -54,6 +58,8 @@ interface LogRow {
 }
 
 type TrafficLevel = 'categories' | 'regions' | 'countries' | 'subdivisions';
+type TrafficSortColumn = 'label' | 'count';
+type SortDirection = 'asc' | 'desc';
 
 interface TrafficEntry {
   label: string;
@@ -85,8 +91,12 @@ const filterKeys = [
 ] as const;
 
 const pageSizes: LogsPerPage[] = [10, 25, 50, 100, 250, 500, 1000];
-const batchSizes: LogsBatchSize[] = [1000, 5000, 10000, 20000];
-const isDevelopment = import.meta.env.DEV;
+const trafficFilterByLabel: Record<string, TrafficCategoryFilter> = {
+  'Trafic Humain Légitime': 'human',
+  'Trafic Robot / Suspect (sans Session ID)': 'robot-no-session',
+  'Trafic Robot / Suspect (navigateur atypique)': 'robot-browser',
+  'Trafic en erreur': 'error',
+};
 const tableColumns: LogTableColumn[] = [
   { label: 'Sélection', className: 'selection-column', minWidth: 48 },
   { label: 'Date', className: 'date-column', minWidth: 100 },
@@ -117,9 +127,7 @@ function createDefaultFilters(): LogFilterState {
 }
 
 const filters = reactive<LogFilterState>(createDefaultFilters());
-const batchSize = ref<LogsBatchSize>(20000);
 const logs = ref<AnalyticsLog[]>([]);
-const loadedCount = ref(0);
 const eventTypes = ref<string[]>([]);
 const countries = ref<string[]>([]);
 const devices = ref<string[]>([]);
@@ -138,16 +146,108 @@ const maintenanceError = ref<string | null>(null);
 const purgeDate = ref('');
 const trafficLevel = ref<TrafficLevel>('categories');
 const trafficCategory = ref('');
+const trafficFilterCategory = ref<TrafficCategoryFilter | ''>('');
 const trafficRegion = ref('');
 const trafficCountry = ref('');
+const trafficSortColumn = ref<TrafficSortColumn>('count');
+const trafficSortDirection = ref<SortDirection>('desc');
+const loadedMapLocations = ref<AnalyticsTrafficLocation[]>([]);
+const mapLocationsApproximate = ref(false);
+const mapLocationsLoaded = ref(false);
+const mapLoading = ref(false);
+const mapPage = ref(0);
+const mapEventsLoaded = ref(0);
+const mapEventsTotal = ref(0);
+const mapErrorMessage = ref<string | null>(null);
 let requestVersion = 0;
+let mapRequestVersion = 0;
 let loadTimer: number | undefined;
 let activeRequest: AbortController | undefined;
+let activeMapRequest: AbortController | undefined;
 let columnResizeState: ColumnResizeState | null = null;
-let cursorId = 0;
-let cursorInitialized = false;
 
 const maximumSelection = 1000;
+const maximumMapLocations = 2000;
+
+interface MapLocationCounter {
+  key: string;
+  location: AnalyticsTrafficLocation;
+}
+
+function swapMapCounters(heap: MapLocationCounter[], indexes: Map<string, number>, first: number, second: number): void {
+  [heap[first], heap[second]] = [heap[second], heap[first]];
+  indexes.set(heap[first].key, first);
+  indexes.set(heap[second].key, second);
+}
+
+function siftMapCounterUp(heap: MapLocationCounter[], indexes: Map<string, number>, index: number): void {
+  while (index > 0) {
+    const parent = Math.floor((index - 1) / 2);
+    if (heap[parent].location.count <= heap[index].location.count) break;
+    swapMapCounters(heap, indexes, parent, index);
+    index = parent;
+  }
+}
+
+function siftMapCounterDown(heap: MapLocationCounter[], indexes: Map<string, number>, index: number): void {
+  while (true) {
+    const left = index * 2 + 1;
+    const right = left + 1;
+    let smallest = index;
+    if (left < heap.length && heap[left].location.count < heap[smallest].location.count) {
+      smallest = left;
+    }
+    if (right < heap.length && heap[right].location.count < heap[smallest].location.count) {
+      smallest = right;
+    }
+    if (smallest === index) break;
+    swapMapCounters(heap, indexes, index, smallest);
+    index = smallest;
+  }
+}
+
+function addMapLocations(
+  locations: AnalyticsTrafficLocation[],
+  heap: MapLocationCounter[],
+  indexes: Map<string, number>,
+): { locations: AnalyticsTrafficLocation[]; approximate: boolean } {
+  let approximate = false;
+  for (const location of locations) {
+    const key = JSON.stringify([
+      location.category,
+      location.country,
+      location.subdivision,
+      location.city,
+      location.latitude,
+      location.longitude,
+    ]);
+    const index = indexes.get(key);
+    if (index !== undefined) {
+      heap[index].location.count += location.count;
+      siftMapCounterDown(heap, indexes, index);
+      continue;
+    }
+
+    if (heap.length < maximumMapLocations) {
+      const newIndex = heap.length;
+      heap.push({ key, location: { ...location } });
+      indexes.set(key, newIndex);
+      siftMapCounterUp(heap, indexes, newIndex);
+      continue;
+    }
+
+    approximate = true;
+    const estimatedCount = heap[0].location.count + location.count;
+    indexes.delete(heap[0].key);
+    heap[0] = { key, location: { ...location, count: estimatedCount } };
+    indexes.set(key, 0);
+    siftMapCounterDown(heap, indexes, 0);
+  }
+  return {
+    locations: heap.map(({ location }) => location),
+    approximate,
+  };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -218,12 +318,13 @@ const rows = computed<LogRow[]>(() =>
     const country = readString(context, 'country') || log.country || '';
     const subdivision = readString(context, 'subdivision');
     const city = readString(context, 'city');
+    const browser = log.browser ?? readString(context, 'browser');
 
     return {
       log,
       country: country || '—',
       device: readString(context, 'device') || log.device || '—',
-      browser: readString(context, 'browser') || log.browser || '—',
+      browser: browser || '—',
       paramsText: formatJson(log.params),
       location: {
         country,
@@ -233,32 +334,7 @@ const rows = computed<LogRow[]>(() =>
         longitude: readCoordinate(context, ['longitude', 'lng', 'lon']),
       },
     };
-  }).filter((row) => {
-    if (filters.category && row.log.eventOrError !== filters.category) return false;
-    if (filters.eventType && row.log.eventType !== filters.eventType) return false;
-    if (filters.sessionId && !matchesSessionFilter(row.log.sessionId ?? '', filters.sessionId)) return false;
-    if (filters.paramsSearch && !(row.log.params ?? '').includes(filters.paramsSearch)) return false;
-    if (filters.country && row.location.country.toLowerCase() !== filters.country.toLowerCase()) return false;
-    if (filters.device && row.device !== filters.device) return false;
-    if (filters.browser && row.browser !== filters.browser) return false;
-    if (filters.startDate && row.log.date.slice(0, 16) < filters.startDate.replace('T', ' ')) return false;
-    if (filters.endDate && row.log.date.slice(0, 16) > filters.endDate.replace('T', ' ')) return false;
-    return true;
   }),
-);
-
-function matchesSessionFilter(sessionId: string, filter: string): boolean {
-  let pattern = '.*';
-  for (const character of filter) {
-    if (character === '*') pattern += '.*';
-    else if (character === '?') pattern += '.';
-    else pattern += character.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-  return new RegExp(`${pattern}.*`, 'i').test(sessionId);
-}
-
-const mapLocations = computed(() =>
-  trafficRows.value.map((row) => row.location),
 );
 
 const regionByCountry: Record<string, string> = {
@@ -274,7 +350,7 @@ const regionByCountry: Record<string, string> = {
   FR: 'Europe de l’Ouest', DE: 'Europe de l’Ouest', GB: 'Europe de l’Ouest', NL: 'Europe de l’Ouest',
   BE: 'Europe de l’Ouest', CH: 'Europe de l’Ouest', AT: 'Europe de l’Ouest', IE: 'Europe de l’Ouest',
   LU: 'Europe de l’Ouest', MC: 'Europe de l’Ouest',
-  FI: 'Europe du Nord', SE: 'Europe du Nord', NO: 'Europe du Nord', DK: 'Europe du Nord',
+  FI: 'Europe du Nord', SE: 'Europe du Nord', NO: 'Europe du Nord', DK: 'Europe du Nord', AX: 'Europe du Nord',
   IS: 'Europe du Nord', EE: 'Europe du Nord', LV: 'Europe du Nord', LT: 'Europe du Nord',
   IT: 'Europe du Sud', ES: 'Europe du Sud', PT: 'Europe du Sud', GR: 'Europe du Sud',
   HR: 'Europe du Sud', SI: 'Europe du Sud', RS: 'Europe du Sud', BA: 'Europe du Sud',
@@ -293,7 +369,8 @@ const regionByCountry: Record<string, string> = {
   LK: 'Asie du Sud & Centrale', NP: 'Asie du Sud & Centrale', KZ: 'Asie du Sud & Centrale', UZ: 'Asie du Sud & Centrale',
   ZA: 'Afrique', MA: 'Afrique', DZ: 'Afrique', TN: 'Afrique', EG: 'Afrique',
   NG: 'Afrique', KE: 'Afrique', GH: 'Afrique', SN: 'Afrique', CI: 'Afrique',
-  CM: 'Afrique', ET: 'Afrique', TZ: 'Afrique', UG: 'Afrique', MU: 'Afrique', RE: 'Afrique',
+  CM: 'Afrique', ET: 'Afrique', TZ: 'Afrique', UG: 'Afrique', MU: 'Afrique', RE: 'Afrique', ZM: 'Afrique', 
+  ZW: 'Afrique', MW: 'Afrique', MZ: 'Afrique', AO: 'Afrique', NA: 'Afrique',
   AU: 'Océanie', NZ: 'Océanie', FJ: 'Océanie', NC: 'Océanie', PF: 'Océanie',
 };
 
@@ -319,24 +396,29 @@ function getTrafficCategory(row: LogRow): string {
   return 'Trafic Humain Légitime';
 }
 
-const trafficRows = computed(() => {
-  if (trafficLevel.value === 'categories') return rows.value;
-  return rows.value.filter((row) => {
-    if (getTrafficCategory(row) !== trafficCategory.value) return false;
+const trafficSummary = computed(() => props.analyticsSummary?.traffic);
+const mapLocations = computed<AnalyticsTrafficLocation[]>(() => {
+  const locations = mapLocationsLoaded.value
+    ? loadedMapLocations.value
+    : trafficSummary.value?.locations ?? rows.value.map((row) => ({
+      ...row.location,
+      category: getTrafficCategory(row),
+      count: 1,
+    }));
+  return locations.filter((location) => {
+    if (trafficLevel.value === 'categories') return true;
+    if (location.category !== trafficCategory.value) return false;
     if (trafficLevel.value === 'regions') return true;
-    if (getRegion(getCountryCode(row)) !== trafficRegion.value) return false;
+    if (getRegion(location.country.toUpperCase()) !== trafficRegion.value) return false;
     if (trafficLevel.value === 'countries') return true;
-    return getCountryCode(row) === trafficCountry.value;
+    return location.country === trafficCountry.value;
   });
 });
 
 const lastPage = computed(() =>
-  Math.max(1, Math.ceil(trafficRows.value.length / filters.perPage)),
+  Math.max(1, Math.ceil(totalCount.value / filters.perPage)),
 );
-const pageRows = computed(() => {
-  const start = (filters.page - 1) * filters.perPage;
-  return trafficRows.value.slice(start, start + filters.perPage);
-});
+const pageRows = computed(() => rows.value);
 const pageSelectionChecked = computed(() =>
   pageRows.value.length > 0 &&
   pageRows.value.every((row) => selectedIds.value.has(row.log.id)),
@@ -415,23 +497,62 @@ function handleResizeKeydown(event: KeyboardEvent, index: number): void {
 
 const trafficEntries = computed<TrafficEntry[]>(() => {
   const counts = new Map<string, number>();
-  for (const row of trafficRows.value) {
-    let label: string;
-    if (trafficLevel.value === 'categories') {
-      label = getTrafficCategory(row);
-    } else if (trafficLevel.value === 'regions') {
-      label = getRegion(getCountryCode(row));
-    } else if (trafficLevel.value === 'countries') {
-      label = getCountryCode(row);
-    } else {
-      label = row.location.subdivision || 'Non renseigné';
+  const entries = trafficSummary.value?.entries;
+  if (entries) {
+    for (const entry of entries) {
+      if (trafficLevel.value !== 'categories' && entry.category !== trafficCategory.value) continue;
+      if (trafficLevel.value === 'regions' || trafficLevel.value === 'countries') {
+        const region = getRegion(entry.country.toUpperCase());
+        if (trafficLevel.value === 'countries' && region !== trafficRegion.value) continue;
+        const label = trafficLevel.value === 'regions' ? region : entry.country;
+        counts.set(label, (counts.get(label) ?? 0) + entry.count);
+      } else if (trafficLevel.value === 'subdivisions') {
+        if (entry.country !== trafficCountry.value) continue;
+        const label = entry.subdivision || 'Non renseigné';
+        counts.set(label, (counts.get(label) ?? 0) + entry.count);
+      } else {
+        counts.set(entry.category, (counts.get(entry.category) ?? 0) + entry.count);
+      }
     }
-    counts.set(label, (counts.get(label) ?? 0) + 1);
+  } else {
+    for (const row of rows.value) {
+      let label: string;
+      if (trafficLevel.value === 'categories') {
+        label = getTrafficCategory(row);
+      } else if (trafficLevel.value === 'regions') {
+        label = getRegion(getCountryCode(row));
+      } else if (trafficLevel.value === 'countries') {
+        label = getCountryCode(row);
+      } else {
+        label = row.location.subdivision || 'Non renseigné';
+      }
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+    }
   }
   return [...counts.entries()]
     .map(([label, count]) => ({ label, count }))
-    .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
+    .sort((left, right) => {
+      const direction = trafficSortDirection.value === 'asc' ? 1 : -1;
+      const comparison = trafficSortColumn.value === 'count'
+        ? left.count - right.count
+        : left.label.localeCompare(right.label, 'fr', { sensitivity: 'base', numeric: true });
+      return direction * comparison || left.label.localeCompare(right.label, 'fr', { sensitivity: 'base', numeric: true });
+    });
 });
+
+function toggleTrafficSort(column: TrafficSortColumn): void {
+  if (trafficSortColumn.value === column) {
+    trafficSortDirection.value = trafficSortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    trafficSortColumn.value = column;
+    trafficSortDirection.value = 'asc';
+  }
+}
+
+function trafficSortIndicator(column: TrafficSortColumn): string {
+  if (trafficSortColumn.value !== column) return '↕';
+  return trafficSortDirection.value === 'asc' ? '↑' : '↓';
+}
 
 const trafficTitle = computed(() => {
   if (trafficLevel.value === 'categories') return 'Catégories de trafic';
@@ -448,22 +569,28 @@ const trafficColumnTitle = computed(() => ({
 }[trafficLevel.value]));
 
 const humanTrafficCount = computed(() =>
-  rows.value.filter((row) => getTrafficCategory(row) === 'Trafic Humain Légitime').length,
+  trafficSummary.value?.totals.humanCount ??
+    rows.value.filter((row) => getTrafficCategory(row) === 'Trafic Humain Légitime').length,
 );
 const robotTrafficCount = computed(() =>
-  rows.value.filter((row) => getTrafficCategory(row).startsWith('Trafic Robot / Suspect')).length,
+  trafficSummary.value?.totals.robotCount ??
+    rows.value.filter((row) => getTrafficCategory(row).startsWith('Trafic Robot / Suspect')).length,
 );
 const errorTrafficCount = computed(() =>
-  rows.value.filter((row) => getTrafficCategory(row) === 'Trafic en erreur').length,
+  trafficSummary.value?.totals.errorCount ??
+    rows.value.filter((row) => getTrafficCategory(row) === 'Trafic en erreur').length,
 );
 const distinctSessionCount = computed(() =>
-  new Set(rows.value.map((row) => row.log.sessionId?.trim()).filter(Boolean)).size,
+  trafficSummary.value?.totals.distinctSessionCount ??
+    new Set(rows.value.map((row) => row.log.sessionId?.trim()).filter(Boolean)).size,
 );
 
 function selectTrafficEntry(entry: TrafficEntry): void {
-  filters.page = 1;
   if (trafficLevel.value === 'categories') {
+    const filterCategory = trafficFilterByLabel[entry.label];
+    if (!filterCategory) return;
     trafficCategory.value = entry.label;
+    trafficFilterCategory.value = filterCategory;
     trafficLevel.value = 'regions';
   } else if (trafficLevel.value === 'regions') {
     trafficRegion.value = entry.label;
@@ -475,23 +602,114 @@ function selectTrafficEntry(entry: TrafficEntry): void {
 }
 
 function goBackTraffic(): void {
-  filters.page = 1;
   if (trafficLevel.value === 'subdivisions') {
     trafficLevel.value = 'countries';
   } else if (trafficLevel.value === 'countries') {
     trafficLevel.value = 'regions';
   } else if (trafficLevel.value === 'regions') {
     trafficLevel.value = 'categories';
+    trafficCategory.value = '';
+    trafficFilterCategory.value = '';
   }
 }
 
-function sortLogsByDate(logItems: Iterable<AnalyticsLog>): AnalyticsLog[] {
-  return [...logItems].sort((left, right) =>
-    right.date.localeCompare(left.date) || right.id - left.id,
-  );
+function scheduleLogsLoad(): void {
+  requestVersion++;
+  activeRequest?.abort();
+  if (loadTimer !== undefined) window.clearTimeout(loadTimer);
+  loadTimer = window.setTimeout(() => {
+    loadTimer = undefined;
+    void loadLogs();
+  }, 250);
 }
 
-async function loadLogs(forceFullReload = false): Promise<void> {
+async function loadTrafficLocations(): Promise<void> {
+  const currentRequest = ++mapRequestVersion;
+  activeMapRequest?.abort();
+  const source = props.source;
+  const token = props.token;
+
+  loadedMapLocations.value = [];
+  mapLocationsApproximate.value = false;
+  mapLocationsLoaded.value = Boolean(source);
+  mapErrorMessage.value = null;
+  mapPage.value = 0;
+  mapEventsLoaded.value = 0;
+  mapEventsTotal.value = 0;
+
+  if (!source) {
+    mapLoading.value = false;
+    return;
+  }
+
+  const controller = new AbortController();
+  activeMapRequest = controller;
+  mapLoading.value = true;
+
+  try {
+    let page = 1;
+    let hasMore = true;
+    let snapshotId: number | undefined;
+    let cursor: number | undefined;
+    let eventsLoaded = 0;
+    let eventsTotal = 0;
+    const locationHeap: MapLocationCounter[] = [];
+    const locationIndexes = new Map<string, number>();
+    while (hasMore) {
+      const result = await fetchAnalyticsTrafficLocationsPage(
+        source,
+        page,
+        token,
+        snapshotId !== undefined && cursor !== undefined
+          ? { snapshotId, cursor }
+          : undefined,
+        controller.signal,
+      );
+      if (currentRequest !== mapRequestVersion) return;
+
+      if (result.page !== page || (snapshotId !== undefined && result.snapshotId !== snapshotId)) {
+        throw new Error('Le serveur a renvoyé une page de localisations incohérente.');
+      }
+      if (snapshotId === undefined) {
+        snapshotId = result.snapshotId;
+        eventsTotal = result.totalCount ?? 0;
+        mapEventsTotal.value = eventsTotal;
+      }
+      const accumulatedLocations = addMapLocations(
+        result.locations,
+        locationHeap,
+        locationIndexes,
+      );
+      loadedMapLocations.value = accumulatedLocations.locations;
+      mapLocationsApproximate.value ||= accumulatedLocations.approximate;
+      mapPage.value = result.page;
+      eventsLoaded += result.pageEventCount;
+      mapEventsLoaded.value = eventsLoaded;
+      hasMore = result.hasMore;
+      if (hasMore && (result.nextCursor === null || (cursor !== undefined && result.nextCursor >= cursor))) {
+        throw new Error('Le serveur a renvoyé un curseur de pagination invalide.');
+      }
+      cursor = result.nextCursor ?? undefined;
+      page = result.page + 1;
+    }
+  } catch (error) {
+    if (currentRequest === mapRequestVersion) {
+      mapErrorMessage.value = error instanceof Error
+        ? error.message
+        : 'Impossible de charger toutes les localisations de trafic.';
+      if (error instanceof AnalyticsApiError && (error.status === 401 || error.status === 403)) {
+        emit('auth-error', { status: error.status, message: mapErrorMessage.value });
+      }
+    }
+  } finally {
+    if (currentRequest === mapRequestVersion) {
+      mapLoading.value = false;
+      activeMapRequest = undefined;
+    }
+  }
+}
+
+async function loadLogs(): Promise<void> {
   const currentRequest = ++requestVersion;
   activeRequest?.abort();
   const controller = new AbortController();
@@ -503,112 +721,44 @@ async function loadLogs(forceFullReload = false): Promise<void> {
 
   if (!source) {
     logs.value = [];
-    loadedCount.value = 0;
     totalCount.value = 0;
     eventTypes.value = [];
     countries.value = [];
     devices.value = [];
     browsers.value = [];
-    cursorId = 0;
-    cursorInitialized = false;
-    emit('logs-change', []);
     loading.value = false;
     activeRequest = undefined;
     emit('loading-change', false);
     return;
   }
 
-  const loadStartedAt = performance.now();
-  const requestedBatchSize = batchSize.value;
-  let batchRequestCount = 0;
-  let batchRequestDurationMs = 0;
-  const initialLoad = forceFullReload || !cursorInitialized;
   loading.value = true;
   emit('loading-change', true);
-  if (initialLoad) {
-    logs.value = [];
-    loadedCount.value = 0;
-    totalCount.value = 0;
-    cursorId = 0;
-    cursorInitialized = false;
-    emit('logs-change', []);
-  }
+  logs.value = [];
   try {
-    const requestFilters: LogsFilters = { perPage: requestedBatchSize };
-    const fetchBatch = async (afterId: number, throughId?: number) => {
-      const batchStartedAt = performance.now();
-      batchRequestCount++;
-      try {
-        const result = await fetchLogs(
-          source,
-          { ...requestFilters, afterId, throughId },
-          token,
-          controller.signal,
-        );
-        console.log('[Analytics] Lot de journaux récupéré', {
-          source,
-          afterId,
-          throughId: throughId ?? result.highWaterId,
-          requestedCount: requestedBatchSize,
-          receivedCount: result.logs.length,
-          totalCount: result.totalCount,
-          durationMs: Number((performance.now() - batchStartedAt).toFixed(1)),
-        });
-        return result;
-      } finally {
-        batchRequestDurationMs += performance.now() - batchStartedAt;
-      }
+    const requestFilters: LogsFilters = {
+      category: filters.category,
+      eventType: filters.eventType,
+      sessionId: filters.sessionId,
+      paramsSearch: filters.paramsSearch,
+      country: filters.country,
+      device: filters.device,
+      browser: filters.browser,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      trafficCategory: trafficFilterCategory.value || undefined,
+      page: filters.page,
+      perPage: filters.perPage,
     };
-
-    const firstBatch = await fetchBatch(cursorId);
+    const result = await fetchLogs(source, requestFilters, token, controller.signal);
     if (currentRequest !== requestVersion) return;
 
-    eventTypes.value = firstBatch.eventTypes;
-    countries.value = firstBatch.countries;
-    devices.value = firstBatch.devices;
-    browsers.value = firstBatch.browsers;
-
-    const throughId = firstBatch.highWaterId ?? Math.max(
-      cursorId,
-      ...firstBatch.logs.map((log) => log.id),
-    );
-    const expectedNewCount = firstBatch.totalCount;
-    let fetchedCount = 0;
-    const allLogs = new Map(logs.value.map((log) => [log.id, log]));
-    let currentBatch: typeof firstBatch | null = firstBatch;
-
-    while (currentBatch) {
-      const result = currentBatch;
-      currentBatch = null;
-      if (currentRequest !== requestVersion) return;
-
-      for (const log of result.logs) {
-        allLogs.set(log.id, log);
-      }
-      fetchedCount += result.logs.length;
-      if (result.logs.length > 0) {
-        cursorId = result.logs[result.logs.length - 1].id;
-      }
-      cursorInitialized = true;
-      logs.value = sortLogsByDate(allLogs.values());
-      loadedCount.value = allLogs.size;
-      totalCount.value = initialLoad
-        ? Math.max(expectedNewCount, loadedCount.value)
-        : allLogs.size + Math.max(0, expectedNewCount - fetchedCount);
-      emit('logs-change', logs.value);
-
-      if (result.logs.length === 0) break;
-      if (fetchedCount >= expectedNewCount) {
-        cursorId = throughId;
-        break;
-      }
-      currentBatch = await fetchBatch(cursorId, throughId);
-    }
-
-    cursorId = Math.max(cursorId, throughId);
-    totalCount.value = allLogs.size;
-    const pageCount = Math.max(1, Math.ceil(trafficRows.value.length / filters.perPage));
-    if (filters.page > pageCount) filters.page = pageCount;
+    logs.value = result.logs;
+    totalCount.value = result.totalCount;
+    eventTypes.value = result.eventTypes;
+    countries.value = result.countries;
+    devices.value = result.devices;
+    browsers.value = result.browsers;
     emit('dashboard-loaded', source);
   } catch (error) {
     if (currentRequest === requestVersion) {
@@ -623,20 +773,6 @@ async function loadLogs(forceFullReload = false): Promise<void> {
     }
   } finally {
     if (currentRequest === requestVersion) {
-      const totalDurationMs = performance.now() - loadStartedAt;
-      console.log('[Analytics] Chargement des journaux terminé', {
-        source,
-        batchSize: requestedBatchSize,
-        requestCount: batchRequestCount,
-        requestDurationMs: Number(batchRequestDurationMs.toFixed(1)),
-        clientProcessingDurationMs: Number(
-          Math.max(0, totalDurationMs - batchRequestDurationMs).toFixed(1),
-        ),
-        durationMs: Number(totalDurationMs.toFixed(1)),
-        logsLoaded: logs.value.length,
-        totalCount: totalCount.value,
-        status: errorMessage.value ? 'error' : 'success',
-      });
       loading.value = false;
       activeRequest = undefined;
       emit('loading-change', false);
@@ -657,11 +793,7 @@ async function performMaintenance(
     const result = await runMaintenanceAction(props.source, props.token, action);
     selectedIds.value = new Set();
     logs.value = [];
-    loadedCount.value = 0;
     totalCount.value = 0;
-    cursorId = 0;
-    cursorInitialized = false;
-    emit('logs-change', []);
     maintenanceMessage.value = `${result.message} (${result.deletedCount || 0} ligne(s) supprimée(s)).`;
     emit('maintenance-complete');
   } catch (error) {
@@ -708,50 +840,52 @@ function purgeLogs(): Promise<void> {
 watch(
   () => [props.source, props.token, props.refreshKey] as const,
   (next, previous) => {
-    let forceFullReload = !cursorInitialized;
-    if (previous) {
-      const sourceOrTokenChanged = next[0] !== previous[0] || next[1] !== previous[1];
-      const refreshRequested = next[2] !== previous[2];
-      if (sourceOrTokenChanged) {
-        forceFullReload = true;
-        cursorInitialized = false;
-        cursorId = 0;
-        selectedIds.value = new Set();
-        trafficLevel.value = 'categories';
-        trafficCategory.value = '';
-        trafficRegion.value = '';
-        trafficCountry.value = '';
-      }
-      if (sourceOrTokenChanged && filters.page !== 1) {
-        filters.page = 1;
-      }
-      if (!sourceOrTokenChanged && !refreshRequested) return;
-      if (refreshRequested && !sourceOrTokenChanged) {
-        forceFullReload = !cursorInitialized;
-      }
+    const sourceOrTokenChanged = !previous ||
+      next[0] !== previous[0] || next[1] !== previous[1];
+    if (sourceOrTokenChanged) {
+      selectedIds.value = new Set();
+      trafficLevel.value = 'categories';
+      trafficCategory.value = '';
+      trafficFilterCategory.value = '';
+      trafficRegion.value = '';
+      trafficCountry.value = '';
+      filters.page = 1;
     }
-    requestVersion++;
-    activeRequest?.abort();
-    if (loadTimer !== undefined) window.clearTimeout(loadTimer);
-    loadTimer = window.setTimeout(() => {
-      loadTimer = undefined;
-      void loadLogs(forceFullReload);
-    }, 250);
+    scheduleLogsLoad();
+    void loadTrafficLocations();
   },
   { immediate: true },
 );
 
 watch(
-  () => filterKeys.map((key) => filters[key]),
-  () => {
-    selectedIds.value = new Set();
-    trafficLevel.value = 'categories';
-    trafficCategory.value = '';
-    trafficRegion.value = '';
-    trafficCountry.value = '';
-    filters.page = 1;
+  () => [...filterKeys.map((key) => filters[key]), filters.page, filters.perPage],
+  (next, previous) => {
+    const filtersChanged = previous &&
+      filterKeys.some((_, index) => next[index] !== previous[index]);
+    const pageSizeChanged = previous && next[filterKeys.length + 1] !== previous[filterKeys.length + 1];
+    if (filtersChanged || pageSizeChanged) {
+      selectedIds.value = new Set();
+      trafficLevel.value = 'categories';
+      trafficCategory.value = '';
+      trafficFilterCategory.value = '';
+      trafficRegion.value = '';
+      trafficCountry.value = '';
+    }
+    if ((filtersChanged || pageSizeChanged) && filters.page !== 1) {
+      filters.page = 1;
+      return;
+    }
+    scheduleLogsLoad();
   },
 );
+
+watch(trafficFilterCategory, () => {
+  filters.page = 1;
+  selectedIds.value = new Set();
+  logs.value = [];
+  totalCount.value = 0;
+  scheduleLogsLoad();
+});
 
 function resetFilters(): void {
   Object.assign(filters, createDefaultFilters());
@@ -763,15 +897,6 @@ function updatePageSize(event: Event): void {
   const pageSize = pageSizes.find((size) => size === value);
   if (pageSize !== undefined) {
     filters.perPage = pageSize;
-  }
-}
-
-function updateBatchSize(event: Event): void {
-  if (!(event.currentTarget instanceof HTMLSelectElement)) return;
-  const value = Number(event.currentTarget.value);
-  const nextSize = batchSizes.find((size) => size === value);
-  if (nextSize !== undefined) {
-    batchSize.value = nextSize;
   }
 }
 
@@ -835,6 +960,8 @@ onBeforeUnmount(() => {
   }
   requestVersion++;
   activeRequest?.abort();
+  mapRequestVersion++;
+  activeMapRequest?.abort();
   detailsDialog.value?.close();
   stopColumnResize();
   emit('loading-change', false);
@@ -845,59 +972,79 @@ onBeforeUnmount(() => {
   <section v-if="source" class="activity-panel panel" aria-label="Carte et catégories de trafic">
     <p class="muted">
       Navigation : Catégorie de trafic → Région du monde → Pays → Subdivision.
-      La carte et la liste ci-dessous suivent la sélection.
+      La carte et les indicateurs agrègent toute la source si le résumé serveur est
+      disponible ; sinon, ils portent sur la page chargée. Les journaux du tableau
+      sont filtrés et paginés côté serveur, y compris selon la catégorie de trafic sélectionnée.
     </p>
 
-        <p v-if="errorMessage && errorStatus !== 401 && errorStatus !== 403" class="error" role="alert">
+    <p v-if="errorMessage && errorStatus !== 401 && errorStatus !== 403" class="error" role="alert">
       <strong v-if="errorStatus === 401">Jeton invalide ou manquant.</strong>
       <strong v-else-if="errorStatus === 403">Accès refusé.</strong>
       <strong v-else-if="errorStatus === 503">Configuration serveur requise.</strong>
       <strong v-else>Erreur de chargement des journaux.</strong>
       {{ errorMessage }}
     </p>
-    <div v-if="loading" class="loading-status" role="status" aria-live="polite">
+    <p v-if="mapErrorMessage" class="error" role="alert">
+      Erreur lors du chargement progressif de la carte : {{ mapErrorMessage }}
+    </p>
+    <div
+      v-if="loading || props.summaryLoading || mapLoading"
+      class="loading-status"
+      role="status"
+      aria-live="polite"
+    >
       <span class="loading-indicator" aria-hidden="true"></span>
-      <strong>
-        Chargement des journaux…
-        {{ loadedCount.toLocaleString('fr-FR') }}
-        <template v-if="totalCount">/ {{ totalCount.toLocaleString('fr-FR') }}</template>
-      </strong>
-      <progress
-        v-if="totalCount"
-        class="loading-progress"
-        :value="Math.min(loadedCount, totalCount)"
-        :max="totalCount"
-        aria-label="Progression du chargement des journaux"
-      />
+      <div class="loading-messages">
+        <strong v-if="props.summaryLoading">
+          Chargement de la synthèse globale : statistiques d’utilisation, tendances et agrégats de trafic…
+        </strong>
+        <strong v-if="loading">
+          {{ trafficCategory
+            ? `Chargement de « ${trafficCategory} » — page ${filters.page}…`
+            : `Chargement des événements et erreurs — page ${filters.page}…` }}
+        </strong>
+        <strong v-if="mapLoading">
+          Chargement du tableau de bord : carte — page {{ mapPage || 1 }},
+          {{ mapEventsLoaded.toLocaleString('fr-FR') }}
+          <template v-if="mapEventsTotal">
+            / {{ mapEventsTotal.toLocaleString('fr-FR') }}
+          </template>
+          journaux traités, {{ loadedMapLocations.length.toLocaleString('fr-FR') }} points affichés…
+        </strong>
+      </div>
     </div>
 
     <div class="metrics">
       <div class="metric">
-        Requêtes affichées
-        <strong>{{ rows.length.toLocaleString('fr-FR') }}</strong>
+        {{ trafficSummary ? 'Requêtes de la source' : 'Requêtes sur la page' }}
+        <strong>{{ (trafficSummary?.totals.totalCount ?? totalCount).toLocaleString('fr-FR') }}</strong>
       </div>
       <div class="metric human-metric">
-        Trafic Humain Légitime
+        {{ trafficSummary ? 'Trafic Humain Légitime' : 'Trafic Humain Légitime (page)' }}
         <strong>{{ humanTrafficCount.toLocaleString('fr-FR') }}</strong>
       </div>
       <div class="metric bot-metric">
-        Trafic Robots / Suspects
+        {{ trafficSummary ? 'Trafic Robots / Suspects' : 'Trafic Robots / Suspects (page)' }}
         <strong>{{ robotTrafficCount.toLocaleString('fr-FR') }}</strong>
       </div>
       <div class="metric error-metric">
-        Erreurs
+        {{ trafficSummary ? 'Erreurs' : 'Erreurs (page)' }}
         <strong>{{ errorTrafficCount.toLocaleString('fr-FR') }}</strong>
       </div>
       <div class="metric">
-        Sessions distinctes
+        {{ trafficSummary ? 'Sessions distinctes' : 'Sessions distinctes (page)' }}
         <strong>{{ distinctSessionCount.toLocaleString('fr-FR') }}</strong>
       </div>
     </div>
 
     <div class="analytics-grid">
       <article class="analytics-box">
-        <h3>Carte interactive (filtrée selon la sélection)</h3>
-        <LogsMap :locations="mapLocations" />
+        <h3>Carte interactive (selon la sélection de trafic)</h3>
+        <LogsMap
+          :locations="mapLocations"
+          :approximate="mapLocationsApproximate"
+          :subdivision-mode="trafficLevel === 'subdivisions'"
+        />
       </article>
 
       <article class="analytics-box">
@@ -916,8 +1063,21 @@ onBeforeUnmount(() => {
           <table class="interactive-table">
             <thead>
               <tr>
-                <th>{{ trafficColumnTitle }}</th>
-                <th class="count-cell">Requêtes</th>
+                <th :aria-sort="trafficSortColumn === 'label' ? (trafficSortDirection === 'asc' ? 'ascending' : 'descending') : 'none'">
+                  <button class="traffic-sort-button" type="button" @click="toggleTrafficSort('label')">
+                    {{ trafficColumnTitle }}
+                    <span aria-hidden="true">{{ trafficSortIndicator('label') }}</span>
+                  </button>
+                </th>
+                <th
+                  class="count-cell"
+                  :aria-sort="trafficSortColumn === 'count' ? (trafficSortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+                >
+                  <button class="traffic-sort-button" type="button" @click="toggleTrafficSort('count')">
+                    Requêtes
+                    <span aria-hidden="true">{{ trafficSortIndicator('count') }}</span>
+                  </button>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -1024,7 +1184,11 @@ onBeforeUnmount(() => {
 
     <section class="logs-box analytics-box">
       <div class="logs-heading">
-        <h3>Événements et erreurs — {{ trafficTitle }} ({{ trafficRows.length.toLocaleString('fr-FR') }} résultat(s))</h3>
+        <h3>
+          Événements et erreurs
+          <span v-if="trafficCategory">— {{ trafficCategory }}</span>
+          ({{ totalCount.toLocaleString('fr-FR') }} résultat(s))
+        </h3>
         <span v-if="selectedIds.size" class="muted">{{ selectedIds.size }} ligne(s) sélectionnée(s)</span>
       </div>
       <div class="table-wrap logs-table-wrap">
@@ -1068,7 +1232,7 @@ onBeforeUnmount(() => {
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!loading && !errorMessage && trafficRows.length === 0">
+            <tr v-if="!loading && !errorMessage && rows.length === 0">
               <td colspan="10" class="muted empty">Aucun événement pour cette sélection.</td>
             </tr>
             <tr v-for="row in pageRows" :key="row.log.id">
@@ -1108,19 +1272,11 @@ onBeforeUnmount(() => {
         </table>
       </div>
       <nav class="pagination" aria-label="Pagination des journaux">
-        <span>{{ trafficRows.length.toLocaleString('fr-FR') }} événement(s) — page {{ filters.page }} sur {{ lastPage }}</span>
+        <span>{{ totalCount.toLocaleString('fr-FR') }} résultat(s) — page {{ filters.page }} sur {{ lastPage }}</span>
         <label>
           Lignes par page
           <select :value="filters.perPage" @change="updatePageSize">
             <option v-for="size in pageSizes" :key="size" :value="size">{{ size }}</option>
-          </select>
-        </label>
-        <label v-if="isDevelopment">
-          Lot API (développement)
-          <select :value="batchSize" @change="updateBatchSize">
-            <option v-for="size in batchSizes" :key="size" :value="size">
-              {{ size.toLocaleString('fr-FR') }}
-            </option>
           </select>
         </label>
         <button
@@ -1399,7 +1555,7 @@ button.primary:hover:not(:disabled) {
 }
 
 .analytics-grid .table-wrap {
-  max-height: 360px;
+  max-height: 550px;
   overflow: auto;
 }
 
@@ -1428,6 +1584,32 @@ th {
   width: 7rem;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.traffic-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.traffic-sort-button:hover {
+  color: #284f7c;
+}
+
+.traffic-sort-button:focus-visible {
+  outline: 2px solid #284f7c;
+  outline-offset: 2px;
+}
+
+.count-cell .traffic-sort-button {
+  width: 100%;
+  justify-content: flex-end;
 }
 
 .interactive-table tbody tr:hover,
@@ -1520,6 +1702,12 @@ th {
   color: #1e3a5f;
 }
 
+.loading-messages {
+  display: grid;
+  min-width: 0;
+  gap: .35rem;
+}
+
 .loading-indicator {
   width: .8rem;
   height: .8rem;
@@ -1527,13 +1715,6 @@ th {
   border-top-color: #284f7c;
   border-radius: 50%;
   animation: loading-spin .8s linear infinite;
-}
-
-.loading-progress {
-  grid-column: 2;
-  width: 100%;
-  height: .45rem;
-  accent-color: #284f7c;
 }
 
 @keyframes loading-spin {
